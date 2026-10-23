@@ -1,0 +1,92 @@
+.navbar {
+  background: #111827; /* Negro selva */
+  color: white;
+  padding: 12px 0;
+  border-bottom: 3px solid #f59e0b; /* Línea naranja jaguar */
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-logo {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #f59e0b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-img { height: 35px; }
+
+.navbar-links {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  font-weight: 500;
+}
+
+.navbar-links a {
+  color: #e5e7eb;
+  transition: color 0.2s;
+}
+
+.navbar-links a:hover {
+  color: #f59e0b;
+}
+
+.btn-donate {
+  background: #f59e0b;
+  color: #111827 !important;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.btn-donate:hover {
+  background: #d97706;
+}
+
+.btn-login {
+  border: 2px solid #f59e0b;
+  padding: 6px 16px;
+  border-radius: 6px;
+  color: #f59e0b !important;
+}
+
+.btn-login:hover {
+  background: #f59e0b;
+  color: #111827 !important;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 10px;
+}
+
+.user-name {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.btn-logout {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: bold;
+}
