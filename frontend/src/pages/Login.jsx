@@ -41,3 +41,21 @@ export default function Login() {
     </div>
   );
 }
+
+// Notificacion de errores 
+/* try {
+      const user = await login(email, password);
+
+      navigate(
+        location.state?.desde ?? rutaInicio(user),
+        { replace: true }
+      );
+    } catch (err) {
+      setError(
+        err.response?.data?.error ||
+        'Correo electrónico o contraseña incorrectos'
+      );
+    } finally {
+      setCargando(false);
+    }
+      */
