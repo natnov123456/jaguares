@@ -76,13 +76,12 @@ psql -U postgres -d fundacion_jaguares -f db/02_seed_usuarios.sql
 *(Nota: Si el script falla por un error de BOM, ejecuta manualmente `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";` y luego vuelve a correr el script).*
 
 ### 3. Configurar el Backend
-1. Abre `backend/src/FundacionJaguares.Api/appsettings.json`
-2. Cambia la contraseña de la base de datos por la tuya:
-```json
-"ConnectionStrings": {
-  "Default": "Host=localhost;Port=5432;Database=fundacion_jaguares;Username=postgres;Password=TU_CONTRASEÑA"
-}
+`appsettings.json` usa por defecto `Port=5432` y `Password=postgres`. Si tu PostgreSQL usa otra contraseña o puerto, **no edites `appsettings.json`** (se subiría tu contraseña al repositorio). Guárdala solo en tu máquina con *user-secrets*:
+```powershell
+cd backend/src/FundacionJaguares.Api
+dotnet user-secrets set "ConnectionStrings:Default" "Host=localhost;Port=5432;Database=fundacion_jaguares;Username=postgres;Password=TU_CONTRASEÑA"
 ```
+*Se ejecuta una sola vez; el backend la usa automáticamente al correr en modo desarrollo.*
 
 ### 4. Ejecutar el Backend (Terminal 1)
 ```powershell

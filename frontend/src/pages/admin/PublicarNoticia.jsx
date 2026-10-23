@@ -4,24 +4,24 @@ import { contenidoApi } from '../../services/api';
 
 export default function PublicarNoticia() {
   const [form, setForm] = useState({ titulo: '', resumen: '', contenido: '', imagenUrl: '', publicada: true });
-  const [msg, setMsg] = useState('');
+  const [msg, setMsg] = useState(null);
   const navigate = useNavigate();
 
   const publicar = async (e) => {
     e.preventDefault();
     try {
       await contenidoApi.crearNoticia(form);
-      setMsg('Noticia publicada ✅');
+      setMsg({ tipo: 'success', texto: 'Noticia publicada ✅' });
       setTimeout(() => navigate('/noticias'), 1200);
     } catch (err) {
-      setMsg(err.response?.data?.error || 'Error');
+      setMsg({ tipo: 'error', texto: err.response?.data?.error || 'Error al publicar la noticia' });
     }
   };
 
   return (
     <div className="auth-container">
       <h1>Publicar noticia</h1>
-      {msg && <div className="success-msg">{msg}</div>}
+      {msg && <div className={`${msg.tipo}-msg`}>{msg.texto}</div>}
       <form onSubmit={publicar}>
         <label>Título</label>
         <input type="text" value={form.titulo} onChange={e => setForm({...form, titulo: e.target.value})} required />
