@@ -13,7 +13,9 @@ public interface ICursoService
     Task<Curso> CrearAsync(CrearCursoDto dto, Guid docenteId);
     Task<Inscripcion> InscribirAsync(Guid cursoId, Guid participanteId);
     Task CancelarInscripcionAsync(Guid cursoId, Guid participanteId);
-    Task<int> FinalizarYGenerarCertificadosAsync(Guid cursoId);
+    Task<List<MiInscripcionDto>> ListarInscripcionesAsync(Guid participanteId);
+    Task<List<CursoGestionDto>> ListarGestionAsync(Guid? docenteId);
+    Task<int> FinalizarYGenerarCertificadosAsync(Guid cursoId, Guid? docenteId);
 }
 
 public class CursoService : ICursoService
@@ -30,6 +32,11 @@ public class CursoService : ICursoService
 
     public async Task<Curso> CrearAsync(CrearCursoDto dto, Guid docenteId)
     {
+        if (dto.FechaFin < dto.FechaInicio)
+            throw new ArgumentException("La fecha de fin no puede ser anterior a la de inicio");
+        if (dto.CupoMaximo <= 0)
+            throw new ArgumentException("El cupo máximo debe ser mayor a 0");
+
         var c = new Curso
         {
             Titulo = dto.Titulo, Descripcion = dto.Descripcion,
@@ -77,10 +84,33 @@ public class CursoService : ICursoService
         await _cursos.LiberarCupoAsync(cursoId);
     }
 
-    public async Task<int> FinalizarYGenerarCertificadosAsync(Guid cursoId)
+    public Task<List<MiInscripcionDto>> ListarInscripcionesAsync(Guid participanteId) =>
+        (from i in _db.Inscripciones
+         join c in _db.Cursos on i.CursoId equals c.Id
+         where i.ParticipanteId == participanteId
+         orderby c.FechaInicio descending
+         select new MiInscripcionDto(c.Id, c.Titulo, c.FechaInicio, c.FechaFin,
+                                     c.Estado, i.Estado, i.FechaInscripcion)).ToListAsync();
+
+    // docenteId == null: la directora ve todos los cursos
+    public Task<List<CursoGestionDto>> ListarGestionAsync(Guid? docenteId) =>
+        _db.Cursos
+            .Where(c => docenteId == null || c.DocenteId == docenteId)
+            .OrderByDescending(c => c.FechaInicio)
+            .Select(c => new CursoGestionDto(c.Id, c.Titulo, c.FechaInicio, c.FechaFin,
+                c.CupoMaximo, c.CupoDisponible, c.Estado,
+                _db.Inscripciones.Count(i => i.CursoId == c.Id && i.Estado == "CONFIRMADA")))
+            .ToListAsync();
+
+    // docenteId == null: la directora puede finalizar cualquier curso
+    public async Task<int> FinalizarYGenerarCertificadosAsync(Guid cursoId, Guid? docenteId)
     {
         var curso = await _cursos.GetByIdAsync(cursoId)
                     ?? throw new KeyNotFoundException("Curso no encontrado");
+        if (docenteId != null && curso.DocenteId != docenteId)
+            throw new UnauthorizedAccessException("Solo puedes finalizar tus propios cursos");
+        if (curso.Estado == "FINALIZADO")
+            throw new InvalidOperationException("El curso ya fue finalizado y sus certificados emitidos");
 
         var inscripciones = await _db.Inscripciones
             .Where(i => i.CursoId == cursoId && i.Estado == "CONFIRMADA")

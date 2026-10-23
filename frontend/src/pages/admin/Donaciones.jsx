@@ -1,141 +1,149 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { puede } from '../../config/permisos';
 import { donacionesApi } from '../../services/api';
+import { bs, fechaHora } from '../../utils/formato';
+
+const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
+               'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+function TablaDonaciones({ donaciones, vacio }) {
+  if (donaciones.length === 0) return <p className="muted" style={{ textAlign: 'center', padding: 24 }}>{vacio}</p>;
+  return (
+    <div className="table-wrap">
+      <table className="table">
+        <thead><tr><th>Fecha</th><th>Monto</th><th>Medio</th><th>Ref.</th></tr></thead>
+        <tbody>
+          {donaciones.map(d => (
+            <tr key={d.id}>
+              <td>{fechaHora(d.fecha)}</td>
+              <td style={{ fontWeight: 'bold' }}>{bs(d.monto)}</td>
+              <td>{d.medio}</td>
+              <td className="muted">{d.referencia || '-'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export default function AdminDonaciones() {
-  const [donaciones, setDonaciones] = useState([]);
-  const [total, setTotal] = useState(0);
+  const { usuario } = useAuth();
+  // La directora ve el reporte financiero completo; el encargado de eventos solo lo que él registró
+  const verReporte = puede(usuario, 'verReporteFinanciero');
+
+  const hoy = new Date();
+  const [periodo, setPeriodo] = useState({ anio: hoy.getFullYear(), mes: hoy.getMonth() + 1 });
+  const [reporte, setReporte] = useState({ total: 0, cantidad: 0, detalle: [] });
+  const [misRegistros, setMisRegistros] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // Estado para el formulario manual (por si entra efectivo a la oficina)
+
   const [monto, setMonto] = useState('');
   const [referencia, setReferencia] = useState('');
-  const [mensaje, setMensaje] = useState('');
+  const [mensaje, setMensaje] = useState(null);
 
-  const fechaActual = new Date();
-  const anio = fechaActual.getFullYear();
-  const mes = fechaActual.getMonth() + 1; // Enero es 0
-
-  const cargarDonaciones = async () => {
+  const cargar = async () => {
     try {
-      // Llamamos al endpoint de reporte que ya teníamos
-      const { data } = await donacionesApi.reporte(anio, mes);
-      setDonaciones(data.detalle || []);
-      setTotal(data.total || 0);
+      if (verReporte) {
+        const { data } = await donacionesApi.reporte(periodo.anio, periodo.mes);
+        setReporte(data);
+      } else {
+        const { data } = await donacionesApi.misRegistros();
+        setMisRegistros(data);
+      }
     } catch (error) {
-      console.error("Error al cargar donaciones:", error);
+      console.error('Error al cargar donaciones:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    cargarDonaciones();
-  }, []);
+    setLoading(true);
+    cargar();
+  }, [periodo.anio, periodo.mes]);
 
   const registrarDonacionManual = async (e) => {
     e.preventDefault();
-    setMensaje('');
+    setMensaje(null);
     try {
       await donacionesApi.registrar({
         monto: parseFloat(monto),
-        medio: "EFECTIVO",
-        referencia: referencia || "RECIBO-OFICINA",
-        donanteId: null
+        medio: 'EFECTIVO',
+        referencia: referencia || 'RECIBO-OFICINA',
+        donanteId: null,
       });
-      setMensaje('✅ Donación registrada correctamente');
+      setMensaje({ tipo: 'success', texto: '✅ Donación registrada correctamente' });
       setMonto('');
       setReferencia('');
-      cargarDonaciones(); // Recargar la tabla
-    } catch (error) {
-      setMensaje('❌ Error al registrar la donación');
+      cargar();
+    } catch {
+      setMensaje({ tipo: 'error', texto: '❌ Error al registrar la donación' });
     }
   };
 
+  const anios = Array.from({ length: 4 }, (_, i) => hoy.getFullYear() - i);
+
   return (
-    <div className="container" style={{ padding: '48px 24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+    <div className="container page">
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: '2rem', color: '#111827' }}>Gestión de Donaciones</h1>
-          <p style={{ color: '#6b7280' }}>Resumen del mes actual ({mes}/{anio})</p>
+          <h1>{verReporte ? 'Reporte de Donaciones' : 'Registro de Donaciones'}</h1>
+          <p>
+            {verReporte
+              ? `Reporte financiero de ${MESES[periodo.mes - 1]} ${periodo.anio}`
+              : 'Registra el efectivo que recibes en oficina o en eventos.'}
+          </p>
         </div>
-        <div style={{ background: '#fef3c7', padding: '16px 24px', borderRadius: '8px', borderLeft: '4px solid #f59e0b' }}>
-          <p style={{ fontSize: '0.9rem', color: '#92400e', margin: 0 }}>Total Recaudado</p>
-          <h2 style={{ fontSize: '2rem', color: '#b45309', margin: 0 }}>Bs. {total}</h2>
-        </div>
+        {verReporte && (
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="form-stack" style={{ flexDirection: 'row' }}>
+              <select value={periodo.mes} onChange={e => setPeriodo({ ...periodo, mes: +e.target.value })} aria-label="Mes">
+                {MESES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+              </select>
+              <select value={periodo.anio} onChange={e => setPeriodo({ ...periodo, anio: +e.target.value })} aria-label="Año">
+                {anios.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+            <div className="stat-box">
+              <p>Total recaudado ({reporte.cantidad} aportes)</p>
+              <h2>{bs(reporte.total)}</h2>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' }}>
-        
-        {/* Tabla de Donaciones */}
-        <div className="card" style={{ padding: '24px' }}>
-          <h2 style={{ fontSize: '1.2rem', marginBottom: '16px' }}>Historial del Mes</h2>
+      <div className="split">
+        <section className="panel">
+          <h2>{verReporte ? 'Detalle del mes' : 'Mis últimos registros'}</h2>
           {loading ? (
             <p>Cargando...</p>
-          ) : donaciones.length === 0 ? (
-            <p style={{ color: '#6b7280', textAlign: 'center', padding: '24px' }}>No hay donaciones registradas este mes.</p>
+          ) : verReporte ? (
+            <TablaDonaciones donaciones={reporte.detalle} vacio="No hay donaciones registradas en este mes." />
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '2px solid #e5e7eb', textAlign: 'left' }}>
-                  <th style={{ padding: '8px' }}>Fecha</th>
-                  <th style={{ padding: '8px' }}>Monto</th>
-                  <th style={{ padding: '8px' }}>Medio</th>
-                  <th style={{ padding: '8px' }}>Ref.</th>
-                </tr>
-              </thead>
-              <tbody>
-                {donaciones.map(d => (
-                  <tr key={d.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                    <td style={{ padding: '12px 8px' }}>
-                      {new Date(d.fecha).toLocaleDateString('es-BO')} {new Date(d.fecha).toLocaleTimeString('es-BO', {hour: '2-digit', minute:'2-digit'})}
-                    </td>
-                    <td style={{ padding: '12px 8px', fontWeight: 'bold' }}>Bs. {d.monto}</td>
-                    <td style={{ padding: '12px 8px' }}>{d.medio}</td>
-                    <td style={{ padding: '12px 8px', color: '#6b7280' }}>{d.referencia || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <TablaDonaciones donaciones={misRegistros} vacio="Aún no registraste donaciones." />
           )}
-        </div>
+        </section>
 
-        {/* Formulario para registrar donación presencial */}
-        <div className="card" style={{ padding: '24px', alignSelf: 'start' }}>
-          <h2 style={{ fontSize: '1.2rem', marginBottom: '16px' }}>Registrar Efectivo</h2>
-          <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '16px' }}>
-            Usa este formulario si alguien te entrega dinero en la oficina.
+        <section className="panel">
+          <h2>Registrar efectivo</h2>
+          <p className="muted" style={{ fontSize: '0.9rem', marginBottom: 16 }}>
+            Usa este formulario cuando alguien entregue dinero en mano. Las donaciones en línea se registran solas.
           </p>
-          {mensaje && <div style={{ marginBottom: '16px', padding: '8px', background: mensaje.includes('✅') ? '#dcfce7' : '#fee2e2', borderRadius: '4px', fontSize: '0.9rem' }}>{mensaje}</div>}
-          
-          <form onSubmit={registrarDonacionManual} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {mensaje && <div className={`${mensaje.tipo}-msg`}>{mensaje.texto}</div>}
+          <form onSubmit={registrarDonacionManual} className="form-stack">
             <div>
-              <label style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>Monto (Bs.)</label>
-              <input 
-                type="number" 
-                min="1" 
-                step="0.01" 
-                value={monto} 
-                onChange={e => setMonto(e.target.value)} 
-                required 
-                style={{ width: '100%', padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px' }}
-              />
+              <label>Monto (Bs.)</label>
+              <input type="number" min="1" step="0.01" value={monto} onChange={e => setMonto(e.target.value)} required />
             </div>
             <div>
-              <label style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>Referencia / Recibo</label>
-              <input 
-                type="text" 
-                value={referencia} 
-                onChange={e => setReferencia(e.target.value)} 
-                placeholder="Ej: RECIBO-001"
-                style={{ width: '100%', padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px' }}
-              />
+              <label>Referencia / Recibo</label>
+              <input type="text" value={referencia} onChange={e => setReferencia(e.target.value)} placeholder="Ej: RECIBO-001" />
             </div>
-            <button type="submit" className="btn-primary" style={{ marginTop: '8px' }}>
-              Guardar Donación
-            </button>
+            <button type="submit" className="btn-primary">Guardar donación</button>
           </form>
-        </div>
-
+        </section>
       </div>
     </div>
   );

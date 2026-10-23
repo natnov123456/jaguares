@@ -49,6 +49,8 @@ public class AuthService : IAuthService
                 ?? throw new UnauthorizedAccessException("Credenciales inválidas");
         if (!BCrypt.Net.BCrypt.Verify(dto.Password, u.PasswordHash))
             throw new UnauthorizedAccessException("Credenciales inválidas");
+        if (!u.Activo)
+            throw new UnauthorizedAccessException("Tu cuenta está desactivada. Contacta a la fundación.");
         return GenerarToken(u);
     }
 

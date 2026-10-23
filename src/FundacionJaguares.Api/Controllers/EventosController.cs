@@ -36,6 +36,6 @@ public class EventosController : ControllerBase
     }
 
     [HttpGet("{id:guid}/asistencias")]
-    [Authorize]
+    [Authorize(Roles = "ENCARGADO_EVENTOS,DIRECTORA")]
     public async Task<IActionResult> Asistencias(Guid id) => Ok(await _eventos.ListarAsistenciasAsync(id));
 }

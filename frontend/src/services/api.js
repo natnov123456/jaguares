@@ -34,22 +34,33 @@ export const cursosApi = {
   listar: () => api.get('/Cursos'),
   crear: (data) => api.post('/Cursos', data),
   inscribir: (id) => api.post(`/Cursos/${id}/inscribir`),
+  cancelarInscripcion: (id) => api.delete(`/Cursos/${id}/inscripcion`),
+  misInscripciones: () => api.get('/Cursos/mis-inscripciones'),
+  gestion: () => api.get('/Cursos/gestion'),
   finalizar: (id) => api.post(`/Cursos/${id}/finalizar`),
+};
+
+export const eventosApi = {
+  listar: () => api.get('/Eventos'),
+  crear: (data) => api.post('/Eventos', data),
 };
 
 export const certificadosApi = {
   verificar: (codigo) => api.get(`/Certificados/verificar/${codigo}`),
+  mios: () => api.get('/Certificados/mios'),
 };
 
 export const donacionesApi = {
   registrar: (data) => api.post('/Donaciones', data),
   enLinea: (data) => api.post('/Donaciones/en-linea', data),
   reporte: (anio, mes) => api.get(`/Donaciones/reporte/${anio}/${mes}`),
+  misRegistros: () => api.get('/Donaciones/mis-registros'),
 };
 
 export const voluntariosApi = {
   postular: (data) => api.post('/Voluntarios/postular', data),
   listar: () => api.get('/Voluntarios'),
+  miHistorial: () => api.get('/Voluntarios/mi-historial'),
   registrarParticipacion: (id, data) => api.post(`/Voluntarios/${id}/participaciones`, data),
 };
 

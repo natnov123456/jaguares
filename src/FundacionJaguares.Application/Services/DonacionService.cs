@@ -11,6 +11,7 @@ public interface IDonacionService
     Task<Donacion> RegistrarDonacionEnLineaAsync(CrearDonacionDto dto);
     Task<decimal> TotalPeriodoAsync(int anio, int mes);
     Task<List<Donacion>> ListarPeriodoAsync(int anio, int mes);
+    Task<List<Donacion>> ListarRegistradasPorAsync(Guid usuarioId);
 }
 
 public class DonacionService : IDonacionService
@@ -70,4 +71,5 @@ public class DonacionService : IDonacionService
 
     public Task<decimal> TotalPeriodoAsync(int anio, int mes) => _donaciones.TotalPeriodoAsync(anio, mes);
     public Task<List<Donacion>> ListarPeriodoAsync(int anio, int mes) => _donaciones.GetByPeriodoAsync(anio, mes);
+    public Task<List<Donacion>> ListarRegistradasPorAsync(Guid usuarioId) => _donaciones.GetByRegistradorAsync(usuarioId);
 }

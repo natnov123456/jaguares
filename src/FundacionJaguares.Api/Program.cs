@@ -14,10 +14,13 @@ using Npgsql.NameTranslation;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1) DbContext
+// Una sola instancia del traductor: si se crea uno nuevo por DbContext, EF Core ve opciones
+// distintas en cada request y tras ~20 lanza ManyServiceProvidersCreatedWarning (HTTP 500)
+var sinTraduccion = new NpgsqlNullNameTranslator();
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("Default"), npg => npg
-            .MapEnum<Rol>("rol_enum", nameTranslator: new NpgsqlNullNameTranslator())
-            .MapEnum<MedioPago>("medio_pago_enum", nameTranslator: new NpgsqlNullNameTranslator()))
+            .MapEnum<Rol>("rol_enum", nameTranslator: sinTraduccion)
+            .MapEnum<MedioPago>("medio_pago_enum", nameTranslator: sinTraduccion))
        .UseSnakeCaseNamingConvention());
 
 // 2) Repositorios

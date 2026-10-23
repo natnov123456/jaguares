@@ -8,6 +8,10 @@ public record TokenDto(string Token, string NombreCompleto, string Rol, DateTime
 // CURSOS
 public record CrearCursoDto(string Titulo, string? Descripcion, DateOnly FechaInicio, DateOnly FechaFin,
                             int CupoMaximo, int AsistenciaMinimaPct = 80);
+public record CursoGestionDto(Guid Id, string Titulo, DateOnly FechaInicio, DateOnly FechaFin,
+                              int CupoMaximo, int CupoDisponible, string Estado, int Inscritos);
+public record MiInscripcionDto(Guid CursoId, string Titulo, DateOnly FechaInicio, DateOnly FechaFin,
+                               string EstadoCurso, string EstadoInscripcion, DateTime FechaInscripcion);
 
 // EVENTOS
 public record CrearEventoDto(string Titulo, string? Descripcion, string? Lugar,
@@ -17,6 +21,7 @@ public record AsistenciaDto(Guid ParticipanteId);
 // CERTIFICADOS
 public record VerificarCertificadoDto(string CodigoUnico);
 public record CertificadoVerificacionDto(bool Valido, string? NombreParticipante, string? NombreCurso, DateTime? EmitidoEn);
+public record CertificadoDto(Guid Id, string CodigoUnico, string NombreCurso, DateTime EmitidoEn, bool Valido);
 
 // DONACIONES
 public record CrearDonacionDto(decimal Monto, string Medio, string? Referencia, Guid? DonanteId);

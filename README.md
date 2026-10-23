@@ -103,13 +103,31 @@ npm run dev
 
 El sistema cuenta con 3 portales diferentes según el rol del usuario. Estos usuarios se crean con el script `db/02_seed_usuarios.sql` (se puede volver a ejecutar sin problema: restablece las contraseñas):
 
-| Rol | Nombre | Email | Password | Acceso |
-|-----|--------|-------|----------|--------|
-| **DIRECTORA** | María Directora | `directora@jaguares.org` | `Admin123!` | Panel de administración total (Cursos, Noticias, Donaciones, Voluntarios) |
-| **DOCENTE** | Carlos Docente | `docente@jaguares.org` | `Docente123!` | Panel de administración: crear y gestionar cursos |
-| **ENCARGADO_EVENTOS** | Elena Encargada | `eventos@jaguares.org` | `Eventos123!` | Panel de administración: Donaciones y Voluntarios |
-| **VOLUNTARIO** | Valeria Voluntaria | `voluntario@example.com` | `Vol123!` | Portal del voluntario (Mis certificados, participaciones) |
-| **PARTICIPANTE** | Juan Pérez | `juan@example.com` | `Juan123!` | Inscripción a cursos, ver certificados, donar |
+| Rol | Nombre | Email | Password | Inicio tras login |
+|-----|--------|-------|----------|-------------------|
+| **DIRECTORA** | María Directora | `directora@jaguares.org` | `Admin123!` | `/admin` |
+| **DOCENTE** | Carlos Docente | `docente@jaguares.org` | `Docente123!` | `/admin` |
+| **ENCARGADO_EVENTOS** | Elena Encargada | `eventos@jaguares.org` | `Eventos123!` | `/admin` |
+| **VOLUNTARIO** | Valeria Voluntaria | `voluntario@example.com` | `Vol123!` | `/voluntario` |
+| **PARTICIPANTE** | Juan Pérez | `juan@example.com` | `Juan123!` | `/mi-cuenta` |
+
+### Matriz de permisos
+
+| Funcionalidad | Visitante | Participante | Voluntario | Docente | Encargado eventos | Directora |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| Ver cursos, noticias, verificar certificado, donar en línea | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Inscribirse / cancelar inscripción a cursos | — | ✅ | ✅ | — | — | — |
+| Mis cursos y mis certificados (`/mi-cuenta`) | — | ✅ | ✅ | — | — | — |
+| Portal de voluntario: historial de participaciones | — | — | ✅ | — | — | — |
+| Crear cursos | — | — | — | ✅ | — | ✅ |
+| Ver inscritos y finalizar curso (emite certificados) | — | — | — | Solo sus cursos | — | Todos |
+| Crear eventos | — | — | — | — | ✅ | ✅ |
+| Registro de voluntarios y sus actividades | — | — | — | — | ✅ | ✅ |
+| Registrar donaciones en efectivo | — | — | — | — | ✅ (ve solo lo que registró) | ✅ |
+| Reporte financiero mensual (RF-06) | — | — | — | — | — | ✅ |
+| Publicar noticias | — | — | — | — | — | ✅ |
+
+Los permisos de la interfaz están centralizados en `frontend/src/config/permisos.js` (navbar, rutas y panel se arman desde ahí) y deben coincidir con los `[Authorize(Roles = ...)]` de los controladores, que son los que realmente protegen los datos. Un usuario con `activo = false` no puede iniciar sesión.
 
 *(También puedes registrar usuarios nuevos desde la web o Swagger; quedan como `PARTICIPANTE` y el rol se cambia con SQL: `UPDATE usuarios SET rol='DIRECTORA' WHERE email='...';`)*
 
@@ -124,15 +142,21 @@ El sistema cuenta con 3 portales diferentes según el rol del usuario. Estos usu
 - **Donaciones:** Pasarela para donar en línea (QR, transferencia o tarjeta).
 - **Voluntariado:** Formulario público para postularse como voluntario.
 
-### Portal de Administración (`/admin`)
-- **Dashboard:** Tarjetas de acceso rápido.
-- **Crear Curso:** Formulario para publicar nuevos talleres.
+### Mi Cuenta (`/mi-cuenta`) — Participante y Voluntario
+- **Mis inscripciones:** Cursos inscritos con estado; se puede cancelar mientras el curso esté publicado.
+- **Mis certificados:** Certificados emitidos con su código de verificación.
+
+### Portal de Administración (`/admin`) — cada rol ve solo sus secciones
+- **Panel:** Tarjetas de las secciones permitidas para el rol.
+- **Mis cursos:** Cursos con inscritos/cupo y botón "Finalizar y certificar" (docente: solo los suyos).
+- **Eventos:** Listado y creación de eventos.
+- **Voluntarios:** Registro único con historial de actividades.
+- **Donaciones:** La directora ve el reporte mensual con selector de mes; el encargado registra efectivo y ve sus registros.
 - **Noticias:** Editor para publicar novedades en el sitio público.
-- **Donaciones:** Tabla con el historial del mes y formulario para registrar efectivo en mano.
 
 ### Portal del Voluntario (`/voluntario`)
-- **Dashboard:** Resumen de su actividad.
-- **Mis Certificados:** Visualización de cursos completados.
+- **Dashboard:** Historial de participaciones, datos del registro y acceso a sus cursos.
+- **Mis Certificados:** Certificados obtenidos en cursos.
 
 ---
 
@@ -143,11 +167,11 @@ Todos los endpoints están documentados en Swagger. Aquí un resumen:
 | Módulo | Endpoints Principales |
 |--------|-----------------------|
 | **Auth** | `POST /registro`, `POST /login` |
-| **Cursos** | `GET /`, `POST /`, `POST /{id}/inscribir`, `POST /{id}/finalizar` |
+| **Cursos** | `GET /`, `POST /`, `GET /gestion`, `GET /mis-inscripciones`, `POST /{id}/inscribir`, `DELETE /{id}/inscripcion`, `POST /{id}/finalizar` |
 | **Eventos** | `GET /`, `POST /`, `POST /{id}/asistencia` |
-| **Certificados** | `GET /verificar/{codigo}` (Público) |
-| **Donaciones** | `POST /`, `POST /en-linea`, `GET /reporte/{anio}/{mes}` |
-| **Voluntarios** | `POST /postular`, `GET /` (con historial), `POST /{id}/participaciones` |
+| **Certificados** | `GET /verificar/{codigo}` (Público), `GET /mios` |
+| **Donaciones** | `POST /`, `POST /en-linea`, `GET /mis-registros`, `GET /reporte/{anio}/{mes}` (solo Directora) |
+| **Voluntarios** | `POST /postular`, `GET /` (con historial), `GET /mi-historial`, `POST /{id}/participaciones` |
 | **Contenido** | `GET /noticias`, `POST /noticias`, `GET /galeria` |
 
 ---

@@ -1,29 +1,26 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { rutaInicio } from '../config/permisos';
 import './Auth.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { usuario, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  if (usuario) return <Navigate to={rutaInicio(usuario)} replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
       const user = await login(email, password);
-      
-      // Redirección dependiendo del rol
-      if (['DIRECTORA', 'DOCENTE', 'ENCARGADO_EVENTOS'].includes(user.rol)) {
-        navigate('/admin');
-      } else if (user.rol === 'VOLUNTARIO') {
-        navigate('/voluntario');
-      } else {
-        navigate('/'); // Participante normal
-      }
+      // Vuelve a la página que pidió el login (p. ej. inscribirse a un curso) o al inicio de su rol
+      navigate(location.state?.desde ?? rutaInicio(user), { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Credenciales inválidas');
     }

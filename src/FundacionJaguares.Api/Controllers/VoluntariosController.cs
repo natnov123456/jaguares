@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FundacionJaguares.Application.DTOs;
 using FundacionJaguares.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,17 @@ public class VoluntariosController : ControllerBase
     {
         try { return Ok(await _voluntarios.PostularAsync(dto)); }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    [HttpGet("mi-historial")]
+    [Authorize(Roles = "VOLUNTARIO")]
+    public async Task<IActionResult> MiHistorial()
+    {
+        var id = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
+                 ?? User.FindFirstValue("sub")!);
+        var email = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("email");
+        var v = await _voluntarios.ObtenerPorUsuarioAsync(id, email);
+        return v == null ? NotFound(new { error = "No figuras en el registro de voluntarios" }) : Ok(v);
     }
 
     [HttpGet]

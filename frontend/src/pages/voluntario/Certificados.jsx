@@ -1,22 +1,19 @@
-import { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { Link } from 'react-router-dom';
+import MisCertificados from '../../components/MisCertificados';
 
 export default function VoluntarioCertificados() {
-  const { usuario } = useAuth();
-
-  // Aquí a futuro conectarías con un endpoint GET /api/Certificados/mis-certificados
-  // Por ahora mostramos un mensaje genérico ya que el backend aún no filtra por ID de usuario.
-  
   return (
-    <div className="container" style={{ padding: '48px 24px' }}>
-      <h1 style={{ fontSize: '2rem', marginBottom: '24px' }}>Mis Certificados</h1>
-      <div className="auth-container" style={{ margin: 0, maxWidth: '100%' }}>
-        <p style={{ textAlign: 'center', color: '#6b7280', padding: '40px' }}>
-          Aún no tienes certificados emitidos o la función está en desarrollo.
-          <br/><br/>
-          Si acabas de terminar un curso, contacta a la Directora para que emita tu certificado.
-        </p>
+    <div className="container page">
+      <div className="page-header">
+        <div>
+          <h1>Mis Certificados</h1>
+          <p>Certificados obtenidos en los cursos de la fundación.</p>
+        </div>
+        <Link to="/voluntario" className="btn-secondary">← Volver al portal</Link>
       </div>
+      <section className="panel">
+        <MisCertificados />
+      </section>
     </div>
   );
 }

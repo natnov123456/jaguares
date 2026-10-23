@@ -10,6 +10,7 @@ public interface IVoluntarioService
 {
     Task<List<Voluntario>> ListarAsync();
     Task<List<VoluntarioConHistorialDto>> ListarConHistorialAsync();
+    Task<VoluntarioConHistorialDto?> ObtenerPorUsuarioAsync(Guid usuarioId, string? email);
     Task<Voluntario> PostularAsync(PostulacionVoluntarioDto dto);
     Task<ParticipacionVoluntario> RegistrarParticipacionAsync(Guid voluntarioId, Guid? eventoId, string descripcion);
 }
@@ -24,11 +25,22 @@ public class VoluntarioService : IVoluntarioService
 
     public Task<List<Voluntario>> ListarAsync() => _voluntarios.GetAllAsync();
 
-    public async Task<List<VoluntarioConHistorialDto>> ListarConHistorialAsync()
+    public Task<List<VoluntarioConHistorialDto>> ListarConHistorialAsync() =>
+        ConHistorialAsync(_db.Voluntarios.OrderBy(v => v.NombreCompleto));
+
+    // El voluntario se vincula por usuario_id; si se postuló antes de tener cuenta, por email
+    public async Task<VoluntarioConHistorialDto?> ObtenerPorUsuarioAsync(Guid usuarioId, string? email) =>
+        (await ConHistorialAsync(_db.Voluntarios.Where(v =>
+            v.UsuarioId == usuarioId || (email != null && v.Email == email)).Take(1)))
+        .FirstOrDefault();
+
+    private async Task<List<VoluntarioConHistorialDto>> ConHistorialAsync(IQueryable<Voluntario> query)
     {
-        var voluntarios = await _db.Voluntarios.OrderBy(v => v.NombreCompleto).ToListAsync();
+        var voluntarios = await query.ToListAsync();
+        var ids = voluntarios.Select(v => v.Id).ToList();
         var historial = await (
             from p in _db.ParticipacionesVoluntario
+            where ids.Contains(p.VoluntarioId)
             join e in _db.Eventos on p.EventoId equals e.Id into ev
             from e in ev.DefaultIfEmpty()
             orderby p.Fecha descending

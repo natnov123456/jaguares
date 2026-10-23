@@ -15,7 +15,7 @@ export default function Registro() {
     try {
       await authApi.registro(form);
       await login(form.email, form.password);
-      navigate('/');
+      navigate('/mi-cuenta');
     } catch (err) {
       setError(err.response?.data?.error || 'Error al registrarse');
     }

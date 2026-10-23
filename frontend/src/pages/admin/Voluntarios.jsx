@@ -1,5 +1,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import { voluntariosApi } from '../../services/api';
+import Estado from '../../components/Estado';
+import { fecha } from '../../utils/formato';
 
 export default function AdminVoluntarios() {
   const [voluntarios, setVoluntarios] = useState([]);
@@ -75,8 +77,8 @@ export default function AdminVoluntarios() {
                     <td style={{ padding: '12px 8px' }}>
                       {v.email}<br /><span style={{ color: '#6b7280' }}>{v.telefono || '-'}</span>
                     </td>
-                    <td style={{ padding: '12px 8px' }}>{v.estado}</td>
-                    <td style={{ padding: '12px 8px' }}>{new Date(v.postuladoEn).toLocaleDateString('es-BO')}</td>
+                    <td style={{ padding: '12px 8px' }}><Estado valor={v.estado} /></td>
+                    <td style={{ padding: '12px 8px' }}>{fecha(v.postuladoEn)}</td>
                     <td style={{ padding: '12px 8px' }}>
                       <button className="btn-primary" style={{ padding: '4px 12px' }}
                               onClick={() => { setAbierto(abierto === v.id ? null : v.id); setMensaje(''); }}>

@@ -60,6 +60,8 @@ public class CertificadoRepository : Repository<Certificado>
     public CertificadoRepository(AppDbContext db) : base(db) { }
     public Task<Certificado?> GetByCodigoAsync(string codigo) =>
         Set.FirstOrDefaultAsync(c => c.CodigoUnico == codigo);
+    public Task<List<Certificado>> GetByParticipanteAsync(Guid participanteId) =>
+        Set.Where(c => c.ParticipanteId == participanteId).OrderByDescending(c => c.EmitidoEn).ToListAsync();
 }
 
 public class DonacionRepository : Repository<Donacion>
@@ -70,6 +72,8 @@ public class DonacionRepository : Repository<Donacion>
     public async Task<decimal> TotalPeriodoAsync(int anio, int mes) =>
         await Set.Where(d => d.Estado == "CONFIRMADA" && d.Fecha.Year == anio && d.Fecha.Month == mes)
                  .SumAsync(d => (decimal?)d.Monto) ?? 0m;
+    public Task<List<Donacion>> GetByRegistradorAsync(Guid usuarioId) =>
+        Set.Where(d => d.RegistradoPor == usuarioId).OrderByDescending(d => d.Fecha).Take(50).ToListAsync();
 }
 
 public class VoluntarioRepository : Repository<Voluntario>
