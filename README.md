@@ -30,17 +30,21 @@ El proyecto está dividido en dos grandes bloques: el **Backend** (Modelo C4) y 
 
 ```text
 FundacionJaguares/
-├── backend (src/)                   # Arquitectura en 4 capas
-│   ├── FundacionJaguares.Api        # Controladores y Swagger
-│   ├── FundacionJaguares.Application# DTOs y Lógica de Negocio (Services)
-│   ├── FundacionJaguares.Infrastructure# DbContext, Repositorios y Adaptadores
-│   └── FundacionJaguares.Domain     # Entidades puras
-├── frontend/                        # Aplicación React 19
-│   ├── src/pages                    # Vistas (Públicas, Admin, Voluntario)
-│   ├── src/components               # Navbar, ProtectedRoute
-│   ├── src/context                  # Autenticación (AuthContext)
-│   └── src/services                 # Conexión API (Axios)
-└── db/                              # Scripts SQL
+├── backend/                             # API ASP.NET Core (Modelo C4, 4 capas)
+│   ├── FundacionJaguares.slnx           # Solución .NET
+│   └── src/
+│       ├── FundacionJaguares.Api            # Controladores y Swagger
+│       ├── FundacionJaguares.Application    # DTOs y Lógica de Negocio (Services)
+│       ├── FundacionJaguares.Infrastructure # DbContext, Repositorios y Adaptadores
+│       └── FundacionJaguares.Domain         # Entidades puras
+├── frontend/                            # Aplicación React 19
+│   └── src/
+│       ├── pages                        # Vistas (Públicas, Admin, Voluntario)
+│       ├── components                   # Navbar, ProtectedRoute
+│       ├── context                      # Autenticación (AuthContext)
+│       └── services                     # Conexión API (Axios)
+├── db/                                  # Scripts SQL (schema + seed)
+└── docs/                                # Documentos del proyecto (Minuta, SRS, C4)
 ```
 
 ---
@@ -72,7 +76,7 @@ psql -U postgres -d fundacion_jaguares -f db/02_seed_usuarios.sql
 *(Nota: Si el script falla por un error de BOM, ejecuta manualmente `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";` y luego vuelve a correr el script).*
 
 ### 3. Configurar el Backend
-1. Abre `src/FundacionJaguares.Api/appsettings.json`
+1. Abre `backend/src/FundacionJaguares.Api/appsettings.json`
 2. Cambia la contraseña de la base de datos por la tuya:
 ```json
 "ConnectionStrings": {
@@ -82,6 +86,7 @@ psql -U postgres -d fundacion_jaguares -f db/02_seed_usuarios.sql
 
 ### 4. Ejecutar el Backend (Terminal 1)
 ```powershell
+cd backend
 dotnet restore
 dotnet run --project src/FundacionJaguares.Api
 ```
@@ -206,6 +211,7 @@ Septiembre 2026
 ---
 
 ## 📚 Documentos del Proyecto
+Disponibles en la carpeta [`docs/`](docs/):
 - **Doc 1:** Minuta de Entrevista y Relevamiento de Requerimientos.
 - **Doc 2:** Especificación de Requisitos de Software (SRS - ISO/IEC/IEEE 29148).
 - **Doc 3:** Arquitectura de Software (Modelo C4).

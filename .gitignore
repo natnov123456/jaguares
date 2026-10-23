@@ -1,4 +1,5 @@
-﻿[Bb]in/
+[Bb]in/
 [Oo]bj/
 node_modules/
 .vscode/
+.DS_Store
