@@ -20,6 +20,7 @@ export default function Navbar() {
             <>
               <Link to="/">Inicio</Link>
               <Link to="/cursos">Cursos</Link>
+              <Link to="/noticias">Noticias</Link>
               <Link to="/certificados">Verificar Certificado</Link>
               <Link to="/donaciones" className="btn-donate">Donar</Link>
             </>
@@ -31,6 +32,7 @@ export default function Navbar() {
               <Link to="/admin">Panel de Control</Link>
               <Link to="/admin/crear-curso">Crear Curso</Link>
               {usuario.rol === 'DIRECTORA' && <Link to="/admin/publicar-noticia">Noticias</Link>}
+              {usuario.rol !== 'DOCENTE' && <Link to="/admin/voluntarios">Voluntarios</Link>}
             </>
           )}
 
@@ -45,7 +47,7 @@ export default function Navbar() {
           {/* Sesión */}
           {usuario ? (
             <div className="user-menu">
-              <span className="user-name">Hola, {usuario.nombreCompleto.split(' ')[0]}</span>
+              <span className="user-name">Hola, {usuario.nombreCompleto?.split(' ')[0] ?? 'usuario'}</span>
               <button onClick={() => { logout(); navigate('/'); }} className="btn-logout">Salir</button>
             </div>
           ) : (

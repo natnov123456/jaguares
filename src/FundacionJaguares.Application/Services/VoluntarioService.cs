@@ -9,6 +9,7 @@ namespace FundacionJaguares.Application.Services;
 public interface IVoluntarioService
 {
     Task<List<Voluntario>> ListarAsync();
+    Task<List<VoluntarioConHistorialDto>> ListarConHistorialAsync();
     Task<Voluntario> PostularAsync(PostulacionVoluntarioDto dto);
     Task<ParticipacionVoluntario> RegistrarParticipacionAsync(Guid voluntarioId, Guid? eventoId, string descripcion);
 }
@@ -22,6 +23,23 @@ public class VoluntarioService : IVoluntarioService
     { _voluntarios = voluntarios; _db = db; }
 
     public Task<List<Voluntario>> ListarAsync() => _voluntarios.GetAllAsync();
+
+    public async Task<List<VoluntarioConHistorialDto>> ListarConHistorialAsync()
+    {
+        var voluntarios = await _db.Voluntarios.OrderBy(v => v.NombreCompleto).ToListAsync();
+        var historial = await (
+            from p in _db.ParticipacionesVoluntario
+            join e in _db.Eventos on p.EventoId equals e.Id into ev
+            from e in ev.DefaultIfEmpty()
+            orderby p.Fecha descending
+            select new { p.VoluntarioId, Dto = new ParticipacionDto(p.Id, p.EventoId, e != null ? e.Titulo : null, p.Descripcion, p.Fecha) }
+        ).ToListAsync();
+
+        return voluntarios.Select(v => new VoluntarioConHistorialDto(
+            v.Id, v.NombreCompleto, v.Email, v.Telefono, v.Estado, v.PostuladoEn,
+            historial.Where(h => h.VoluntarioId == v.Id).Select(h => h.Dto).ToList()
+        )).ToList();
+    }
 
     public async Task<Voluntario> PostularAsync(PostulacionVoluntarioDto dto)
     {
@@ -42,6 +60,9 @@ public class VoluntarioService : IVoluntarioService
 
     public async Task<ParticipacionVoluntario> RegistrarParticipacionAsync(Guid voluntarioId, Guid? eventoId, string descripcion)
     {
+        if (await _voluntarios.GetByIdAsync(voluntarioId) == null)
+            throw new KeyNotFoundException("Voluntario no encontrado");
+
         var p = new ParticipacionVoluntario
         {
             VoluntarioId = voluntarioId,

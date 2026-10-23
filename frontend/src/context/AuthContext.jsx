@@ -10,7 +10,16 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('usuario');
-    if (token && user) setUsuario(JSON.parse(user));
+    if (token && user) {
+      try {
+        const parsed = JSON.parse(user);
+        if (parsed?.rol) setUsuario(parsed);
+        else throw new Error('usuario inválido');
+      } catch {
+        localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
+      }
+    }
     setLoading(false);
   }, []);
 

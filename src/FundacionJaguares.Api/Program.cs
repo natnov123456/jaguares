@@ -1,5 +1,7 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using FundacionJaguares.Application.Services;
+using FundacionJaguares.Domain.Entities;
 using FundacionJaguares.Infrastructure;
 using FundacionJaguares.Infrastructure.Adapters;
 using FundacionJaguares.Infrastructure.Repositories;
@@ -7,12 +9,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Npgsql.NameTranslation;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 1) DbContext
 builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("Default"))
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("Default"), npg => npg
+            .MapEnum<Rol>("rol_enum", nameTranslator: new NpgsqlNullNameTranslator())
+            .MapEnum<MedioPago>("medio_pago_enum", nameTranslator: new NpgsqlNullNameTranslator()))
        .UseSnakeCaseNamingConvention());
 
 // 2) Repositorios
@@ -90,7 +95,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddControllers();
+// Enums como texto en JSON ("EFECTIVO", "DIRECTORA") en lugar de números
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 var app = builder.Build();
 

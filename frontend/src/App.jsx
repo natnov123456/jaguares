@@ -11,12 +11,14 @@ import Cursos from './pages/Cursos';
 import Certificados from './pages/Certificados';
 import Donaciones from './pages/Donaciones';
 import Voluntariado from './pages/Voluntariado';
+import Noticias from './pages/Noticias';
 
 // Páginas Admin
 import Dashboard from './pages/admin/Dashboard';
 import CrearCurso from './pages/admin/CrearCurso';
 import PublicarNoticia from './pages/admin/PublicarNoticia';
 import AdminDonaciones from './pages/admin/Donaciones'; // <-- NUEVA IMPORTACIÓN
+import AdminVoluntarios from './pages/admin/Voluntarios';
 
 // Páginas Voluntario
 import VoluntarioDashboard from './pages/voluntario/Dashboard';
@@ -36,6 +38,7 @@ export default function App() {
           <Route path="/certificados" element={<Certificados />} />
           <Route path="/donaciones" element={<Donaciones />} />
           <Route path="/voluntariado" element={<Voluntariado />} />
+          <Route path="/noticias" element={<Noticias />} />
 
           {/* Rutas Protegidas - ADMIN */}
           <Route 
@@ -53,7 +56,11 @@ export default function App() {
           {/* NUEVA RUTA DE DONACIONES */}
           <Route 
             path="/admin/donaciones" 
-            element={<ProtectedRoute roles={['DIRECTORA', 'ENCARGADO_EVENTOS']}><AdminDonaciones /></ProtectedRoute>} 
+            element={<ProtectedRoute roles={['DIRECTORA', 'ENCARGADO_EVENTOS']}><AdminDonaciones /></ProtectedRoute>}
+          />
+          <Route
+            path="/admin/voluntarios"
+            element={<ProtectedRoute roles={['DIRECTORA', 'ENCARGADO_EVENTOS']}><AdminVoluntarios /></ProtectedRoute>}
           />
 
           {/* Rutas Protegidas - VOLUNTARIO */}

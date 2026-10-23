@@ -28,7 +28,6 @@ public class AppDbContext : DbContext
             e.ToTable("usuarios");
             e.HasKey(x => x.Id);
             e.HasIndex(x => x.Email).IsUnique();
-            e.Property(x => x.Rol).HasConversion<string>();
         });
 
         mb.Entity<Curso>(e =>
@@ -75,7 +74,6 @@ public class AppDbContext : DbContext
             e.ToTable("donaciones");
             e.HasKey(x => x.Id);
             e.Property(x => x.Monto).HasPrecision(12, 2);
-            e.Property(x => x.Medio).HasConversion<string>();
         });
 
         mb.Entity<Voluntario>(e =>

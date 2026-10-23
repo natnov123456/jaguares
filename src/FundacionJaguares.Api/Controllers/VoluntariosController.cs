@@ -21,5 +21,13 @@ public class VoluntariosController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = "DIRECTORA,ENCARGADO_EVENTOS")]
-    public async Task<IActionResult> Listar() => Ok(await _voluntarios.ListarAsync());
+    public async Task<IActionResult> Listar() => Ok(await _voluntarios.ListarConHistorialAsync());
+
+    [HttpPost("{id:guid}/participaciones")]
+    [Authorize(Roles = "DIRECTORA,ENCARGADO_EVENTOS")]
+    public async Task<IActionResult> RegistrarParticipacion(Guid id, RegistrarParticipacionDto dto)
+    {
+        try { return Ok(await _voluntarios.RegistrarParticipacionAsync(id, dto.EventoId, dto.Descripcion)); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
 }

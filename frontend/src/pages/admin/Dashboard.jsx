@@ -34,6 +34,14 @@ export default function Dashboard() {
           <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Donaciones</h3>
           <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>Ver historial y registrar aportes en efectivo.</p>
         </Link>
+
+        {usuario?.rol !== 'DOCENTE' && (
+          <Link to="/admin/voluntarios" className="card card-body" style={{ textAlign: 'center', borderTop: '4px solid #f59e0b' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🤝</div>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Voluntarios</h3>
+            <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>Listado único con historial de actividades.</p>
+          </Link>
+        )}
       </div>
     </div>
   );

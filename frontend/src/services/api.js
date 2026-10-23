@@ -50,6 +50,7 @@ export const donacionesApi = {
 export const voluntariosApi = {
   postular: (data) => api.post('/Voluntarios/postular', data),
   listar: () => api.get('/Voluntarios'),
+  registrarParticipacion: (id, data) => api.post(`/Voluntarios/${id}/participaciones`, data),
 };
 
 export const contenidoApi = {

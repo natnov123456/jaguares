@@ -62,7 +62,12 @@ psql -U postgres -c "CREATE DATABASE fundacion_jaguares;"
 
 # Ejecutar el script de tablas (está en la carpeta db/)
 psql -U postgres -d fundacion_jaguares -f db/01_schema.sql
+
+# Cargar los usuarios de prueba (ver tabla de credenciales más abajo)
+psql -U postgres -d fundacion_jaguares -f db/02_seed_usuarios.sql
 ```
+
+> Si `psql` no se reconoce en Windows, usa la ruta completa: `& "C:\Program Files\PostgreSQL\16\bin\psql.exe" ...` (ajusta la versión), o ejecuta los scripts desde el Query Tool de pgAdmin.
 
 *(Nota: Si el script falla por un error de BOM, ejecuta manualmente `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";` y luego vuelve a correr el script).*
 
@@ -96,15 +101,17 @@ npm run dev
 
 ## 🔐 Roles y Credenciales de Prueba
 
-El sistema cuenta con 3 portales diferentes según el rol del usuario:
+El sistema cuenta con 3 portales diferentes según el rol del usuario. Estos usuarios se crean con el script `db/02_seed_usuarios.sql` (se puede volver a ejecutar sin problema: restablece las contraseñas):
 
-| Rol | Email | Password | Acceso |
-|-----|-------|----------|--------|
-| **DIRECTORA** | `directora@jaguares.org` | `Admin123!` | Panel de administración total (Cursos, Noticias, Donaciones) |
-| **VOLUNTARIO** | `voluntario@example.com` | `Vol123!` | Portal del voluntario (Mis certificados, participaciones) |
-| **PARTICIPANTE** | `juan@example.com` | `Juan123!` | Inscripción a cursos, ver certificados, donar |
+| Rol | Nombre | Email | Password | Acceso |
+|-----|--------|-------|----------|--------|
+| **DIRECTORA** | María Directora | `directora@jaguares.org` | `Admin123!` | Panel de administración total (Cursos, Noticias, Donaciones, Voluntarios) |
+| **DOCENTE** | Carlos Docente | `docente@jaguares.org` | `Docente123!` | Panel de administración: crear y gestionar cursos |
+| **ENCARGADO_EVENTOS** | Elena Encargada | `eventos@jaguares.org` | `Eventos123!` | Panel de administración: Donaciones y Voluntarios |
+| **VOLUNTARIO** | Valeria Voluntaria | `voluntario@example.com` | `Vol123!` | Portal del voluntario (Mis certificados, participaciones) |
+| **PARTICIPANTE** | Juan Pérez | `juan@example.com` | `Juan123!` | Inscripción a cursos, ver certificados, donar |
 
-*(Para crear estos usuarios, puedes usar el endpoint de Registro en Swagger o el formulario de la página web, y luego actualizar el rol con SQL).*
+*(También puedes registrar usuarios nuevos desde la web o Swagger; quedan como `PARTICIPANTE` y el rol se cambia con SQL: `UPDATE usuarios SET rol='DIRECTORA' WHERE email='...';`)*
 
 ---
 
@@ -140,7 +147,7 @@ Todos los endpoints están documentados en Swagger. Aquí un resumen:
 | **Eventos** | `GET /`, `POST /`, `POST /{id}/asistencia` |
 | **Certificados** | `GET /verificar/{codigo}` (Público) |
 | **Donaciones** | `POST /`, `POST /en-linea`, `GET /reporte/{anio}/{mes}` |
-| **Voluntarios** | `POST /postular`, `GET /` |
+| **Voluntarios** | `POST /postular`, `GET /` (con historial), `POST /{id}/participaciones` |
 | **Contenido** | `GET /noticias`, `POST /noticias`, `GET /galeria` |
 
 ---

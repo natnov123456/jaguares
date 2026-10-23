@@ -8,7 +8,7 @@ export default function Certificados() {
   const verificar = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await certificadosApi.verificar(codigo);
+      const { data } = await certificadosApi.verificar(codigo.trim());
       setRes(data);
     } catch {
       setRes({ valido: false });
@@ -30,6 +30,7 @@ export default function Certificados() {
               <p><strong>✅ Certificado válido</strong></p>
               <p>Participante: {res.nombreParticipante}</p>
               <p>Curso: {res.nombreCurso}</p>
+              {res.emitidoEn && <p>Emitido el: {new Date(res.emitidoEn).toLocaleDateString('es-BO')}</p>}
             </>
           ) : (
             <p>❌ Certificado no encontrado</p>

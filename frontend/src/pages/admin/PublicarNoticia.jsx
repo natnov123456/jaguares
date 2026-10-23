@@ -12,7 +12,7 @@ export default function PublicarNoticia() {
     try {
       await contenidoApi.crearNoticia(form);
       setMsg('Noticia publicada ✅');
-      setTimeout(() => navigate('/admin'), 1200);
+      setTimeout(() => navigate('/noticias'), 1200);
     } catch (err) {
       setMsg(err.response?.data?.error || 'Error');
     }

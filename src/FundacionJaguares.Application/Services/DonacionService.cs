@@ -23,6 +23,7 @@ public class DonacionService : IDonacionService
 
     public async Task<Donacion> RegistrarAsync(CrearDonacionDto dto, Guid? registradoPor)
     {
+        if (dto.Monto <= 0) throw new ArgumentException("El monto debe ser mayor a 0");
         if (!Enum.TryParse<MedioPago>(dto.Medio, true, out var medio))
             throw new ArgumentException("Medio de pago inválido");
 
@@ -42,14 +43,22 @@ public class DonacionService : IDonacionService
 
     public async Task<Donacion> RegistrarDonacionEnLineaAsync(CrearDonacionDto dto)
     {
-        var ref_ = dto.Referencia ?? Guid.NewGuid().ToString("N");
+        if (dto.Monto <= 0) throw new ArgumentException("El monto debe ser mayor a 0");
+
+        // En línea solo se acepta QR, pasarela o transferencia (el efectivo se registra en oficina)
+        var medio = MedioPago.PASARELA;
+        if (!string.IsNullOrWhiteSpace(dto.Medio)
+            && (!Enum.TryParse(dto.Medio, true, out medio) || medio == MedioPago.EFECTIVO))
+            throw new ArgumentException("Medio de pago inválido para donación en línea");
+
+        var ref_ = dto.Referencia ?? $"DON-{Guid.NewGuid().ToString("N")[..10].ToUpper()}";
         var ok = await _payment.ProcesarPagoAsync(dto.Monto, ref_);
         if (!ok) throw new InvalidOperationException("Pago rechazado");
 
         var d = new Donacion
         {
             Monto = dto.Monto,
-            Medio = MedioPago.PASARELA,
+            Medio = medio,
             Referencia = ref_,
             DonanteId = dto.DonanteId,
             Estado = "CONFIRMADA"
