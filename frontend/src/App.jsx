@@ -16,6 +16,7 @@ import Noticias from './pages/Noticias';
 import Calendario from './pages/Calendario';
 import Transparencia from './pages/Transparencia';
 import Galeria from './pages/Galeria';
+import QuienesSomos from './pages/QuienesSomos';
 
 // Participante / Voluntario
 import MiCuenta from './pages/MiCuenta';
@@ -32,6 +33,7 @@ import AdminDonaciones from './pages/admin/Donaciones';
 import AdminVoluntarios from './pages/admin/Voluntarios';
 import AdminTransparencia from './pages/admin/Transparencia';
 import AdminGaleria from './pages/admin/Galeria';
+import AdminInstitucional from './pages/admin/Institucional';
 
 // Páginas Voluntario
 import VoluntarioDashboard from './pages/voluntario/Dashboard';
@@ -58,6 +60,7 @@ export default function App() {
           <Route path="/transparencia" element={<Transparencia />} />
           <Route path="/galeria" element={<Galeria />} />
           <Route path="/galeria/:id" element={<Galeria />} />
+          <Route path="/quienes-somos" element={<QuienesSomos />} />
 
           {/* Participante y Voluntario */}
           <Route path="/mi-cuenta" element={protegida('verMiCuenta', <MiCuenta />)} />
@@ -73,6 +76,7 @@ export default function App() {
           <Route path="/admin/voluntarios" element={protegida('gestionarVoluntarios', <AdminVoluntarios />)} />
           <Route path="/admin/transparencia" element={protegida('publicarTransparencia', <AdminTransparencia />)} />
           <Route path="/admin/galeria" element={protegida('gestionarGaleria', <AdminGaleria />)} />
+          <Route path="/admin/institucional" element={protegida('editarInstitucional', <AdminInstitucional />)} />
 
           {/* Voluntario */}
           <Route path="/voluntario" element={protegida('verPortalVoluntario', <VoluntarioDashboard />)} />

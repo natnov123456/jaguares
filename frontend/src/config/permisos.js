@@ -40,6 +40,7 @@ export const PERMISOS = {
   publicarNoticias: [DIRECTORA],
   publicarTransparencia: [DIRECTORA],
   gestionarGaleria: [DIRECTORA],
+  editarInstitucional: [DIRECTORA],
 };
 
 export function puede(usuario, permiso) {
@@ -73,6 +74,8 @@ export const SECCIONES_PANEL = [
     descripcion: 'Publicar novedades en el sitio público.' },
   { permiso: 'gestionarGaleria', ruta: '/admin/galeria', titulo: 'Galería', icono: '🖼️',
     descripcion: 'Crear álbumes con fotos y videos de las actividades.' },
+  { permiso: 'editarInstitucional', ruta: '/admin/institucional', titulo: 'Quiénes somos', icono: '🏛️',
+    descripcion: 'Editar misión, visión, historia, equipo y datos de contacto.' },
   { permiso: 'publicarTransparencia', ruta: '/admin/transparencia', titulo: 'Transparencia', icono: '📊',
     descripcion: 'Publicar en el sitio en qué se usaron las donaciones de cada mes.' },
 ];

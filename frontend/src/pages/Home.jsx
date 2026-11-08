@@ -24,6 +24,8 @@ export default function Home() {
           <h2>Nuestra Misión</h2>
           <p>Nacimos con el espíritu del jaguar: fuerte, ágil y protector de su territorio. Buscamos empoderar a las comunidades de La Paz a través de talleres, capacitaciones y voluntariado activo.</p>
           <Link to="/voluntariado" className="link-voluntario">Únete como voluntario →</Link>
+          <br />
+          <Link to="/quienes-somos" className="link-voluntario">Conoce quiénes somos y escríbenos →</Link>
         </div>
         <div className="mission-stats">
           <div className="stat-card">

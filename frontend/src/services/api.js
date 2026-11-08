@@ -96,6 +96,15 @@ export const galeriaApi = {
   eliminarItem: (itemId) => api.delete(`/Galeria/items/${itemId}`),
 };
 
+export const institucionalApi = {
+  obtener: () => api.get('/Institucional'),
+  actualizar: (data) => api.put('/Institucional', data),
+};
+
+export const contactoApi = {
+  enviar: (data) => api.post('/Contacto', data),
+};
+
 export const voluntariosApi = {
   postular: (data) => api.post('/Voluntarios/postular', data),
   listar: () => api.get('/Voluntarios'),

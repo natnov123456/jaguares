@@ -1,0 +1,81 @@
+.qs-hero {
+  background: #111827;
+  color: white;
+  padding: 40px 0;
+  border-bottom: 3px solid #f59e0b;
+}
+.qs-hero h1 { color: #f59e0b; font-size: 2rem; }
+.qs-hero p { color: #d1d5db; }
+
+.qs-pilares {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0 24px;
+}
+.qs-texto { white-space: pre-line; }
+
+.qs-equipo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+.qs-miembro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 12px;
+}
+.qs-miembro p { font-size: 0.9rem; margin-top: 6px; color: #4b5563; }
+.qs-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 1.6rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.qs-datos { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.qs-datos a { color: #b45309; }
+
+.qs-error { color: #991b1b; font-size: 0.85rem; }
+.form-stack [aria-invalid='true'] { border-color: #dc2626; }
+
+/* Fuera de la pantalla en lugar de display:none: algunos bots ignoran los campos ocultos */
+.qs-trampa {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Editor de la Directora */
+.qs-miembro-edit {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+.qs-miembro-edit textarea { grid-column: 1 / -1; }
+.qs-miembro-edit input, .qs-miembro-edit textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+@media (max-width: 600px) {
+  .qs-miembro-edit { grid-template-columns: 1fr auto; }
+  .qs-miembro-edit .qs-cargo { grid-column: 1 / -1; }
+}

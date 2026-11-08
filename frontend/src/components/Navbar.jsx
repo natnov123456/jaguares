@@ -29,6 +29,7 @@ export default function Navbar() {
             // Visitantes, participantes y voluntarios: sitio público + su espacio personal
             <>
               <NavLink to="/" end>Inicio</NavLink>
+              <NavLink to="/quienes-somos">Quiénes somos</NavLink>
               <NavLink to="/cursos">Cursos</NavLink>
               <NavLink to="/calendario">Calendario</NavLink>
               <NavLink to="/noticias">Noticias</NavLink>
