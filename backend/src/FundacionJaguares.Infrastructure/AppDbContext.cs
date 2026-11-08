@@ -16,6 +16,8 @@ public class AppDbContext : DbContext
     public DbSet<Certificado> Certificados => Set<Certificado>();
     public DbSet<Donante> Donantes => Set<Donante>();
     public DbSet<Donacion> Donaciones => Set<Donacion>();
+    public DbSet<ReporteTransparencia> ReportesTransparencia => Set<ReporteTransparencia>();
+    public DbSet<DestinoTransparencia> DestinosTransparencia => Set<DestinoTransparencia>();
     public DbSet<Voluntario> Voluntarios => Set<Voluntario>();
     public DbSet<ParticipacionVoluntario> ParticipacionesVoluntario => Set<ParticipacionVoluntario>();
     public DbSet<Noticia> Noticias => Set<Noticia>();
@@ -81,6 +83,22 @@ public class AppDbContext : DbContext
         mb.Entity<Donacion>(e =>
         {
             e.ToTable("donaciones");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Monto).HasPrecision(12, 2);
+        });
+
+        mb.Entity<ReporteTransparencia>(e =>
+        {
+            e.ToTable("reportes_transparencia");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.Anio, x.Mes }).IsUnique();
+            e.Property(x => x.TotalRecaudado).HasPrecision(12, 2);
+            e.HasMany(x => x.Destinos).WithOne().HasForeignKey(d => d.ReporteId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<DestinoTransparencia>(e =>
+        {
+            e.ToTable("transparencia_destinos");
             e.HasKey(x => x.Id);
             e.Property(x => x.Monto).HasPrecision(12, 2);
         });

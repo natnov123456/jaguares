@@ -49,6 +49,7 @@ builder.Services.AddScoped<IVoluntarioService, VoluntarioService>();
 builder.Services.AddScoped<IContenidoService, ContenidoService>();
 builder.Services.AddScoped<IActividadService, ActividadService>();
 builder.Services.AddScoped<IAsistenciaService, AsistenciaService>();
+builder.Services.AddScoped<ITransparenciaService, TransparenciaService>();
 
 // 5) JWT Auth
 var jwtSecret = cfg["Jwt:Secret"]!;

@@ -43,6 +43,15 @@ public record CrearDonacionDto(decimal Monto, string Medio, string? Referencia, 
 public record DonanteDto(string Nombre, string? Email, string? Telefono, bool EsAnonimo);
 public record ReporteDonacionesDto(int Anio, int Mes, decimal Total, int Cantidad, List<FundacionJaguares.Domain.Entities.Donacion> Detalle);
 
+// TRANSPARENCIA (FUJ-121): solo montos agregados, ningún dato de donantes
+public record DestinoDto(string Categoria, decimal Monto, string? Descripcion);
+public record PublicarTransparenciaDto(List<DestinoDto> Destinos, string? Nota);
+public record DestinoResumenDto(string Categoria, decimal Monto, string? Descripcion, decimal Porcentaje);
+public record ResumenTransparenciaDto(int Anio, int Mes, decimal TotalRecaudado, int CantidadDonaciones,
+                                      decimal TotalAsignado, List<DestinoResumenDto> Destinos,
+                                      string? Nota, DateTime? PublicadoEn, bool Publicado);
+public record MesPublicadoDto(int Anio, int Mes, decimal TotalRecaudado);
+
 // VOLUNTARIADO
 public record PostulacionVoluntarioDto(string NombreCompleto, string Email, string? Telefono);
 public record RegistrarParticipacionDto(Guid? EventoId, string Descripcion);
