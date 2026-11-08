@@ -34,6 +34,7 @@ import AdminVoluntarios from './pages/admin/Voluntarios';
 import AdminTransparencia from './pages/admin/Transparencia';
 import AdminGaleria from './pages/admin/Galeria';
 import AdminInstitucional from './pages/admin/Institucional';
+import PlantillasCertificado from './pages/admin/PlantillasCertificado';
 
 // Páginas Voluntario
 import VoluntarioDashboard from './pages/voluntario/Dashboard';
@@ -69,6 +70,7 @@ export default function App() {
           <Route path="/admin" element={protegida('verPanel', <Dashboard />)} />
           <Route path="/admin/cursos" element={protegida('gestionarCursos', <AdminCursos />)} />
           <Route path="/admin/crear-curso" element={protegida('gestionarCursos', <CrearCurso />)} />
+          <Route path="/admin/plantillas-certificado" element={protegida('gestionarPlantillas', <PlantillasCertificado />)} />
           <Route path="/admin/eventos" element={protegida('gestionarEventos', <AdminEventos />)} />
           <Route path="/admin/checkin" element={protegida('registrarCheckin', <Suspense fallback={<p className="container page">Cargando...</p>}><Checkin /></Suspense>)} />
           <Route path="/admin/publicar-noticia" element={protegida('publicarNoticias', <PublicarNoticia />)} />

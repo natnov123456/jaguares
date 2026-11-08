@@ -1,11 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { cursosApi } from '../../services/api';
+import { cursosApi, plantillasApi } from '../../services/api';
+import SelectorPlantilla from '../../components/SelectorPlantilla';
 
 export default function CrearCurso() {
-  const [form, setForm] = useState({ titulo: '', descripcion: '', fechaInicio: '', fechaFin: '', cupoMaximo: 25, asistenciaMinimaPct: 80 });
+  const [form, setForm] = useState({ titulo: '', descripcion: '', fechaInicio: '', fechaFin: '', cupoMaximo: 25, asistenciaMinimaPct: 80, plantillaId: null });
+  const [plantillas, setPlantillas] = useState([]);
   const [msg, setMsg] = useState(null);
   const navigate = useNavigate();
+
+  // Si la lista no carga, el curso se puede crear igual con el diseño estándar y asignar la plantilla después
+  useEffect(() => { plantillasApi.listar().then(r => setPlantillas(r.data)).catch(() => {}); }, []);
 
   const crear = async (e) => {
     e.preventDefault();
@@ -39,6 +44,9 @@ export default function CrearCurso() {
         <input type="number" min="1" value={form.cupoMaximo} onChange={e => setForm({...form, cupoMaximo: e.target.value})} required />
         <label>Asistencia mínima para certificar (%)</label>
         <input type="number" min="0" max="100" value={form.asistenciaMinimaPct} onChange={e => setForm({...form, asistenciaMinimaPct: e.target.value})} required />
+        <label htmlFor="c-plantilla">Plantilla de certificado</label>
+        <SelectorPlantilla id="c-plantilla" plantillas={plantillas} value={form.plantillaId}
+                           onChange={plantillaId => setForm({...form, plantillaId})} />
         <button type="submit" className="btn-primary">Crear curso</button>
       </form>
       <p><Link to="/admin/cursos">← Volver a mis cursos</Link></p>

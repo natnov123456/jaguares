@@ -7,9 +7,10 @@ public record TokenDto(string Token, string NombreCompleto, string Rol, DateTime
 
 // CURSOS
 public record CrearCursoDto(string Titulo, string? Descripcion, DateOnly FechaInicio, DateOnly FechaFin,
-                            int CupoMaximo, int AsistenciaMinimaPct = 80);
+                            int CupoMaximo, int AsistenciaMinimaPct = 80, Guid? PlantillaId = null);
 public record CursoGestionDto(Guid Id, string Titulo, DateOnly FechaInicio, DateOnly FechaFin,
-                              int CupoMaximo, int CupoDisponible, string Estado, int Inscritos);
+                              int CupoMaximo, int CupoDisponible, string Estado, int Inscritos, Guid? PlantillaId);
+public record AsignarPlantillaDto(Guid? PlantillaId);
 public record MiInscripcionDto(Guid CursoId, string Titulo, DateOnly FechaInicio, DateOnly FechaFin,
                                string EstadoCurso, string EstadoInscripcion, DateTime FechaInscripcion);
 
@@ -36,7 +37,17 @@ public record ActividadDto(Guid Id, string Tipo, string Titulo, string? Descripc
 // CERTIFICADOS
 public record VerificarCertificadoDto(string CodigoUnico);
 public record CertificadoVerificacionDto(bool Valido, string? NombreParticipante, string? NombreCurso, DateTime? EmitidoEn);
-public record CertificadoDto(Guid Id, string CodigoUnico, string NombreCurso, DateTime EmitidoEn, bool Valido);
+public record CertificadoDto(Guid Id, string CodigoUnico, string NombreCurso, DateTime EmitidoEn, bool Valido, string? UrlPdf);
+
+// PLANTILLAS DE CERTIFICADO (FUJ-115)
+public record GuardarPlantillaDto(string? Nombre, string? TipoActividad, string? Titulo, string? Texto,
+                                  string? FirmaUnoNombre, string? FirmaUnoCargo,
+                                  string? FirmaDosNombre, string? FirmaDosCargo);
+public record PlantillaCertificadoDto(Guid Id, string Nombre, string TipoActividad, string Titulo, string Texto,
+                                      string? LogoUrl,
+                                      string? FirmaUnoUrl, string? FirmaUnoNombre, string? FirmaUnoCargo,
+                                      string? FirmaDosUrl, string? FirmaDosNombre, string? FirmaDosCargo,
+                                      DateTime ActualizadoEn);
 
 // DONACIONES
 public record CrearDonacionDto(decimal Monto, string Medio, string? Referencia, Guid? DonanteId);

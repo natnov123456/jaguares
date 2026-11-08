@@ -7,14 +7,67 @@ namespace FundacionJaguares.Application.Services;
 // y genera una miniatura cuadrada liviana para que la galería cargue rápido en el celular.
 public static class ProcesadorImagen
 {
+    public const long MaxBytes = 5 * 1024 * 1024;
     public const long MaxPixeles = 40_000_000; // protege contra imágenes "bomba" de dimensiones enormes
 
     private static readonly SKSamplingOptions Muestreo = new(SKCubicResampler.Mitchell);
 
     public record Resultado(byte[] Imagen, string Extension, byte[] Miniatura, int Ancho, int Alto);
 
+    /// <summary>Lee un archivo subido con límite de tamaño y comprueba que sea realmente JPG o PNG.</summary>
+    /// <exception cref="ArgumentException">Si el archivo no cumple las reglas de subida.</exception>
+    public static async Task<(byte[] Datos, bool EsPng)> LeerValidadoAsync(ArchivoSubido archivo)
+    {
+        if (archivo.Tamano == 0) throw new ArgumentException("El archivo está vacío");
+        if (archivo.Tamano > MaxBytes) throw new ArgumentException("El archivo supera el máximo de 5 MB");
+
+        var ext = Path.GetExtension(archivo.Nombre).ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png")) throw new ArgumentException("Formato no permitido: solo JPG o PNG");
+
+        // Se lee con límite: el tamaño declarado por el cliente no es confiable
+        using var ms = new MemoryStream();
+        await CopiarConLimiteAsync(archivo.Contenido, ms, MaxBytes);
+        var datos = ms.ToArray();
+
+        // La extensión no basta: se comprueba la firma real del archivo
+        var cabecera = datos.AsSpan(0, Math.Min(8, datos.Length));
+        var esJpeg = cabecera.Length >= 3 && cabecera[0] == 0xFF && cabecera[1] == 0xD8 && cabecera[2] == 0xFF;
+        var esPng = cabecera.Length >= 8 && cabecera.SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A });
+        if (!esJpeg && !esPng) throw new ArgumentException("El archivo no es una imagen JPG o PNG válida");
+        return (datos, esPng);
+    }
+
+    private static async Task CopiarConLimiteAsync(Stream origen, Stream destino, long limite)
+    {
+        var buffer = new byte[81920];
+        long total = 0;
+        int leidos;
+        while ((leidos = await origen.ReadAsync(buffer)) > 0)
+        {
+            total += leidos;
+            if (total > limite) throw new ArgumentException("El archivo supera el máximo de 5 MB");
+            await destino.WriteAsync(buffer.AsMemory(0, leidos));
+        }
+    }
+
     /// <exception cref="ArgumentException">Si los datos no son una imagen válida o es demasiado grande.</exception>
     public static Resultado Procesar(byte[] datos, bool esPng, int ladoMaximo, int ladoMiniatura)
+    {
+        using var ampliada = Preparar(datos, ladoMaximo);
+        var imagen = CodificarSegunTipo(ampliada, esPng);
+        var miniatura = MiniaturaCuadrada(ampliada, ladoMiniatura);
+        return new Resultado(imagen, esPng ? ".png" : ".jpg", miniatura, ampliada.Width, ampliada.Height);
+    }
+
+    /// <summary>Igual que <see cref="Procesar"/> pero sin miniatura (logos y firmas). Conserva la transparencia del PNG.</summary>
+    /// <exception cref="ArgumentException">Si los datos no son una imagen válida o es demasiado grande.</exception>
+    public static (byte[] Imagen, string Extension) Normalizar(byte[] datos, bool esPng, int ladoMaximo)
+    {
+        using var ampliada = Preparar(datos, ladoMaximo);
+        return (CodificarSegunTipo(ampliada, esPng), esPng ? ".png" : ".jpg");
+    }
+
+    private static SKBitmap Preparar(byte[] datos, int ladoMaximo)
     {
         using var codec = SKCodec.Create(new SKMemoryStream(datos))
                           ?? throw new ArgumentException("El archivo está dañado o no es una imagen válida");
@@ -26,14 +79,12 @@ public static class ProcesadorImagen
         using var orientada = Orientar(decodificada, codec.EncodedOrigin);
 
         // Imagen ampliada: como máximo ladoMaximo px en su lado mayor
-        using var ampliada = Reducir(orientada, ladoMaximo);
-        var formato = esPng ? SKEncodedImageFormat.Png : SKEncodedImageFormat.Jpeg;
-        // Al recodificar no se copian los metadatos: la foto publicada no incluye EXIF ni ubicación GPS
-        var imagen = Codificar(ampliada, formato, esPng ? 100 : 82);
-
-        var miniatura = MiniaturaCuadrada(ampliada, ladoMiniatura);
-        return new Resultado(imagen, esPng ? ".png" : ".jpg", miniatura, ampliada.Width, ampliada.Height);
+        return Reducir(orientada, ladoMaximo);
     }
+
+    // Al recodificar no se copian los metadatos: la foto publicada no incluye EXIF ni ubicación GPS
+    private static byte[] CodificarSegunTipo(SKBitmap bmp, bool esPng) =>
+        Codificar(bmp, esPng ? SKEncodedImageFormat.Png : SKEncodedImageFormat.Jpeg, esPng ? 100 : 82);
 
     private static SKBitmap Reducir(SKBitmap src, int ladoMaximo)
     {

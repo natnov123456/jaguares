@@ -57,6 +57,23 @@ public class CursosController : ControllerBase
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
     }
 
+    // FUJ-115: plantilla con la que se emitirán los certificados del curso (null = diseño estándar)
+    [HttpPut("{id:guid}/plantilla")]
+    [Authorize(Roles = "DOCENTE,DIRECTORA")]
+    public async Task<IActionResult> AsignarPlantilla(Guid id, AsignarPlantillaDto dto)
+    {
+        var docenteId = User.IsInRole("DIRECTORA") ? (Guid?)null : UsuarioId();
+        try
+        {
+            await _cursos.AsignarPlantillaAsync(id, dto.PlantillaId, docenteId);
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
     [HttpPost("{id:guid}/finalizar")]
     [Authorize(Roles = "DOCENTE,DIRECTORA")]
     public async Task<IActionResult> Finalizar(Guid id)

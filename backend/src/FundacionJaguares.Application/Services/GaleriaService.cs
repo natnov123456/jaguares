@@ -25,7 +25,7 @@ public interface IGaleriaService
 
 public partial class GaleriaService : IGaleriaService
 {
-    public const long MaxBytes = 5 * 1024 * 1024;
+    public const long MaxBytes = ProcesadorImagen.MaxBytes;
     public const int LadoMaximo = 1920;   // imagen ampliada
     public const int LadoMiniatura = 400; // miniatura cuadrada para la grilla
 
@@ -118,24 +118,8 @@ public partial class GaleriaService : IGaleriaService
 
     private async Task<GaleriaItem> ProcesarImagenAsync(Guid albumId, ArchivoSubido archivo, int orden)
     {
-        if (archivo.Tamano == 0) throw new ArgumentException("El archivo está vacío");
-        if (archivo.Tamano > MaxBytes) throw new ArgumentException("El archivo supera el máximo de 5 MB");
-
-        var ext = Path.GetExtension(archivo.Nombre).ToLowerInvariant();
-        if (ext is not (".jpg" or ".jpeg" or ".png")) throw new ArgumentException("Formato no permitido: solo JPG o PNG");
-
-        // Se lee con límite: el tamaño declarado por el cliente no es confiable
-        using var ms = new MemoryStream();
-        await CopiarConLimiteAsync(archivo.Contenido, ms, MaxBytes);
-        ms.Position = 0;
-
-        // La extensión no basta: se comprueba la firma real del archivo
-        var cabecera = ms.ToArray().AsSpan(0, (int)Math.Min(8, ms.Length));
-        var esJpeg = cabecera.Length >= 3 && cabecera[0] == 0xFF && cabecera[1] == 0xD8 && cabecera[2] == 0xFF;
-        var esPng = cabecera.Length >= 8 && cabecera.SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A });
-        if (!esJpeg && !esPng) throw new ArgumentException("El archivo no es una imagen JPG o PNG válida");
-
-        var r = ProcesadorImagen.Procesar(ms.ToArray(), esPng, LadoMaximo, LadoMiniatura);
+        var (bytes, esPng) = await ProcesadorImagen.LeerValidadoAsync(archivo);
+        var r = ProcesadorImagen.Procesar(bytes, esPng, LadoMaximo, LadoMiniatura);
 
         var id = Guid.NewGuid().ToString("N");
         var carpeta = $"galeria/{albumId:N}";
@@ -153,19 +137,6 @@ public partial class GaleriaService : IGaleriaService
             Titulo = titulo.Length > 200 ? titulo[..200] : titulo,
             ImagenUrl = urlImagen, MiniaturaUrl = urlMini, Orden = orden
         };
-    }
-
-    private static async Task CopiarConLimiteAsync(Stream origen, Stream destino, long limite)
-    {
-        var buffer = new byte[81920];
-        long total = 0;
-        int leidos;
-        while ((leidos = await origen.ReadAsync(buffer)) > 0)
-        {
-            total += leidos;
-            if (total > limite) throw new ArgumentException("El archivo supera el máximo de 5 MB");
-            await destino.WriteAsync(buffer.AsMemory(0, leidos));
-        }
     }
 
     // ---------- Videos ----------
