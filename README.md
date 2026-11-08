@@ -72,6 +72,7 @@ psql -U postgres -d fundacion_jaguares -f db/02_seed_usuarios.sql
 
 # Scripts de las historias nuevas (idempotentes: se pueden volver a ejecutar)
 psql -U postgres -d fundacion_jaguares -f db/03_jag32_inscripciones_evento_qr.sql
+psql -U postgres -d fundacion_jaguares -f db/04_jag40_transparencia.sql
 ```
 
 > Si ya tenías la base creada, basta con ejecutar los scripts `03_...` en adelante que te falten.
