@@ -55,6 +55,7 @@ builder.Services.AddScoped<IAuthService>(sp =>
 builder.Services.AddScoped<ICursoService, CursoService>();
 builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<ICertificadoService, CertificadoService>();
+builder.Services.AddScoped<IPlantillaService, PlantillaService>();
 builder.Services.AddScoped<IDonacionService, DonacionService>();
 builder.Services.AddScoped<IVoluntarioService, VoluntarioService>();
 builder.Services.AddScoped<IContenidoService, ContenidoService>();

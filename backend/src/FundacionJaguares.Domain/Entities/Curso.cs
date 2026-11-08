@@ -12,6 +12,7 @@ public class Curso
     public int CupoDisponible { get; set; }
     public int AsistenciaMinimaPct { get; set; } = 80;
     public string Estado { get; set; } = "BORRADOR";
+    public Guid? PlantillaId { get; set; }
     public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
 }
 

@@ -24,6 +24,6 @@ public class CertificadoService : ICertificadoService
 
     public async Task<List<CertificadoDto>> ListarPorParticipanteAsync(Guid participanteId) =>
         (await _certs.GetByParticipanteAsync(participanteId))
-            .Select(c => new CertificadoDto(c.Id, c.CodigoUnico, c.NombreCurso, c.EmitidoEn, c.Valido))
+            .Select(c => new CertificadoDto(c.Id, c.CodigoUnico, c.NombreCurso, c.EmitidoEn, c.Valido, c.UrlPdf))
             .ToList();
 }

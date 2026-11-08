@@ -10,5 +10,6 @@ public class Certificado
     public string NombreCurso { get; set; } = "";
     public DateTime EmitidoEn { get; set; } = DateTime.UtcNow;
     public string? UrlPdf { get; set; }
+    public Guid? PlantillaId { get; set; }
     public bool Valido { get; set; } = true;
 }

@@ -9,6 +9,7 @@ public interface IAlmacenamientoArchivos
 {
     Task<string> GuardarAsync(string carpeta, string nombreArchivo, Stream contenido);
     void Eliminar(string? urlPublica);
+    Task<byte[]?> LeerAsync(string? urlPublica);
 }
 
 public partial class AlmacenamientoLocal : IAlmacenamientoArchivos
@@ -46,12 +47,24 @@ public partial class AlmacenamientoLocal : IAlmacenamientoArchivos
 
     public void Eliminar(string? urlPublica)
     {
-        if (string.IsNullOrEmpty(urlPublica) || !urlPublica.StartsWith(_prefijoUrl + "/")) return;
-        var relativa = urlPublica[(_prefijoUrl.Length + 1)..].Replace('/', Path.DirectorySeparatorChar);
-        var ruta = Path.GetFullPath(Path.Combine(_raiz, relativa));
-        // Nunca borrar fuera de la carpeta de subidas
-        if (!ruta.StartsWith(_raiz + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return;
+        var ruta = RutaLocal(urlPublica);
+        if (ruta is null) return;
         try { if (File.Exists(ruta)) File.Delete(ruta); }
         catch (IOException) { /* el archivo puede estar en uso; queda huérfano pero no rompe la operación */ }
+    }
+
+    public async Task<byte[]?> LeerAsync(string? urlPublica)
+    {
+        var ruta = RutaLocal(urlPublica);
+        return ruta is not null && File.Exists(ruta) ? await File.ReadAllBytesAsync(ruta) : null;
+    }
+
+    // Null si la URL no corresponde a un archivo dentro de la carpeta de subidas (nunca se accede fuera de ella)
+    private string? RutaLocal(string? urlPublica)
+    {
+        if (string.IsNullOrEmpty(urlPublica) || !urlPublica.StartsWith(_prefijoUrl + "/")) return null;
+        var relativa = urlPublica[(_prefijoUrl.Length + 1)..].Replace('/', Path.DirectorySeparatorChar);
+        var ruta = Path.GetFullPath(Path.Combine(_raiz, relativa));
+        return ruta.StartsWith(_raiz + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ? ruta : null;
     }
 }
