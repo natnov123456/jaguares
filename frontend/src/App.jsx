@@ -12,6 +12,7 @@ import Certificados from './pages/Certificados';
 import Donaciones from './pages/Donaciones';
 import Voluntariado from './pages/Voluntariado';
 import Noticias from './pages/Noticias';
+import Calendario from './pages/Calendario';
 
 // Participante / Voluntario
 import MiCuenta from './pages/MiCuenta';
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="/donaciones" element={<Donaciones />} />
           <Route path="/voluntariado" element={<Voluntariado />} />
           <Route path="/noticias" element={<Noticias />} />
+          <Route path="/calendario" element={<Calendario />} />
 
           {/* Participante y Voluntario */}
           <Route path="/mi-cuenta" element={protegida('verMiCuenta', <MiCuenta />)} />

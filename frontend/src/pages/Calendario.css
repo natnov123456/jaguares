@@ -1,0 +1,142 @@
+.cal-leyenda { display: flex; gap: 16px; font-size: 0.9rem; color: #4b5563; }
+.cal-leyenda span { display: flex; align-items: center; gap: 6px; }
+
+.cal-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.cal-dot.cal-curso { background: #f59e0b; }
+.cal-dot.cal-evento { background: #16a34a; }
+
+.cal-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.cal-nav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cal-nav .btn-secondary { min-width: 40px; }
+.panel h2.cal-titulo { margin: 0 0 0 8px; font-size: 1.2rem; }
+
+.cal-vistas { display: inline-flex; border: 1px solid #f59e0b; border-radius: 4px; overflow: hidden; }
+.cal-vistas button { background: white; border: none; padding: 6px 14px; font-weight: 600; color: #b45309; }
+.cal-vistas button.activo { background: #f59e0b; color: white; }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid #e5e7eb;
+  border-left: 1px solid #e5e7eb;
+  transition: opacity 0.2s;
+}
+.cal-grid.cal-cargando { opacity: 0.5; }
+
+.cal-cabecera {
+  padding: 6px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6b7280;
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cal-celda {
+  min-height: 104px;
+  padding: 4px;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  min-width: 0;
+}
+.cal-semana .cal-celda { min-height: 260px; }
+.cal-celda.fuera { background: #fafafa; color: #9ca3af; }
+.cal-celda.sel { background: #fffbeb; }
+.cal-celda.hoy .cal-num {
+  background: #f59e0b;
+  color: white;
+  border-radius: 999px;
+  padding: 0 7px;
+}
+.cal-num { font-size: 0.85rem; font-weight: 600; display: inline-block; margin-bottom: 2px; }
+.cal-semana .cal-cabecera { display: none; }
+.cal-items { display: flex; flex-direction: column; gap: 3px; }
+
+.cal-chip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cal-semana .cal-chip { white-space: normal; }
+.cal-chip.cal-curso { background: #fef3c7; color: #92400e; border-left: 3px solid #f59e0b; }
+.cal-chip.cal-evento { background: #dcfce7; color: #166534; border-left: 3px solid #16a34a; }
+.cal-chip:hover { filter: brightness(0.95); }
+.cal-chip-hora { font-weight: 400; margin-right: 4px; }
+
+.cal-puntos { display: none; gap: 3px; flex-wrap: wrap; }
+
+.cal-agenda { display: none; margin-top: 16px; }
+.cal-agenda h3 { font-size: 1rem; margin-bottom: 8px; }
+.cal-agenda-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+/* Celular: celdas compactas con puntos de color + agenda del día debajo */
+@media (max-width: 700px) {
+  .cal-celda, .cal-semana .cal-celda { min-height: 52px; text-align: center; }
+  .cal-items { display: none; }
+  .cal-puntos { display: flex; justify-content: center; }
+  .cal-agenda { display: block; }
+  .cal-semana .cal-num { font-size: 0.75rem; }
+}
+
+/* Ventana de detalle (también la usan otras páginas públicas) */
+.modal-fondo {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 200;
+}
+.modal {
+  position: relative;
+  background: white;
+  border-radius: 10px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-cerrar {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #6b7280;
+}
+.modal-datos { list-style: none; margin: 12px 0; display: flex; flex-direction: column; gap: 4px; }
+.modal-acciones { margin-top: 12px; }

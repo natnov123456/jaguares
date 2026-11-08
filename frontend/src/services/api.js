@@ -45,6 +45,10 @@ export const eventosApi = {
   crear: (data) => api.post('/Eventos', data),
 };
 
+export const actividadesApi = {
+  rango: (desde, hasta, signal) => api.get('/Actividades', { params: { desde, hasta }, signal }),
+};
+
 export const certificadosApi = {
   verificar: (codigo) => api.get(`/Certificados/verificar/${codigo}`),
   mios: () => api.get('/Certificados/mios'),
