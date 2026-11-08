@@ -33,6 +33,9 @@ builder.Services.AddScoped<VoluntarioRepository>();
 builder.Services.AddScoped<ContenidoRepository>();
 
 // 3) Adapters
+// Correo: sección "Smtp" (guárdala con user-secrets, nunca en appsettings.json). Sin Host, solo se registra en el log.
+builder.Services.AddSingleton(builder.Configuration.GetSection("Smtp").Get<SmtpOpciones>() ?? new SmtpOpciones());
+builder.Services.AddSingleton(builder.Configuration.GetSection("Contacto").Get<ContactoOpciones>() ?? new ContactoOpciones());
 builder.Services.AddScoped<IEmailAdapter, EmailAdapter>();
 builder.Services.AddScoped<IWhatsAppAdapter, WhatsAppAdapter>();
 builder.Services.AddScoped<IPaymentAdapter, PaymentAdapter>();
@@ -59,6 +62,8 @@ builder.Services.AddScoped<IActividadService, ActividadService>();
 builder.Services.AddScoped<IAsistenciaService, AsistenciaService>();
 builder.Services.AddScoped<ITransparenciaService, TransparenciaService>();
 builder.Services.AddScoped<IGaleriaService, GaleriaService>();
+builder.Services.AddScoped<IInstitucionalService, InstitucionalService>();
+builder.Services.AddScoped<IContactoService, ContactoService>();
 
 // 5) JWT Auth
 var jwtSecret = cfg["Jwt:Secret"]!;

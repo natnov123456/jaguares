@@ -62,6 +62,14 @@ public record VoluntarioConHistorialDto(Guid Id, string NombreCompleto, string E
 // CONTENIDO
 public record CrearNoticiaDto(string Titulo, string? Resumen, string Contenido, string? ImagenUrl, bool Publicada);
 
+// QUIÉNES SOMOS Y CONTACTO (FUJ-127)
+public record MiembroEquipoDto(string Nombre, string? Cargo, string? Descripcion);
+public record PaginaInstitucionalDto(string? Mision, string? Vision, string? Historia, List<MiembroEquipoDto> Equipo,
+                                     string? Direccion, string? Telefono, string? EmailContacto, string? Horario,
+                                     DateTime? ActualizadoEn);
+// SitioWeb es un campo trampa (honeypot): oculto para personas, los bots lo llenan
+public record ConsultaContactoDto(string? Nombre, string? Email, string? Asunto, string? Mensaje, string? SitioWeb);
+
 // GALERÍA (FUJ-126)
 public record GuardarAlbumDto(string Titulo, string? Descripcion, bool Publicado);
 public record AgregarVideoDto(string Url, string? Titulo);

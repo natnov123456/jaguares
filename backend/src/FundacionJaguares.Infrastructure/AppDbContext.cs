@@ -24,6 +24,8 @@ public class AppDbContext : DbContext
     public DbSet<GaleriaItem> Galeria => Set<GaleriaItem>();
     public DbSet<Album> Albumes => Set<Album>();
     public DbSet<NotificacionLog> NotificacionesLog => Set<NotificacionLog>();
+    public DbSet<PaginaInstitucional> PaginaInstitucional => Set<PaginaInstitucional>();
+    public DbSet<ConsultaContacto> ConsultasContacto => Set<ConsultaContacto>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -134,6 +136,21 @@ public class AppDbContext : DbContext
             e.ToTable("albumes");
             e.HasKey(x => x.Id);
             e.HasMany<GaleriaItem>().WithOne().HasForeignKey(i => i.AlbumId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<PaginaInstitucional>(e =>
+        {
+            e.ToTable("pagina_institucional");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).ValueGeneratedNever();
+            e.Property(x => x.EquipoJson).HasColumnName("equipo").HasColumnType("jsonb");
+        });
+
+        mb.Entity<ConsultaContacto>(e =>
+        {
+            e.ToTable("consultas_contacto");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.Ip, x.CreadoEn });
         });
 
         mb.Entity<NotificacionLog>(e =>

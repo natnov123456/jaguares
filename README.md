@@ -91,6 +91,20 @@ dotnet user-secrets set "ConnectionStrings:Default" "Host=localhost;Port=5432;Da
 ```
 *Se ejecuta una sola vez; el backend la usa automáticamente al correr en modo desarrollo.*
 
+**Correo (opcional).** Sin configuración, los correos (confirmaciones, formulario de contacto) **no se envían**: solo se escriben en la consola del backend, lo cual alcanza para desarrollar. Para enviarlos de verdad, configura un servidor SMTP con *user-secrets* (por ejemplo, Gmail con una contraseña de aplicación):
+```powershell
+cd backend/src/FundacionJaguares.Api
+dotnet user-secrets set "Smtp:Host" "smtp.gmail.com"
+dotnet user-secrets set "Smtp:Puerto" "587"
+dotnet user-secrets set "Smtp:Usuario" "cuenta@gmail.com"
+dotnet user-secrets set "Smtp:Password" "CONTRASEÑA_DE_APLICACION"
+dotnet user-secrets set "Smtp:Remitente" "cuenta@gmail.com"
+# Correo que recibe las consultas si la Directora no cargó uno en "Quiénes somos"
+dotnet user-secrets set "Contacto:EmailDestino" "contacto@jaguares.org"
+```
+
+**Archivos subidos.** Las fotos de la galería se guardan en `backend/src/FundacionJaguares.Api/wwwroot/uploads/` (no se suben al repositorio) y la API las sirve en `http://localhost:5055/uploads/...`. Para usar otra carpeta: `dotnet user-secrets set "Almacenamiento:RutaLocal" "D:\ruta\uploads"`.
+
 ### 4. Ejecutar el Backend (Terminal 1)
 ```powershell
 cd backend
