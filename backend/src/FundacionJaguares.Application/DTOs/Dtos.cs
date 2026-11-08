@@ -50,7 +50,11 @@ public record PlantillaCertificadoDto(Guid Id, string Nombre, string TipoActivid
                                       DateTime ActualizadoEn);
 
 // DONACIONES
-public record CrearDonacionDto(decimal Monto, string Medio, string? Referencia, Guid? DonanteId);
+public record CrearDonacionDto(decimal Monto, string Medio, string? Referencia, Guid? DonanteId,
+                               string? DonanteNombre = null, string? DonanteEmail = null);
+public record MiDonacionDto(Guid Id, long NumeroComprobante, DateTime Fecha, decimal Monto, string Moneda,
+                            string Medio, string? Referencia, string Estado);
+public record ComprobanteDto(string NombreArchivo, byte[] Pdf);
 public record DonanteDto(string Nombre, string? Email, string? Telefono, bool EsAnonimo);
 public record ReporteDonacionesDto(int Anio, int Mes, decimal Total, int Cantidad, List<FundacionJaguares.Domain.Entities.Donacion> Detalle);
 

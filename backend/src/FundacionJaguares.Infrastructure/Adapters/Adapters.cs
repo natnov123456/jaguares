@@ -2,10 +2,12 @@ using Microsoft.Extensions.Logging;
 
 namespace FundacionJaguares.Infrastructure.Adapters;
 
+public record AdjuntoCorreo(string Nombre, byte[] Contenido, string TipoContenido);
+
 public interface IEmailAdapter
 {
     // responderA: dirección a la que se responde (p. ej. el correo de quien escribió el formulario de contacto)
-    Task EnviarAsync(string para, string asunto, string cuerpo, string? responderA = null);
+    Task EnviarAsync(string para, string asunto, string cuerpo, string? responderA = null, AdjuntoCorreo? adjunto = null);
 }
 public interface IWhatsAppAdapter { Task EnviarAsync(string telefono, string mensaje); }
 public interface IPaymentAdapter  { Task<bool> ProcesarPagoAsync(decimal monto, string referencia); }
@@ -31,11 +33,11 @@ public class EmailAdapter : IEmailAdapter
 
     public EmailAdapter(ILogger<EmailAdapter> log, SmtpOpciones smtp) { _log = log; _smtp = smtp; }
 
-    public async Task EnviarAsync(string para, string asunto, string cuerpo, string? responderA = null)
+    public async Task EnviarAsync(string para, string asunto, string cuerpo, string? responderA = null, AdjuntoCorreo? adjunto = null)
     {
         if (!_smtp.Configurado)
         {
-            _log.LogInformation("[EMAIL sin SMTP] Para: {p} | {a} | {c}", para, asunto, cuerpo);
+            _log.LogInformation("[EMAIL sin SMTP] Para: {p} | {a} | {c} | Adjunto: {n}", para, asunto, cuerpo, adjunto?.Nombre ?? "ninguno");
             return;
         }
 
@@ -52,6 +54,8 @@ public class EmailAdapter : IEmailAdapter
         };
         mensaje.To.Add(para);
         if (!string.IsNullOrWhiteSpace(responderA)) mensaje.ReplyToList.Add(responderA);
+        if (adjunto is not null)
+            mensaje.Attachments.Add(new System.Net.Mail.Attachment(new MemoryStream(adjunto.Contenido), adjunto.Nombre, adjunto.TipoContenido));
 
         using var cliente = new System.Net.Mail.SmtpClient(_smtp.Host, _smtp.Puerto) { EnableSsl = _smtp.UsarSsl };
         if (!string.IsNullOrEmpty(_smtp.Usuario))

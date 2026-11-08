@@ -95,6 +95,9 @@ public class AppDbContext : DbContext
             e.ToTable("donaciones");
             e.HasKey(x => x.Id);
             e.Property(x => x.Monto).HasPrecision(12, 2);
+            e.Property(x => x.NumeroComprobante).ValueGeneratedOnAdd();
+            // Relación explícita: el donante nuevo debe insertarse antes que su donación
+            e.HasOne<Donante>().WithMany().HasForeignKey(x => x.DonanteId).OnDelete(DeleteBehavior.SetNull);
         });
 
         mb.Entity<ReporteTransparencia>(e =>
