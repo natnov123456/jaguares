@@ -18,6 +18,11 @@ public record CrearEventoDto(string Titulo, string? Descripcion, string? Lugar,
                              DateTime FechaInicio, DateTime? FechaFin);
 public record AsistenciaDto(Guid ParticipanteId);
 
+// CALENDARIO (FUJ-114): Tipo = "CURSO" | "EVENTO"; TodoElDia = true en cursos (fechas sin hora)
+public record ActividadDto(Guid Id, string Tipo, string Titulo, string? Descripcion, string? Lugar,
+                           DateTime Inicio, DateTime? Fin, bool TodoElDia,
+                           int? CupoMaximo, int? CupoDisponible, string Estado);
+
 // CERTIFICADOS
 public record VerificarCertificadoDto(string CodigoUnico);
 public record CertificadoVerificacionDto(bool Valido, string? NombreParticipante, string? NombreCurso, DateTime? EmitidoEn);
