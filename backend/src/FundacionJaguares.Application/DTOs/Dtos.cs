@@ -18,6 +18,16 @@ public record CrearEventoDto(string Titulo, string? Descripcion, string? Lugar,
                              DateTime FechaInicio, DateTime? FechaFin);
 public record AsistenciaDto(Guid ParticipanteId);
 
+// CHECK-IN CON QR (FUJ-113)
+public record MiInscripcionEventoDto(Guid Id, Guid EventoId, string Titulo, string? Lugar,
+                                    DateTime FechaInicio, DateTime? FechaFin, string Estado,
+                                    string CodigoQr, DateTime InscritoEn, DateTime? CheckinEn);
+public record CheckinDto(string Codigo);
+// Resultado: REGISTRADO | YA_REGISTRADO | INVALIDO | OTRO_EVENTO | FUERA_DE_FECHA
+public record CheckinResultadoDto(string Resultado, string Mensaje, string? Participante, DateTime? CheckinEn);
+public record InscritoEventoDto(Guid InscripcionId, string Nombre, string Email, string Estado,
+                                DateTime InscritoEn, DateTime? CheckinEn);
+
 // CALENDARIO (FUJ-114): Tipo = "CURSO" | "EVENTO"; TodoElDia = true en cursos (fechas sin hora)
 public record ActividadDto(Guid Id, string Tipo, string Titulo, string? Descripcion, string? Lugar,
                            DateTime Inicio, DateTime? Fin, bool TodoElDia,
