@@ -22,7 +22,7 @@ public class LimiteExcedidoException : Exception
 
 // FUJ-127: formulario de contacto. Protección anti-spam (RNF-02):
 //  1) campo trampa (honeypot) que solo llenan los bots,
-//  2) límite de envíos por IP (3 cada 10 min y 10 por día) y un tope global por hora,
+//  2) límite de 5 envíos por IP por hora (el sexto se rechaza) y un tope global por hora,
 //  3) validación estricta y rechazo de mensajes con muchos enlaces.
 public interface IContactoService
 {
@@ -31,8 +31,7 @@ public interface IContactoService
 
 public partial class ContactoService : IContactoService
 {
-    public const int MaxPorIp10Min = 3;
-    public const int MaxPorIpDia = 10;
+    public const int MaxPorIpHora = 5;
     public const int MaxGlobalHora = 100;
     public const int MaxEnlaces = 3;
 
@@ -85,12 +84,8 @@ public partial class ContactoService : IContactoService
         var ahora = DateTime.UtcNow;
         if (ip is not null)
         {
-            var hace10 = ahora.AddMinutes(-10);
-            var haceDia = ahora.AddDays(-1);
-            var recientes = await _db.ConsultasContacto
-                .Where(c => c.Ip == ip && c.CreadoEn > haceDia)
-                .Select(c => c.CreadoEn).ToListAsync();
-            if (recientes.Count(f => f > hace10) >= MaxPorIp10Min || recientes.Count >= MaxPorIpDia)
+            var haceHora = ahora.AddHours(-1);
+            if (await _db.ConsultasContacto.CountAsync(c => c.Ip == ip && c.CreadoEn > haceHora) >= MaxPorIpHora)
                 throw new LimiteExcedidoException("Enviaste varias consultas seguidas. Intenta de nuevo más tarde.");
         }
         if (await _db.ConsultasContacto.CountAsync(c => c.CreadoEn > ahora.AddHours(-1)) >= MaxGlobalHora)
