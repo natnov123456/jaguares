@@ -41,6 +41,7 @@ export const PERMISOS = {
   publicarTransparencia: [DIRECTORA],
   gestionarGaleria: [DIRECTORA],
   gestionarPlantillas: [DIRECTORA],
+  gestionarCampanas: [DIRECTORA],
   editarInstitucional: [DIRECTORA],
 };
 
@@ -73,6 +74,8 @@ export const SECCIONES_PANEL = [
     descripcion: 'Registro único de voluntarios con su historial de actividades.' },
   { permiso: 'registrarDonaciones', ruta: '/admin/donaciones', titulo: 'Donaciones', icono: '💵',
     descripcion: 'Registrar aportes en efectivo recibidos en oficina o eventos.' },
+  { permiso: 'gestionarCampanas', ruta: '/admin/campanas', titulo: 'Campañas', icono: '🎯',
+    descripcion: 'Crear campañas de donación con meta, fecha límite y barra de avance.' },
   { permiso: 'publicarNoticias', ruta: '/admin/publicar-noticia', titulo: 'Noticias', icono: '📝',
     descripcion: 'Publicar novedades en el sitio público.' },
   { permiso: 'gestionarGaleria', ruta: '/admin/galeria', titulo: 'Galería', icono: '🖼️',

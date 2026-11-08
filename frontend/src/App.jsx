@@ -35,6 +35,7 @@ import AdminTransparencia from './pages/admin/Transparencia';
 import AdminGaleria from './pages/admin/Galeria';
 import AdminInstitucional from './pages/admin/Institucional';
 import PlantillasCertificado from './pages/admin/PlantillasCertificado';
+import AdminCampanas from './pages/admin/Campanas';
 
 // Páginas Voluntario
 import VoluntarioDashboard from './pages/voluntario/Dashboard';
@@ -75,6 +76,7 @@ export default function App() {
           <Route path="/admin/checkin" element={protegida('registrarCheckin', <Suspense fallback={<p className="container page">Cargando...</p>}><Checkin /></Suspense>)} />
           <Route path="/admin/publicar-noticia" element={protegida('publicarNoticias', <PublicarNoticia />)} />
           <Route path="/admin/donaciones" element={protegida('registrarDonaciones', <AdminDonaciones />)} />
+          <Route path="/admin/campanas" element={protegida('gestionarCampanas', <AdminCampanas />)} />
           <Route path="/admin/voluntarios" element={protegida('gestionarVoluntarios', <AdminVoluntarios />)} />
           <Route path="/admin/transparencia" element={protegida('publicarTransparencia', <AdminTransparencia />)} />
           <Route path="/admin/galeria" element={protegida('gestionarGaleria', <AdminGaleria />)} />

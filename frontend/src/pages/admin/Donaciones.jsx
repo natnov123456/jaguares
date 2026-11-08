@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { puede } from '../../config/permisos';
-import { donacionesApi } from '../../services/api';
+import { campanasApi, donacionesApi } from '../../services/api';
 import { bs, fechaHora, numeroComprobante } from '../../utils/formato';
 import BotonComprobante from '../../components/BotonComprobante';
 
@@ -46,6 +46,8 @@ export default function AdminDonaciones() {
   const [referencia, setReferencia] = useState('');
   const [donanteNombre, setDonanteNombre] = useState('');
   const [donanteEmail, setDonanteEmail] = useState('');
+  const [campanas, setCampanas] = useState([]);
+  const [campanaId, setCampanaId] = useState('');
   const [mensaje, setMensaje] = useState(null);
 
   const cargar = async () => {
@@ -69,6 +71,8 @@ export default function AdminDonaciones() {
     cargar();
   }, [periodo.anio, periodo.mes]);
 
+  useEffect(() => { campanasApi.vigentes().then(r => setCampanas(r.data)).catch(() => {}); }, []);
+
   const registrarDonacionManual = async (e) => {
     e.preventDefault();
     setMensaje(null);
@@ -80,6 +84,7 @@ export default function AdminDonaciones() {
         donanteId: null,
         donanteNombre: donanteNombre.trim() || null,
         donanteEmail: donanteEmail.trim() || null,
+        campanaId: campanaId || null,
       });
       const aviso = !donanteEmail.trim() ? '' : data.comprobanteEnviadoEn
         ? ' y comprobante enviado por correo'
@@ -89,6 +94,7 @@ export default function AdminDonaciones() {
       setReferencia('');
       setDonanteNombre('');
       setDonanteEmail('');
+      setCampanaId('');
       cargar();
     } catch (err) {
       setMensaje({ tipo: 'error', texto: `❌ ${err.response?.data?.error || 'Error al registrar la donación'}` });
@@ -162,6 +168,15 @@ export default function AdminDonaciones() {
               <label htmlFor="d-email">Correo para enviarle el comprobante (opcional)</label>
               <input id="d-email" type="email" maxLength={150} value={donanteEmail} onChange={e => setDonanteEmail(e.target.value)} />
             </div>
+            {campanas.length > 0 && (
+              <div>
+                <label htmlFor="d-campana">Campaña (opcional)</label>
+                <select id="d-campana" value={campanaId} onChange={e => setCampanaId(e.target.value)}>
+                  <option value="">Donación general</option>
+                  {campanas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                </select>
+              </div>
+            )}
             <button type="submit" className="btn-primary">Guardar donación</button>
           </form>
         </section>

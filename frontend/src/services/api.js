@@ -87,6 +87,13 @@ export const donacionesApi = {
   comprobante: (id) => api.get(`/Donaciones/${id}/comprobante`, { responseType: 'blob' }),
 };
 
+export const campanasApi = {
+  vigentes: () => api.get('/Campanas'),
+  todas: () => api.get('/Campanas/admin'),
+  crear: (data) => api.post('/Campanas', data),
+  actualizar: (id, data) => api.put(`/Campanas/${id}`, data),
+};
+
 export const transparenciaApi = {
   meses: () => api.get('/Transparencia'),
   resumen: (anio, mes) => api.get(`/Transparencia/${anio}/${mes}`),
