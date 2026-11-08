@@ -51,7 +51,13 @@ public record PlantillaCertificadoDto(Guid Id, string Nombre, string TipoActivid
 
 // DONACIONES
 public record CrearDonacionDto(decimal Monto, string Medio, string? Referencia, Guid? DonanteId,
-                               string? DonanteNombre = null, string? DonanteEmail = null);
+                               string? DonanteNombre = null, string? DonanteEmail = null, Guid? CampanaId = null);
+
+// CAMPAÑAS (FUJ-117)
+public record GuardarCampanaDto(string? Nombre, string? Descripcion, decimal Meta, DateOnly FechaLimite, bool Activa = true);
+public record CampanaDto(Guid Id, string Nombre, string? Descripcion, decimal Meta, DateOnly FechaLimite, bool Activa,
+                         bool Vigente, decimal Recaudado, decimal Porcentaje, int CantidadDonaciones, DateTime CreadoEn);
+
 public record MiDonacionDto(Guid Id, long NumeroComprobante, DateTime Fecha, decimal Monto, string Moneda,
                             string Medio, string? Referencia, string Estado);
 public record ComprobanteDto(string NombreArchivo, byte[] Pdf);

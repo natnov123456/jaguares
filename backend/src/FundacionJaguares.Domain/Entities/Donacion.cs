@@ -25,4 +25,5 @@ public class Donacion
     public long NumeroComprobante { get; set; }
     public Guid? UsuarioId { get; set; }
     public DateTime? ComprobanteEnviadoEn { get; set; }
+    public Guid? CampanaId { get; set; }
 }

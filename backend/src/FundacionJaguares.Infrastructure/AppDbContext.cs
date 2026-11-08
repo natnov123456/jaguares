@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<PlantillaCertificado> PlantillasCertificado => Set<PlantillaCertificado>();
     public DbSet<Donante> Donantes => Set<Donante>();
     public DbSet<Donacion> Donaciones => Set<Donacion>();
+    public DbSet<Campana> Campanas => Set<Campana>();
     public DbSet<ReporteTransparencia> ReportesTransparencia => Set<ReporteTransparencia>();
     public DbSet<DestinoTransparencia> DestinosTransparencia => Set<DestinoTransparencia>();
     public DbSet<Voluntario> Voluntarios => Set<Voluntario>();
@@ -98,6 +99,13 @@ public class AppDbContext : DbContext
             e.Property(x => x.NumeroComprobante).ValueGeneratedOnAdd();
             // Relación explícita: el donante nuevo debe insertarse antes que su donación
             e.HasOne<Donante>().WithMany().HasForeignKey(x => x.DonanteId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        mb.Entity<Campana>(e =>
+        {
+            e.ToTable("campanas");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Meta).HasPrecision(12, 2);
         });
 
         mb.Entity<ReporteTransparencia>(e =>

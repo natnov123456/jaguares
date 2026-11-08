@@ -30,6 +30,7 @@ builder.Services.AddScoped<CursoRepository>();
 builder.Services.AddScoped<EventoRepository>();
 builder.Services.AddScoped<CertificadoRepository>();
 builder.Services.AddScoped<DonacionRepository>();
+builder.Services.AddScoped<CampanaRepository>();
 builder.Services.AddScoped<VoluntarioRepository>();
 builder.Services.AddScoped<ContenidoRepository>();
 
