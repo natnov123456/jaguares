@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5055/api';
+const SERVIDOR = 'http://localhost:5055';
+const API_URL = `${SERVIDOR}/api`;
+
+// Las imágenes subidas se sirven desde la API ("/uploads/..."); las URLs externas se dejan igual
+export const archivoUrl = (url) => (url?.startsWith('/') ? `${SERVIDOR}${url}` : url);
 
 const api = axios.create({
   baseURL: API_URL,
@@ -72,6 +76,24 @@ export const transparenciaApi = {
   vistaPrevia: (anio, mes) => api.get(`/Transparencia/vista-previa/${anio}/${mes}`),
   publicar: (anio, mes, data) => api.put(`/Transparencia/${anio}/${mes}`, data),
   despublicar: (anio, mes) => api.delete(`/Transparencia/${anio}/${mes}`),
+};
+
+export const galeriaApi = {
+  albumes: () => api.get('/Galeria/albumes'),
+  album: (id) => api.get(`/Galeria/albumes/${id}`),
+  albumesAdmin: () => api.get('/Galeria/admin/albumes'),
+  crearAlbum: (data) => api.post('/Galeria/albumes', data),
+  actualizarAlbum: (id, data) => api.put(`/Galeria/albumes/${id}`, data),
+  eliminarAlbum: (id) => api.delete(`/Galeria/albumes/${id}`),
+  subirImagen: (id, archivo) => {
+    const form = new FormData();
+    form.append('archivos', archivo);
+    // Hay que pisar el 'application/json' por defecto: con él axios convertiría el FormData a JSON.
+    // Con multipart/form-data el navegador agrega solo el "boundary".
+    return api.post(`/Galeria/albumes/${id}/imagenes`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  agregarVideo: (id, data) => api.post(`/Galeria/albumes/${id}/videos`, data),
+  eliminarItem: (itemId) => api.delete(`/Galeria/items/${itemId}`),
 };
 
 export const voluntariosApi = {

@@ -32,6 +32,7 @@ export default function Navbar() {
               <NavLink to="/cursos">Cursos</NavLink>
               <NavLink to="/calendario">Calendario</NavLink>
               <NavLink to="/noticias">Noticias</NavLink>
+              <NavLink to="/galeria">Galería</NavLink>
               <NavLink to="/transparencia">Transparencia</NavLink>
               <NavLink to="/certificados">Verificar Certificado</NavLink>
               {puede(usuario, 'verPortalVoluntario') && <NavLink to="/voluntario">Mi Portal</NavLink>}
