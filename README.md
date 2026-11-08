@@ -69,7 +69,12 @@ psql -U postgres -d fundacion_jaguares -f db/01_schema.sql
 
 # Cargar los usuarios de prueba (ver tabla de credenciales más abajo)
 psql -U postgres -d fundacion_jaguares -f db/02_seed_usuarios.sql
+
+# Scripts de las historias nuevas (idempotentes: se pueden volver a ejecutar)
+psql -U postgres -d fundacion_jaguares -f db/03_jag32_inscripciones_evento_qr.sql
 ```
+
+> Si ya tenías la base creada, basta con ejecutar los scripts `03_...` en adelante que te falten.
 
 > Si `psql` no se reconoce en Windows, usa la ruta completa: `& "C:\Program Files\PostgreSQL\16\bin\psql.exe" ...` (ajusta la versión), o ejecuta los scripts desde el Query Tool de pgAdmin.
 
