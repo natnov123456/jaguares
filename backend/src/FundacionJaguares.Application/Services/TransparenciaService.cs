@@ -89,10 +89,16 @@ public class TransparenciaService : ITransparenciaService
         reporte.PublicadoPor = publicadoPor;
         reporte.PublicadoEn = DateTime.UtcNow;
         foreach (var d in destinos)
-            reporte.Destinos.Add(new DestinoTransparencia
+        {
+            var destino = new DestinoTransparencia
             {
                 ReporteId = reporte.Id, Categoria = d.Categoria, Monto = d.Monto, Descripcion = d.Descripcion
-            });
+            };
+            // Se marca como nuevo de forma explícita: al tener ya su Guid, si solo se agregara a la
+            // colección de un reporte existente EF lo trataría como fila existente (UPDATE en vez de INSERT).
+            // EF lo agrega solo a reporte.Destinos (fixup de la relación).
+            _db.DestinosTransparencia.Add(destino);
+        }
 
         await _db.SaveChangesAsync();
         await tx.CommitAsync();
