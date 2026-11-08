@@ -26,6 +26,26 @@ public class Repository<T> : IRepository<T> where T : class
     public Task<int> SaveChangesAsync() => Db.SaveChangesAsync();
 }
 
+public class CampanaRepository : Repository<Campana>
+{
+    public CampanaRepository(AppDbContext db) : base(db) { }
+
+    public Task<List<Campana>> ListarAsync(bool soloVigentes, DateOnly hoy) =>
+        Set.Where(c => !soloVigentes || (c.Activa && c.FechaLimite >= hoy))
+           .OrderBy(c => c.FechaLimite).ThenBy(c => c.Nombre).ToListAsync();
+
+    // Solo cuentan las donaciones confirmadas: una anulada deja de sumar a la barra
+    public async Task<Dictionary<Guid, (decimal Total, int Cantidad)>> TotalesAsync(IReadOnlyCollection<Guid> ids)
+    {
+        var filas = await Db.Donaciones
+            .Where(d => d.CampanaId != null && ids.Contains(d.CampanaId.Value) && d.Estado == "CONFIRMADA")
+            .GroupBy(d => d.CampanaId!.Value)
+            .Select(g => new { Id = g.Key, Total = g.Sum(d => d.Monto), Cantidad = g.Count() })
+            .ToListAsync();
+        return filas.ToDictionary(f => f.Id, f => (f.Total, f.Cantidad));
+    }
+}
+
 public class CursoRepository : Repository<Curso>
 {
     public CursoRepository(AppDbContext db) : base(db) { }

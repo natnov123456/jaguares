@@ -77,6 +77,7 @@ psql -U postgres -d fundacion_jaguares -f db/05_jag73_galeria_albumes.sql
 psql -U postgres -d fundacion_jaguares -f db/06_jag74_institucional_contacto.sql
 psql -U postgres -d fundacion_jaguares -f db/07_fuj115_plantillas_certificado.sql
 psql -U postgres -d fundacion_jaguares -f db/08_fuj116_comprobante_donacion.sql
+psql -U postgres -d fundacion_jaguares -f db/09_fuj117_campanas_donacion.sql
 ```
 
 > Si ya tenías la base creada, basta con ejecutar los scripts `03_...` en adelante que te falten.
@@ -199,6 +200,7 @@ Todos los endpoints están documentados en Swagger. Aquí un resumen:
 | **Eventos** | `GET /`, `POST /`, `POST /{id}/asistencia` |
 | **Certificados** | `GET /verificar/{codigo}` (Público), `GET /mios`, `GET/POST /plantillas`, `PUT/DELETE /plantillas/{id}`, `POST/DELETE /plantillas/{id}/imagenes/{campo}`, `GET /plantillas/{id}/vista-previa` |
 | **Donaciones** | `POST /`, `POST /en-linea`, `GET /mis-registros`, `GET /mias`, `GET /{id}/comprobante`, `GET /reporte/{anio}/{mes}` (solo Directora) |
+| **Campañas** | `GET /` (Público), `GET /admin`, `POST /`, `PUT /{id}` (solo Directora) |
 | **Voluntarios** | `POST /postular`, `GET /` (con historial), `GET /mi-historial`, `POST /{id}/participaciones` |
 | **Contenido** | `GET /noticias`, `POST /noticias`, `GET /galeria` |
 
