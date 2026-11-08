@@ -25,6 +25,7 @@ const { PARTICIPANTE, VOLUNTARIO, DOCENTE, ENCARGADO_EVENTOS, DIRECTORA } = ROLE
 export const PERMISOS = {
   // Comunidad
   inscribirseCursos: [PARTICIPANTE, VOLUNTARIO],
+  inscribirseEventos: [PARTICIPANTE, VOLUNTARIO],
   verMiCuenta: [PARTICIPANTE, VOLUNTARIO],
   verPortalVoluntario: [VOLUNTARIO],
 
@@ -32,6 +33,7 @@ export const PERMISOS = {
   verPanel: ROLES_STAFF,
   gestionarCursos: [DOCENTE, DIRECTORA],
   gestionarEventos: [ENCARGADO_EVENTOS, DIRECTORA],
+  registrarCheckin: [ENCARGADO_EVENTOS, DIRECTORA],
   gestionarVoluntarios: [ENCARGADO_EVENTOS, DIRECTORA],
   registrarDonaciones: [ENCARGADO_EVENTOS, DIRECTORA],
   verReporteFinanciero: [DIRECTORA],
@@ -59,6 +61,8 @@ export const SECCIONES_PANEL = [
     descripcion: 'Crear talleres, ver inscritos y emitir certificados al finalizar.' },
   { permiso: 'gestionarEventos', ruta: '/admin/eventos', titulo: 'Eventos', icono: '📅',
     descripcion: 'Programar eventos y actividades de la fundación.' },
+  { permiso: 'registrarCheckin', ruta: '/admin/checkin', titulo: 'Check-in QR', icono: '📷',
+    descripcion: 'Registrar la asistencia escaneando el QR del participante desde el celular.' },
   { permiso: 'gestionarVoluntarios', ruta: '/admin/voluntarios', titulo: 'Voluntarios', icono: '🤝',
     descripcion: 'Registro único de voluntarios con su historial de actividades.' },
   { permiso: 'registrarDonaciones', ruta: '/admin/donaciones', titulo: 'Donaciones', icono: '💵',

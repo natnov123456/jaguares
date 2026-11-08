@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { actividadesApi, cursosApi } from '../services/api';
+import { Link, useNavigate } from 'react-router-dom';
+import { actividadesApi, cursosApi, eventosApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { puede } from '../config/permisos';
 import { fecha, fechaHora } from '../utils/formato';
@@ -48,6 +48,7 @@ export default function Calendario() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
   const puedeInscribirse = puede(usuario, 'inscribirseCursos');
+  const puedeInscribirseEventos = puede(usuario, 'inscribirseEventos');
 
   const [vista, setVista] = useState('mes');
   const [ref, setRef] = useState(() => new Date());
@@ -57,6 +58,7 @@ export default function Calendario() {
   const [diaSel, setDiaSel] = useState(() => claveDia(new Date()));
   const [detalle, setDetalle] = useState(null);
   const [cursosInscritos, setCursosInscritos] = useState(new Set());
+  const [eventosInscritos, setEventosInscritos] = useState(new Set());
   const [msg, setMsg] = useState(null);
 
   const { inicio, fin } = useMemo(() => rangoVista(vista, ref), [vista, ref]);
@@ -83,6 +85,13 @@ export default function Calendario() {
       .catch(console.error);
   }, [puedeInscribirse]);
 
+  useEffect(() => {
+    if (!puedeInscribirseEventos) return;
+    eventosApi.misInscripciones()
+      .then(r => setEventosInscritos(new Set(r.data.map(i => i.eventoId))))
+      .catch(console.error);
+  }, [puedeInscribirseEventos]);
+
   const porDia = useMemo(() => {
     const mapa = {};
     for (const a of actividades) (mapa[claveDia(new Date(a.inicio))] ??= []).push(a);
@@ -100,7 +109,8 @@ export default function Calendario() {
     setRef(r);
   };
 
-  const [hoyClave] = useState(() => claveDia(new Date()));
+  const [ahora] = useState(() => Date.now());
+  const hoyClave = claveDia(new Date(ahora));
   const titulo = vista === 'mes'
     ? `${MESES[ref.getMonth()]} ${ref.getFullYear()}`
     : `${fecha(claveDia(inicio))} – ${fecha(claveDia(fin))}`;
@@ -118,8 +128,33 @@ export default function Calendario() {
     }
   };
 
+  const inscribirEvento = async (a) => {
+    setMsg(null);
+    try {
+      await eventosApi.inscribir(a.id);
+      setEventosInscritos(new Set([...eventosInscritos, a.id]));
+      setMsg({ tipo: 'success', texto: '✅ Inscripción confirmada. Tu código QR de ingreso está en "Mis cursos".' });
+    } catch (err) {
+      setMsg({ tipo: 'error', texto: err.response?.data?.error || 'No se pudo completar la inscripción' });
+    }
+  };
+
+  const accionEvento = (a) => {
+    if (new Date(a.fin ?? a.inicio).getTime() < ahora) return <span className="badge">Evento realizado</span>;
+    if (!usuario) {
+      return (
+        <button className="btn-primary" onClick={() => navigate('/login', { state: { desde: '/calendario' } })}>
+          Inicia sesión para inscribirte
+        </button>
+      );
+    }
+    if (!puedeInscribirseEventos) return null;
+    if (eventosInscritos.has(a.id)) return <Link to="/mi-cuenta" className="badge badge-ok">✓ Inscrito/a · ver mi QR</Link>;
+    return <button className="btn-primary" onClick={() => inscribirEvento(a)}>Inscribirme al evento</button>;
+  };
+
   const accionDetalle = (a) => {
-    if (a.tipo !== 'CURSO') return null;
+    if (a.tipo === 'EVENTO') return accionEvento(a);
     if (!usuario) {
       return (
         <button className="btn-primary" onClick={() => navigate('/login', { state: { desde: '/calendario' } })}>

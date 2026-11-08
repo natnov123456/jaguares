@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
@@ -22,6 +23,8 @@ import Dashboard from './pages/admin/Dashboard';
 import AdminCursos from './pages/admin/Cursos';
 import CrearCurso from './pages/admin/CrearCurso';
 import AdminEventos from './pages/admin/Eventos';
+// El lector QR (jsQR) solo lo usa el personal de eventos: se descarga aparte al abrir la página
+const Checkin = lazy(() => import('./pages/admin/Checkin'));
 import PublicarNoticia from './pages/admin/PublicarNoticia';
 import AdminDonaciones from './pages/admin/Donaciones';
 import AdminVoluntarios from './pages/admin/Voluntarios';
@@ -57,6 +60,7 @@ export default function App() {
           <Route path="/admin/cursos" element={protegida('gestionarCursos', <AdminCursos />)} />
           <Route path="/admin/crear-curso" element={protegida('gestionarCursos', <CrearCurso />)} />
           <Route path="/admin/eventos" element={protegida('gestionarEventos', <AdminEventos />)} />
+          <Route path="/admin/checkin" element={protegida('registrarCheckin', <Suspense fallback={<p className="container page">Cargando...</p>}><Checkin /></Suspense>)} />
           <Route path="/admin/publicar-noticia" element={protegida('publicarNoticias', <PublicarNoticia />)} />
           <Route path="/admin/donaciones" element={protegida('registrarDonaciones', <AdminDonaciones />)} />
           <Route path="/admin/voluntarios" element={protegida('gestionarVoluntarios', <AdminVoluntarios />)} />

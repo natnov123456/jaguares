@@ -1,0 +1,45 @@
+.checkin { max-width: 640px; }
+
+.checkin-camara { margin: 16px 0; display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.checkin-btn { padding: 16px; font-size: 1.1rem; }
+
+.lector-qr {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #111827;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.lector-qr video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lector-qr-marco {
+  position: absolute;
+  inset: 15%;
+  border: 3px solid rgba(245, 158, 11, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
+}
+
+.checkin-resultado {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 1.05rem;
+}
+.checkin-resultado.ok { background: #dcfce7; color: #166534; }
+.checkin-resultado.warn { background: #fef3c7; color: #92400e; }
+.checkin-resultado.error { background: #fee2e2; color: #991b1b; }
+.checkin-icono { font-size: 1.8rem; }
+
+.checkin-manual { display: flex; gap: 8px; }
+.checkin-manual input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 1rem;
+}

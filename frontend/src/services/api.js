@@ -43,6 +43,11 @@ export const cursosApi = {
 export const eventosApi = {
   listar: () => api.get('/Eventos'),
   crear: (data) => api.post('/Eventos', data),
+  inscribir: (id) => api.post(`/Eventos/${id}/inscribir`),
+  misInscripciones: () => api.get('/Eventos/mis-inscripciones'),
+  qr: (inscripcionId) => api.get(`/Eventos/mis-inscripciones/${inscripcionId}/qr`, { responseType: 'blob' }),
+  checkin: (id, codigo) => api.post(`/Eventos/${id}/checkin`, { codigo }),
+  inscritos: (id) => api.get(`/Eventos/${id}/inscritos`),
 };
 
 export const actividadesApi = {

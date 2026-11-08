@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { cursosApi } from '../services/api';
 import MisCertificados from '../components/MisCertificados';
+import MisEventos from '../components/MisEventos';
 import Estado from '../components/Estado';
 import { fecha } from '../utils/formato';
 
@@ -36,7 +37,7 @@ export default function MiCuenta() {
       <div className="page-header">
         <div>
           <h1>Mis cursos</h1>
-          <p>Hola, {usuario?.nombreCompleto}. Aquí ves tus inscripciones y certificados.</p>
+          <p>Hola, {usuario?.nombreCompleto}. Aquí ves tus inscripciones, tus códigos QR de eventos y tus certificados.</p>
         </div>
         <Link to="/cursos" className="btn-primary">Buscar cursos</Link>
       </div>
@@ -73,6 +74,11 @@ export default function MiCuenta() {
             </table>
           </div>
         )}
+      </section>
+
+      <section className="panel">
+        <h2>Mis eventos</h2>
+        <MisEventos />
       </section>
 
       <section className="panel">
