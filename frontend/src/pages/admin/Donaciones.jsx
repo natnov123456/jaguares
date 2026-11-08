@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { puede } from '../../config/permisos';
 import { donacionesApi } from '../../services/api';
-import { bs, fechaHora } from '../../utils/formato';
+import { bs, fechaHora, numeroComprobante } from '../../utils/formato';
+import BotonComprobante from '../../components/BotonComprobante';
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
                'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -12,14 +13,16 @@ function TablaDonaciones({ donaciones, vacio }) {
   return (
     <div className="table-wrap">
       <table className="table">
-        <thead><tr><th>Fecha</th><th>Monto</th><th>Medio</th><th>Ref.</th></tr></thead>
+        <thead><tr><th>N°</th><th>Fecha</th><th>Monto</th><th>Medio</th><th>Ref.</th><th /></tr></thead>
         <tbody>
           {donaciones.map(d => (
             <tr key={d.id}>
+              <td><code>{numeroComprobante(d.numeroComprobante)}</code></td>
               <td>{fechaHora(d.fecha)}</td>
               <td style={{ fontWeight: 'bold' }}>{bs(d.monto)}</td>
               <td>{d.medio}</td>
               <td className="muted">{d.referencia || '-'}</td>
+              <td>{d.estado === 'CONFIRMADA' && <BotonComprobante donacion={d} />}</td>
             </tr>
           ))}
         </tbody>
@@ -41,6 +44,8 @@ export default function AdminDonaciones() {
 
   const [monto, setMonto] = useState('');
   const [referencia, setReferencia] = useState('');
+  const [donanteNombre, setDonanteNombre] = useState('');
+  const [donanteEmail, setDonanteEmail] = useState('');
   const [mensaje, setMensaje] = useState(null);
 
   const cargar = async () => {
@@ -68,18 +73,25 @@ export default function AdminDonaciones() {
     e.preventDefault();
     setMensaje(null);
     try {
-      await donacionesApi.registrar({
+      const { data } = await donacionesApi.registrar({
         monto: parseFloat(monto),
         medio: 'EFECTIVO',
         referencia: referencia || 'RECIBO-OFICINA',
         donanteId: null,
+        donanteNombre: donanteNombre.trim() || null,
+        donanteEmail: donanteEmail.trim() || null,
       });
-      setMensaje({ tipo: 'success', texto: '✅ Donación registrada correctamente' });
+      const aviso = !donanteEmail.trim() ? '' : data.comprobanteEnviadoEn
+        ? ' y comprobante enviado por correo'
+        : ', pero no se pudo enviar el comprobante por correo';
+      setMensaje({ tipo: 'success', texto: `✅ Donación registrada${aviso}` });
       setMonto('');
       setReferencia('');
+      setDonanteNombre('');
+      setDonanteEmail('');
       cargar();
-    } catch {
-      setMensaje({ tipo: 'error', texto: '❌ Error al registrar la donación' });
+    } catch (err) {
+      setMensaje({ tipo: 'error', texto: `❌ ${err.response?.data?.error || 'Error al registrar la donación'}` });
     }
   };
 
@@ -140,6 +152,15 @@ export default function AdminDonaciones() {
             <div>
               <label>Referencia / Recibo</label>
               <input type="text" value={referencia} onChange={e => setReferencia(e.target.value)} placeholder="Ej: RECIBO-001" />
+            </div>
+            <div>
+              <label htmlFor="d-nombre">Nombre del donante (opcional)</label>
+              <input id="d-nombre" type="text" maxLength={150} value={donanteNombre} onChange={e => setDonanteNombre(e.target.value)}
+                     required={!!donanteEmail.trim()} />
+            </div>
+            <div>
+              <label htmlFor="d-email">Correo para enviarle el comprobante (opcional)</label>
+              <input id="d-email" type="email" maxLength={150} value={donanteEmail} onChange={e => setDonanteEmail(e.target.value)} />
             </div>
             <button type="submit" className="btn-primary">Guardar donación</button>
           </form>

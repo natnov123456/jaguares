@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { cursosApi } from '../services/api';
 import MisCertificados from '../components/MisCertificados';
 import MisEventos from '../components/MisEventos';
+import MisDonaciones from '../components/MisDonaciones';
 import Estado from '../components/Estado';
 import { fecha } from '../utils/formato';
 
@@ -84,6 +85,11 @@ export default function MiCuenta() {
       <section className="panel">
         <h2>Mis certificados</h2>
         <MisCertificados />
+      </section>
+
+      <section className="panel">
+        <h2>Mis donaciones</h2>
+        <MisDonaciones />
       </section>
     </div>
   );

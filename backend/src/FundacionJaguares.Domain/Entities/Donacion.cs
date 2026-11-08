@@ -22,4 +22,7 @@ public class Donacion
     public string Estado { get; set; } = "CONFIRMADA";
     public Guid? RegistradoPor { get; set; }
     public DateTime Fecha { get; set; } = DateTime.UtcNow;
+    public long NumeroComprobante { get; set; }
+    public Guid? UsuarioId { get; set; }
+    public DateTime? ComprobanteEnviadoEn { get; set; }
 }

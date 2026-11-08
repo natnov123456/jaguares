@@ -3,6 +3,7 @@ using FundacionJaguares.Application.DTOs;
 using FundacionJaguares.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FundacionJaguares.Api.Controllers;
 
@@ -25,14 +26,41 @@ public class DonacionesController : ControllerBase
     }
 
     // RF-09: donación en línea (QR / pasarela) — pública
+    // Con sesión iniciada la donación queda en la cuenta; el límite evita usarlo para enviar correos a terceros
     [HttpPost("en-linea")]
     [AllowAnonymous]
+    [EnableRateLimiting("donacion-en-linea")]
     public async Task<IActionResult> EnLinea(CrearDonacionDto dto)
     {
-        try { return Ok(await _donaciones.RegistrarDonacionEnLineaAsync(dto)); }
+        var claimId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        Guid? usuarioId = Guid.TryParse(claimId, out var id) ? id : null;
+        try { return Ok(await _donaciones.RegistrarDonacionEnLineaAsync(dto, usuarioId)); }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
     }
+
+    // FUJ-116: donaciones del usuario con sesión
+    [HttpGet("mias")]
+    [Authorize]
+    public async Task<IActionResult> Mias() => Ok(await _donaciones.ListarMiasAsync(UsuarioId()));
+
+    // FUJ-116: comprobante en PDF (donante, quien registró la donación o Directora)
+    [HttpGet("{id:guid}/comprobante")]
+    [Authorize]
+    public async Task<IActionResult> Comprobante(Guid id)
+    {
+        try
+        {
+            var c = await _donaciones.ObtenerComprobanteAsync(id, UsuarioId(), User.IsInRole("DIRECTORA"));
+            return File(c.Pdf, "application/pdf", c.NombreArchivo);
+        }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    private Guid UsuarioId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
+                                           ?? User.FindFirstValue("sub")!);
 
     // Donaciones que registró el usuario actual (el encargado no ve el reporte financiero completo)
     [HttpGet("mis-registros")]

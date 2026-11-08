@@ -83,6 +83,8 @@ export const donacionesApi = {
   enLinea: (data) => api.post('/Donaciones/en-linea', data),
   reporte: (anio, mes) => api.get(`/Donaciones/reporte/${anio}/${mes}`),
   misRegistros: () => api.get('/Donaciones/mis-registros'),
+  mias: () => api.get('/Donaciones/mias'),
+  comprobante: (id) => api.get(`/Donaciones/${id}/comprobante`, { responseType: 'blob' }),
 };
 
 export const transparenciaApi = {

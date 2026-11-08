@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using FundacionJaguares.Application.Services;
 using FundacionJaguares.Domain.Entities;
 using FundacionJaguares.Infrastructure;
@@ -88,6 +89,15 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors(o => o.AddPolicy("front", p =>
     p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
+// Donación en línea: endpoint público que envía correos, limitado por IP
+builder.Services.AddRateLimiter(o =>
+{
+    o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.AddPolicy("donacion-en-linea", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
+});
+
 // 7) Swagger (compatible con Swashbuckle 10 / Microsoft.OpenApi 2.x)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -140,6 +150,7 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseCors("front");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();
