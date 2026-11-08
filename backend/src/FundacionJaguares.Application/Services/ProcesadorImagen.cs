@@ -1,0 +1,102 @@
+using SkiaSharp;
+
+namespace FundacionJaguares.Application.Services;
+
+// Procesa las fotos de la galería (FUJ-126) con SkiaSharp (licencia MIT):
+// corrige la orientación de las fotos de celular, limita el tamaño, quita metadatos (EXIF/GPS)
+// y genera una miniatura cuadrada liviana para que la galería cargue rápido en el celular.
+public static class ProcesadorImagen
+{
+    public const long MaxPixeles = 40_000_000; // protege contra imágenes "bomba" de dimensiones enormes
+
+    private static readonly SKSamplingOptions Muestreo = new(SKCubicResampler.Mitchell);
+
+    public record Resultado(byte[] Imagen, string Extension, byte[] Miniatura, int Ancho, int Alto);
+
+    /// <exception cref="ArgumentException">Si los datos no son una imagen válida o es demasiado grande.</exception>
+    public static Resultado Procesar(byte[] datos, bool esPng, int ladoMaximo, int ladoMiniatura)
+    {
+        using var codec = SKCodec.Create(new SKMemoryStream(datos))
+                          ?? throw new ArgumentException("El archivo está dañado o no es una imagen válida");
+        if ((long)codec.Info.Width * codec.Info.Height > MaxPixeles)
+            throw new ArgumentException("La imagen tiene dimensiones demasiado grandes");
+
+        using var decodificada = SKBitmap.Decode(codec)
+                                 ?? throw new ArgumentException("El archivo está dañado o no es una imagen válida");
+        using var orientada = Orientar(decodificada, codec.EncodedOrigin);
+
+        // Imagen ampliada: como máximo ladoMaximo px en su lado mayor
+        using var ampliada = Reducir(orientada, ladoMaximo);
+        var formato = esPng ? SKEncodedImageFormat.Png : SKEncodedImageFormat.Jpeg;
+        // Al recodificar no se copian los metadatos: la foto publicada no incluye EXIF ni ubicación GPS
+        var imagen = Codificar(ampliada, formato, esPng ? 100 : 82);
+
+        var miniatura = MiniaturaCuadrada(ampliada, ladoMiniatura);
+        return new Resultado(imagen, esPng ? ".png" : ".jpg", miniatura, ampliada.Width, ampliada.Height);
+    }
+
+    private static SKBitmap Reducir(SKBitmap src, int ladoMaximo)
+    {
+        var mayor = Math.Max(src.Width, src.Height);
+        if (mayor <= ladoMaximo) return src.Copy();
+        var escala = (float)ladoMaximo / mayor;
+        var info = new SKImageInfo(Math.Max(1, (int)Math.Round(src.Width * escala)),
+                                   Math.Max(1, (int)Math.Round(src.Height * escala)), src.ColorType, src.AlphaType);
+        return src.Resize(info, Muestreo) ?? throw new ArgumentException("No se pudo procesar la imagen");
+    }
+
+    // Recorte centrado al cuadrado; fondo blanco para PNG con transparencia (la miniatura siempre es JPEG)
+    private static byte[] MiniaturaCuadrada(SKBitmap src, int lado)
+    {
+        var corte = Math.Min(src.Width, src.Height);
+        var origen = SKRect.Create((src.Width - corte) / 2f, (src.Height - corte) / 2f, corte, corte);
+        var destinoLado = Math.Min(lado, corte);
+
+        using var superficie = SKSurface.Create(new SKImageInfo(destinoLado, destinoLado, SKColorType.Rgba8888, SKAlphaType.Premul));
+        var lienzo = superficie.Canvas;
+        lienzo.Clear(SKColors.White);
+        using var img = SKImage.FromBitmap(src);
+        lienzo.DrawImage(img, origen, SKRect.Create(destinoLado, destinoLado), Muestreo);
+        lienzo.Flush();
+        using var snapshot = superficie.Snapshot();
+        using var data = snapshot.Encode(SKEncodedImageFormat.Jpeg, 75);
+        return data.ToArray();
+    }
+
+    private static byte[] Codificar(SKBitmap bmp, SKEncodedImageFormat formato, int calidad)
+    {
+        using var img = SKImage.FromBitmap(bmp);
+        using var data = img.Encode(formato, calidad)
+                         ?? throw new ArgumentException("No se pudo procesar la imagen");
+        return data.ToArray();
+    }
+
+    // Aplica la orientación EXIF (las fotos de celular suelen venir "acostadas")
+    private static SKBitmap Orientar(SKBitmap src, SKEncodedOrigin origen)
+    {
+        float w = src.Width, h = src.Height;
+        SKMatrix? m = origen switch
+        {
+            SKEncodedOrigin.TopRight => new SKMatrix(-1, 0, w, 0, 1, 0, 0, 0, 1),     // espejo horizontal
+            SKEncodedOrigin.BottomRight => new SKMatrix(-1, 0, w, 0, -1, h, 0, 0, 1), // 180°
+            SKEncodedOrigin.BottomLeft => new SKMatrix(1, 0, 0, 0, -1, h, 0, 0, 1),   // espejo vertical
+            SKEncodedOrigin.LeftTop => new SKMatrix(0, 1, 0, 1, 0, 0, 0, 0, 1),       // transpuesta
+            SKEncodedOrigin.RightTop => new SKMatrix(0, -1, h, 1, 0, 0, 0, 0, 1),     // 90° horario
+            SKEncodedOrigin.RightBottom => new SKMatrix(0, -1, h, -1, 0, w, 0, 0, 1), // transversa
+            SKEncodedOrigin.LeftBottom => new SKMatrix(0, 1, 0, -1, 0, w, 0, 0, 1),   // 90° antihorario
+            _ => null
+        };
+        if (m is null) return src.Copy();
+
+        var intercambia = origen is SKEncodedOrigin.LeftTop or SKEncodedOrigin.RightTop
+                                 or SKEncodedOrigin.RightBottom or SKEncodedOrigin.LeftBottom;
+        var dst = new SKBitmap(intercambia ? src.Height : src.Width, intercambia ? src.Width : src.Height,
+                               src.ColorType, src.AlphaType);
+        using var lienzo = new SKCanvas(dst);
+        lienzo.SetMatrix(m.Value);
+        using var img = SKImage.FromBitmap(src);
+        lienzo.DrawImage(img, 0, 0, SKSamplingOptions.Default);
+        lienzo.Flush();
+        return dst;
+    }
+}

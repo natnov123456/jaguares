@@ -61,3 +61,15 @@ public record VoluntarioConHistorialDto(Guid Id, string NombreCompleto, string E
 
 // CONTENIDO
 public record CrearNoticiaDto(string Titulo, string? Resumen, string Contenido, string? ImagenUrl, bool Publicada);
+
+// GALERÍA (FUJ-126)
+public record GuardarAlbumDto(string Titulo, string? Descripcion, bool Publicado);
+public record AgregarVideoDto(string Url, string? Titulo);
+public record GaleriaItemDto(Guid Id, string Tipo, string? Titulo, string? ImagenUrl, string? MiniaturaUrl,
+                             string? VideoUrl, int Orden);
+public record AlbumResumenDto(Guid Id, string Titulo, string? Descripcion, bool Publicado, string? PortadaUrl,
+                              int CantidadImagenes, int CantidadVideos, DateTime CreadoEn);
+public record AlbumDetalleDto(Guid Id, string Titulo, string? Descripcion, bool Publicado, DateTime CreadoEn,
+                              List<GaleriaItemDto> Items);
+public record ErrorSubidaDto(string Archivo, string Error);
+public record ResultadoSubidaDto(List<GaleriaItemDto> Subidas, List<ErrorSubidaDto> Errores);

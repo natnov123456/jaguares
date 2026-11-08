@@ -7,6 +7,7 @@ using FundacionJaguares.Infrastructure.Adapters;
 using FundacionJaguares.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Npgsql.NameTranslation;
@@ -36,6 +37,13 @@ builder.Services.AddScoped<IEmailAdapter, EmailAdapter>();
 builder.Services.AddScoped<IWhatsAppAdapter, WhatsAppAdapter>();
 builder.Services.AddScoped<IPaymentAdapter, PaymentAdapter>();
 
+// Archivos subidos (galería): en disco, servidos por la propia API bajo /uploads.
+// La carpeta se puede cambiar con "Almacenamiento:RutaLocal" (no se sube al repositorio).
+var rutaUploads = builder.Configuration["Almacenamiento:RutaLocal"]
+                  ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads");
+var almacenamiento = new AlmacenamientoLocal(rutaUploads, "/uploads");
+builder.Services.AddSingleton<IAlmacenamientoArchivos>(almacenamiento);
+
 // 4) Services
 var cfg = builder.Configuration;
 builder.Services.AddScoped<IAuthService>(sp =>
@@ -50,6 +58,7 @@ builder.Services.AddScoped<IContenidoService, ContenidoService>();
 builder.Services.AddScoped<IActividadService, ActividadService>();
 builder.Services.AddScoped<IAsistenciaService, AsistenciaService>();
 builder.Services.AddScoped<ITransparenciaService, TransparenciaService>();
+builder.Services.AddScoped<IGaleriaService, GaleriaService>();
 
 // 5) JWT Auth
 var jwtSecret = cfg["Jwt:Secret"]!;
@@ -109,6 +118,18 @@ var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(almacenamiento.Raiz),
+    RequestPath = "/uploads",
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        // Los nombres son únicos (GUID): el navegador puede guardarlos en caché por un año
+        ctx.Context.Response.Headers.CacheControl = "public,max-age=31536000,immutable";
+    }
+});
 
 app.UseCors("front");
 app.UseAuthentication();

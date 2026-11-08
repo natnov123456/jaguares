@@ -22,6 +22,7 @@ public class AppDbContext : DbContext
     public DbSet<ParticipacionVoluntario> ParticipacionesVoluntario => Set<ParticipacionVoluntario>();
     public DbSet<Noticia> Noticias => Set<Noticia>();
     public DbSet<GaleriaItem> Galeria => Set<GaleriaItem>();
+    public DbSet<Album> Albumes => Set<Album>();
     public DbSet<NotificacionLog> NotificacionesLog => Set<NotificacionLog>();
 
     protected override void OnModelCreating(ModelBuilder mb)
@@ -125,6 +126,14 @@ public class AppDbContext : DbContext
         {
             e.ToTable("galeria");
             e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.AlbumId, x.Orden });
+        });
+
+        mb.Entity<Album>(e =>
+        {
+            e.ToTable("albumes");
+            e.HasKey(x => x.Id);
+            e.HasMany<GaleriaItem>().WithOne().HasForeignKey(i => i.AlbumId).OnDelete(DeleteBehavior.Cascade);
         });
 
         mb.Entity<NotificacionLog>(e =>
