@@ -40,6 +40,7 @@ export const PERMISOS = {
   publicarNoticias: [DIRECTORA],
   publicarTransparencia: [DIRECTORA],
   gestionarGaleria: [DIRECTORA],
+  gestionarPlantillas: [DIRECTORA],
   editarInstitucional: [DIRECTORA],
 };
 
@@ -62,6 +63,8 @@ export function rutaInicio(usuario) {
 export const SECCIONES_PANEL = [
   { permiso: 'gestionarCursos', ruta: '/admin/cursos', titulo: 'Mis cursos', icono: '📚',
     descripcion: 'Crear talleres, ver inscritos y emitir certificados al finalizar.' },
+  { permiso: 'gestionarPlantillas', ruta: '/admin/plantillas-certificado', titulo: 'Plantillas de certificado', icono: '🎓',
+    descripcion: 'Configurar logo, firmas y texto de los certificados por tipo de actividad.' },
   { permiso: 'gestionarEventos', ruta: '/admin/eventos', titulo: 'Eventos', icono: '📅',
     descripcion: 'Programar eventos y actividades de la fundación.' },
   { permiso: 'registrarCheckin', ruta: '/admin/checkin', titulo: 'Check-in QR', icono: '📷',

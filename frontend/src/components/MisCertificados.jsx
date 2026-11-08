@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { certificadosApi } from '../services/api';
+import { archivoUrl, certificadosApi } from '../services/api';
 import { fecha } from '../utils/formato';
 
 export default function MisCertificados() {
@@ -52,6 +52,11 @@ export default function MisCertificados() {
                 <button className="btn-secondary" onClick={() => copiar(c.codigoUnico)}>
                   {copiado === c.codigoUnico ? '¡Copiado!' : 'Copiar código'}
                 </button>
+                {c.valido && c.urlPdf && (
+                  <a className="btn-primary" style={{ marginLeft: 8 }} href={archivoUrl(c.urlPdf)} target="_blank" rel="noreferrer">
+                    Descargar PDF
+                  </a>
+                )}
               </td>
             </tr>
           ))}

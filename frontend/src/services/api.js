@@ -42,6 +42,7 @@ export const cursosApi = {
   misInscripciones: () => api.get('/Cursos/mis-inscripciones'),
   gestion: () => api.get('/Cursos/gestion'),
   finalizar: (id) => api.post(`/Cursos/${id}/finalizar`),
+  asignarPlantilla: (id, plantillaId) => api.put(`/Cursos/${id}/plantilla`, { plantillaId }),
 };
 
 export const eventosApi = {
@@ -61,6 +62,20 @@ export const actividadesApi = {
 export const certificadosApi = {
   verificar: (codigo) => api.get(`/Certificados/verificar/${codigo}`),
   mios: () => api.get('/Certificados/mios'),
+};
+
+export const plantillasApi = {
+  listar: () => api.get('/Certificados/plantillas'),
+  crear: (data) => api.post('/Certificados/plantillas', data),
+  actualizar: (id, data) => api.put(`/Certificados/plantillas/${id}`, data),
+  eliminar: (id) => api.delete(`/Certificados/plantillas/${id}`),
+  subirImagen: (id, campo, archivo) => {
+    const form = new FormData();
+    form.append('archivo', archivo);
+    return api.post(`/Certificados/plantillas/${id}/imagenes/${campo}`, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  quitarImagen: (id, campo) => api.delete(`/Certificados/plantillas/${id}/imagenes/${campo}`),
+  vistaPrevia: (id) => api.get(`/Certificados/plantillas/${id}/vista-previa`, { responseType: 'blob' }),
 };
 
 export const donacionesApi = {

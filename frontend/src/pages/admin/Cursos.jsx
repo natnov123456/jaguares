@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { cursosApi } from '../../services/api';
+import { cursosApi, plantillasApi } from '../../services/api';
 import Estado from '../../components/Estado';
+import SelectorPlantilla from '../../components/SelectorPlantilla';
 import { fecha } from '../../utils/formato';
 
 export default function AdminCursos() {
   const { usuario } = useAuth();
   const [cursos, setCursos] = useState([]);
+  const [plantillas, setPlantillas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState(null);
   const [finalizando, setFinalizando] = useState(null);
@@ -19,7 +21,22 @@ export default function AdminCursos() {
       .catch(() => setMsg({ tipo: 'error', texto: 'No se pudieron cargar los cursos' }))
       .finally(() => setLoading(false));
 
-  useEffect(() => { cargar(); }, []);
+  useEffect(() => {
+    cargar();
+    plantillasApi.listar()
+      .then(r => setPlantillas(r.data))
+      .catch(() => setMsg({ tipo: 'error', texto: 'No se pudieron cargar las plantillas de certificado' }));
+  }, []);
+
+  const asignarPlantilla = async (c, plantillaId) => {
+    setMsg(null);
+    try {
+      await cursosApi.asignarPlantilla(c.id, plantillaId);
+      setCursos(lista => lista.map(x => x.id === c.id ? { ...x, plantillaId } : x));
+    } catch (err) {
+      setMsg({ tipo: 'error', texto: err.response?.data?.error || 'No se pudo asignar la plantilla' });
+    }
+  };
 
   const finalizar = async (c) => {
     if (!window.confirm(
@@ -73,7 +90,7 @@ export default function AdminCursos() {
           <div className="table-wrap">
             <table className="table">
               <thead>
-                <tr><th>Curso</th><th>Fechas</th><th>Inscritos / Cupo</th><th>Estado</th><th>Acciones</th></tr>
+                <tr><th>Curso</th><th>Fechas</th><th>Inscritos / Cupo</th><th>Estado</th><th>Plantilla de certificado</th><th>Acciones</th></tr>
               </thead>
               <tbody>
                 {cursos.map(c => (
@@ -82,6 +99,12 @@ export default function AdminCursos() {
                     <td>{fecha(c.fechaInicio)} – {fecha(c.fechaFin)}</td>
                     <td>{c.inscritos} / {c.cupoMaximo}</td>
                     <td><Estado valor={c.estado} /></td>
+                    <td>
+                      <SelectorPlantilla plantillas={plantillas} value={c.plantillaId}
+                                         disabled={c.estado === 'FINALIZADO' || c.estado === 'CANCELADO'}
+                                         aria-label={`Plantilla de ${c.titulo}`}
+                                         onChange={id => asignarPlantilla(c, id)} />
+                    </td>
                     <td>
                       {c.estado === 'FINALIZADO' ? (
                         <span className="muted">Certificados emitidos</span>
