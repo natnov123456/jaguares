@@ -3,14 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { actividadesApi, cursosApi, eventosApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { puede } from '../config/permisos';
-import { fecha, fechaHora } from '../utils/formato';
+import { fecha, fechaHora, MESES } from '../utils/formato';
 import './Calendario.css';
 
 // FUJ-114: calendario público de cursos y eventos (vista mensual y semanal)
 
 const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
-               'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 const pad = (n) => String(n).padStart(2, '0');
 // Clave de día en hora local (no UTC) para agrupar actividades por celda

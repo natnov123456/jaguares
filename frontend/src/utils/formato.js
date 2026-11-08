@@ -11,6 +11,9 @@ export function fechaHora(valor) {
   return new Date(valor).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' });
 }
 
+export const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
+                      'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
 export function bs(monto) {
   return `Bs. ${Number(monto ?? 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }

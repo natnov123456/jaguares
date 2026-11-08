@@ -1,0 +1,47 @@
+.tr-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.tr-tarjetas .stat-box h2 { font-size: 1.5rem; }
+
+.tr-barras { display: flex; flex-direction: column; gap: 16px; }
+.tr-etiqueta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.tr-etiqueta span { color: #4b5563; font-variant-numeric: tabular-nums; }
+.tr-pista { background: #f3f4f6; border-radius: 999px; height: 14px; overflow: hidden; }
+.tr-barra { background: #f59e0b; height: 100%; border-radius: 999px; min-width: 4px; }
+.tr-barra.tr-reserva { background: #9ca3af; }
+.tr-desc { font-size: 0.9rem; margin-top: 4px; }
+.tr-nota {
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  border-radius: 4px;
+  white-space: pre-line;
+}
+.tr-cta { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* Formulario de la Directora */
+.tr-destino {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr auto;
+  gap: 8px;
+  align-items: start;
+}
+.tr-destino input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+.tr-suma { display: flex; justify-content: space-between; font-weight: 600; padding: 8px 0; flex-wrap: wrap; gap: 8px; }
+.tr-suma.excede { color: #991b1b; }
+
+@media (max-width: 700px) {
+  .tr-destino { grid-template-columns: 1fr 1fr; }
+  .tr-destino .tr-col-desc { grid-column: 1 / -1; }
+}

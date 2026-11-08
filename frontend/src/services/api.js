@@ -66,6 +66,14 @@ export const donacionesApi = {
   misRegistros: () => api.get('/Donaciones/mis-registros'),
 };
 
+export const transparenciaApi = {
+  meses: () => api.get('/Transparencia'),
+  resumen: (anio, mes) => api.get(`/Transparencia/${anio}/${mes}`),
+  vistaPrevia: (anio, mes) => api.get(`/Transparencia/vista-previa/${anio}/${mes}`),
+  publicar: (anio, mes, data) => api.put(`/Transparencia/${anio}/${mes}`, data),
+  despublicar: (anio, mes) => api.delete(`/Transparencia/${anio}/${mes}`),
+};
+
 export const voluntariosApi = {
   postular: (data) => api.post('/Voluntarios/postular', data),
   listar: () => api.get('/Voluntarios'),

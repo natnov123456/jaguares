@@ -38,6 +38,7 @@ export const PERMISOS = {
   registrarDonaciones: [ENCARGADO_EVENTOS, DIRECTORA],
   verReporteFinanciero: [DIRECTORA],
   publicarNoticias: [DIRECTORA],
+  publicarTransparencia: [DIRECTORA],
 };
 
 export function puede(usuario, permiso) {
@@ -69,4 +70,6 @@ export const SECCIONES_PANEL = [
     descripcion: 'Registrar aportes en efectivo recibidos en oficina o eventos.' },
   { permiso: 'publicarNoticias', ruta: '/admin/publicar-noticia', titulo: 'Noticias', icono: '📝',
     descripcion: 'Publicar novedades en el sitio público.' },
+  { permiso: 'publicarTransparencia', ruta: '/admin/transparencia', titulo: 'Transparencia', icono: '📊',
+    descripcion: 'Publicar en el sitio en qué se usaron las donaciones de cada mes.' },
 ];

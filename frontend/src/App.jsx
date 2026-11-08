@@ -14,6 +14,7 @@ import Donaciones from './pages/Donaciones';
 import Voluntariado from './pages/Voluntariado';
 import Noticias from './pages/Noticias';
 import Calendario from './pages/Calendario';
+import Transparencia from './pages/Transparencia';
 
 // Participante / Voluntario
 import MiCuenta from './pages/MiCuenta';
@@ -28,6 +29,7 @@ const Checkin = lazy(() => import('./pages/admin/Checkin'));
 import PublicarNoticia from './pages/admin/PublicarNoticia';
 import AdminDonaciones from './pages/admin/Donaciones';
 import AdminVoluntarios from './pages/admin/Voluntarios';
+import AdminTransparencia from './pages/admin/Transparencia';
 
 // Páginas Voluntario
 import VoluntarioDashboard from './pages/voluntario/Dashboard';
@@ -51,6 +53,7 @@ export default function App() {
           <Route path="/voluntariado" element={<Voluntariado />} />
           <Route path="/noticias" element={<Noticias />} />
           <Route path="/calendario" element={<Calendario />} />
+          <Route path="/transparencia" element={<Transparencia />} />
 
           {/* Participante y Voluntario */}
           <Route path="/mi-cuenta" element={protegida('verMiCuenta', <MiCuenta />)} />
@@ -64,6 +67,7 @@ export default function App() {
           <Route path="/admin/publicar-noticia" element={protegida('publicarNoticias', <PublicarNoticia />)} />
           <Route path="/admin/donaciones" element={protegida('registrarDonaciones', <AdminDonaciones />)} />
           <Route path="/admin/voluntarios" element={protegida('gestionarVoluntarios', <AdminVoluntarios />)} />
+          <Route path="/admin/transparencia" element={protegida('publicarTransparencia', <AdminTransparencia />)} />
 
           {/* Voluntario */}
           <Route path="/voluntario" element={protegida('verPortalVoluntario', <VoluntarioDashboard />)} />
