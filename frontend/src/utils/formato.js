@@ -18,6 +18,8 @@ export function bs(monto) {
   return `Bs. ${Number(monto ?? 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+export const numeroComprobante = (n) => String(n).padStart(6, '0');
+
 export const ESTADO_BADGE = {
   PUBLICADO: 'badge-ok',
   EN_CURSO: 'badge-warn',
