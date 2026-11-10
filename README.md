@@ -78,6 +78,7 @@ psql -U postgres -d fundacion_jaguares -f db/06_jag74_institucional_contacto.sql
 psql -U postgres -d fundacion_jaguares -f db/07_fuj115_plantillas_certificado.sql
 psql -U postgres -d fundacion_jaguares -f db/08_fuj116_comprobante_donacion.sql
 psql -U postgres -d fundacion_jaguares -f db/09_fuj117_campanas_donacion.sql
+psql -U postgres -d fundacion_jaguares -f db/10_fuj111_lista_espera.sql
 ```
 
 > Si ya tenías la base creada, basta con ejecutar los scripts `03_...` en adelante que te falten.
@@ -166,7 +167,7 @@ Los permisos de la interfaz están centralizados en `frontend/src/config/permiso
 
 ### Sitio Público (Landing Page)
 - **Inicio:** Información de la fundación, estadísticas y noticias.
-- **Cursos:** Listado de talleres con control de cupos en tiempo real.
+- **Cursos:** Listado de talleres con control de cupos en tiempo real. Si un curso está lleno, el participante se une a la **lista de espera** y queda inscrito automáticamente (con aviso por email) cuando alguien cancela.
 - **Verificar Certificado:** Búsqueda pública por código para validar autenticidad.
 - **Donaciones:** Pasarela para donar en línea (QR, transferencia o tarjeta).
 - **Voluntariado:** Formulario público para postularse como voluntario.
@@ -196,7 +197,7 @@ Todos los endpoints están documentados en Swagger. Aquí un resumen:
 | Módulo | Endpoints Principales |
 |--------|-----------------------|
 | **Auth** | `POST /registro`, `POST /login` |
-| **Cursos** | `GET /`, `POST /`, `GET /gestion`, `GET /mis-inscripciones`, `POST /{id}/inscribir`, `DELETE /{id}/inscripcion`, `POST /{id}/finalizar` |
+| **Cursos** | `GET /`, `POST /`, `GET /gestion`, `GET /mis-inscripciones`, `POST /{id}/inscribir`, `DELETE /{id}/inscripcion`, `POST /{id}/finalizar`, `GET /mi-lista-espera`, `POST/DELETE /{id}/lista-espera`, `GET /{id}/lista-espera` (docente/directora) |
 | **Eventos** | `GET /`, `POST /`, `POST /{id}/asistencia` |
 | **Certificados** | `GET /verificar/{codigo}` (Público), `GET /mios`, `GET/POST /plantillas`, `PUT/DELETE /plantillas/{id}`, `POST/DELETE /plantillas/{id}/imagenes/{campo}`, `GET /plantillas/{id}/vista-previa` |
 | **Donaciones** | `POST /`, `POST /en-linea`, `GET /mis-registros`, `GET /mias`, `GET /{id}/comprobante`, `GET /reporte/{anio}/{mes}` (solo Directora) |

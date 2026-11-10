@@ -5,6 +5,7 @@ import { cursosApi } from '../services/api';
 import MisCertificados from '../components/MisCertificados';
 import MisEventos from '../components/MisEventos';
 import MisDonaciones from '../components/MisDonaciones';
+import MiListaEspera from '../components/MiListaEspera';
 import Estado from '../components/Estado';
 import { fecha } from '../utils/formato';
 
@@ -23,7 +24,7 @@ export default function MiCuenta() {
   useEffect(() => { cargar(); }, []);
 
   const cancelar = async (i) => {
-    if (!window.confirm(`¿Cancelar tu inscripción a "${i.titulo}"? Tu cupo quedará libre para otra persona.`)) return;
+    if (!window.confirm(`¿Cancelar tu inscripción a "${i.titulo}"? Tu cupo pasará a la primera persona de la lista de espera (o quedará libre).`)) return;
     try {
       await cursosApi.cancelarInscripcion(i.cursoId);
       setMsg({ tipo: 'success', texto: 'Inscripción cancelada' });
@@ -75,6 +76,11 @@ export default function MiCuenta() {
             </table>
           </div>
         )}
+      </section>
+
+      <section className="panel">
+        <h2>Mi lista de espera</h2>
+        <MiListaEspera />
       </section>
 
       <section className="panel">

@@ -43,6 +43,11 @@ export const cursosApi = {
   gestion: () => api.get('/Cursos/gestion'),
   finalizar: (id) => api.post(`/Cursos/${id}/finalizar`),
   asignarPlantilla: (id, plantillaId) => api.put(`/Cursos/${id}/plantilla`, { plantillaId }),
+  // FUJ-111: lista de espera
+  unirseListaEspera: (id) => api.post(`/Cursos/${id}/lista-espera`),
+  salirListaEspera: (id) => api.delete(`/Cursos/${id}/lista-espera`),
+  miListaEspera: () => api.get('/Cursos/mi-lista-espera'),
+  listaEspera: (id) => api.get(`/Cursos/${id}/lista-espera`),
 };
 
 export const eventosApi = {

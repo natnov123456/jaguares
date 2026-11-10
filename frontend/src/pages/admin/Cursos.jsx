@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { cursosApi, plantillasApi } from '../../services/api';
 import Estado from '../../components/Estado';
 import SelectorPlantilla from '../../components/SelectorPlantilla';
-import { fecha } from '../../utils/formato';
+import { fecha, fechaHora } from '../../utils/formato';
 
 export default function AdminCursos() {
   const { usuario } = useAuth();
@@ -13,6 +13,7 @@ export default function AdminCursos() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState(null);
   const [finalizando, setFinalizando] = useState(null);
+  const [cola, setCola] = useState(null); // { curso, personas } (FUJ-111)
   const esDirectora = usuario?.rol === 'DIRECTORA';
 
   const cargar = () =>
@@ -35,6 +36,16 @@ export default function AdminCursos() {
       setCursos(lista => lista.map(x => x.id === c.id ? { ...x, plantillaId } : x));
     } catch (err) {
       setMsg({ tipo: 'error', texto: err.response?.data?.error || 'No se pudo asignar la plantilla' });
+    }
+  };
+
+  const verCola = async (c) => {
+    setMsg(null);
+    try {
+      const { data } = await cursosApi.listaEspera(c.id);
+      setCola({ curso: c, personas: data });
+    } catch {
+      setMsg({ tipo: 'error', texto: 'No se pudo cargar la lista de espera' });
     }
   };
 
@@ -90,7 +101,7 @@ export default function AdminCursos() {
           <div className="table-wrap">
             <table className="table">
               <thead>
-                <tr><th>Curso</th><th>Fechas</th><th>Inscritos / Cupo</th><th>Estado</th><th>Plantilla de certificado</th><th>Acciones</th></tr>
+                <tr><th>Curso</th><th>Fechas</th><th>Inscritos / Cupo</th><th>En espera</th><th>Estado</th><th>Plantilla de certificado</th><th>Acciones</th></tr>
               </thead>
               <tbody>
                 {cursos.map(c => (
@@ -98,6 +109,13 @@ export default function AdminCursos() {
                     <td style={{ fontWeight: 600 }}>{c.titulo}</td>
                     <td>{fecha(c.fechaInicio)} – {fecha(c.fechaFin)}</td>
                     <td>{c.inscritos} / {c.cupoMaximo}</td>
+                    <td>
+                      {c.enEspera > 0 ? (
+                        <button className="btn-secondary" style={{ padding: '4px 10px' }} onClick={() => verCola(c)}>
+                          {c.enEspera} en espera
+                        </button>
+                      ) : <span className="muted">—</span>}
+                    </td>
                     <td><Estado valor={c.estado} /></td>
                     <td>
                       <SelectorPlantilla plantillas={plantillas} value={c.plantillaId}
@@ -122,6 +140,29 @@ export default function AdminCursos() {
           </div>
         )}
       </section>
+
+      {cola && (
+        <div className="modal-fondo" onClick={() => setCola(null)}>
+          <div className="modal" role="dialog" aria-modal="true" aria-label="Lista de espera" onClick={e => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={() => setCola(null)} aria-label="Cerrar">×</button>
+            <h2>Lista de espera</h2>
+            <p className="muted" style={{ marginBottom: 12 }}>
+              {cola.curso.titulo}. Cuando alguien cancela, la primera persona queda inscrita automáticamente y se le avisa por email.
+            </p>
+            {cola.personas.length === 0 ? (
+              <p className="muted">La lista de espera está vacía.</p>
+            ) : (
+              <ol style={{ paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {cola.personas.map(p => (
+                  <li key={p.posicion}>
+                    <strong>{p.nombre}</strong> <span className="muted">· {p.email} · desde {fechaHora(p.anotadoEn)}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
