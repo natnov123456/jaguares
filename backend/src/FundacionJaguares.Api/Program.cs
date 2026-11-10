@@ -61,6 +61,7 @@ builder.Services.AddScoped<ICertificadoService, CertificadoService>();
 builder.Services.AddScoped<IPlantillaService, PlantillaService>();
 builder.Services.AddScoped<IDonacionService, DonacionService>();
 builder.Services.AddScoped<IVoluntarioService, VoluntarioService>();
+builder.Services.AddScoped<IVoluntariadoService, VoluntariadoService>();
 builder.Services.AddScoped<IContenidoService, ContenidoService>();
 builder.Services.AddScoped<IActividadService, ActividadService>();
 builder.Services.AddScoped<IAsistenciaService, AsistenciaService>();

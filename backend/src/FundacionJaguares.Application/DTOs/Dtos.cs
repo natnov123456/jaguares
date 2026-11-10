@@ -94,10 +94,25 @@ public record MesPublicadoDto(int Anio, int Mes, decimal TotalRecaudado);
 
 // VOLUNTARIADO
 public record PostulacionVoluntarioDto(string NombreCompleto, string Email, string? Telefono);
-public record RegistrarParticipacionDto(Guid? EventoId, string Descripcion);
-public record ParticipacionDto(Guid Id, Guid? EventoId, string? EventoTitulo, string? Descripcion, DateTime Fecha);
+public record RegistrarParticipacionDto(Guid? EventoId, string Descripcion, decimal? Horas = null);
+public record ParticipacionDto(Guid Id, Guid? EventoId, string? EventoTitulo, string? Descripcion, DateTime Fecha,
+                               decimal? Horas = null, Guid? CursoId = null, string? CursoTitulo = null);
 public record VoluntarioConHistorialDto(Guid Id, string NombreCompleto, string Email, string? Telefono,
-                                        string Estado, DateTime PostuladoEn, List<ParticipacionDto> Historial);
+                                        string Estado, DateTime PostuladoEn, List<ParticipacionDto> Historial,
+                                        decimal TotalHoras = 0);
+
+// ASIGNACIÓN DE VOLUNTARIOS Y HORAS (FUJ-118). Tipo = "EVENTO" | "CURSO"
+public record ActividadAsignableDto(string Tipo, Guid Id, string Titulo, string? Lugar, DateTime Inicio, DateTime? Fin,
+                                    bool TodoElDia, int Asignados);
+public record AsignarVoluntariosDto(List<Guid>? VoluntarioIds, Guid? EventoId, Guid? CursoId, string? Tarea);
+public record RegistrarHorasDto(decimal Horas);
+// Finalizada = la actividad ya terminó: solo entonces se pueden registrar horas
+public record AsignacionDto(Guid Id, Guid VoluntarioId, string Voluntario, string? Email,
+                            string Tipo, Guid ActividadId, string Actividad, string? Lugar,
+                            DateTime Inicio, DateTime? Fin, bool TodoElDia, bool Finalizada,
+                            string? Tarea, string Estado, decimal? Horas, DateTime AsignadoEn);
+public record AsignacionOmitidaDto(Guid VoluntarioId, string Motivo);
+public record ResultadoAsignacionDto(List<AsignacionDto> Asignadas, List<AsignacionOmitidaDto> Omitidas);
 
 // CONTENIDO
 public record CrearNoticiaDto(string Titulo, string? Resumen, string Contenido, string? ImagenUrl, bool Publicada);

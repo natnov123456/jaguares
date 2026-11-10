@@ -12,7 +12,8 @@ public interface IVoluntarioService
     Task<List<VoluntarioConHistorialDto>> ListarConHistorialAsync();
     Task<VoluntarioConHistorialDto?> ObtenerPorUsuarioAsync(Guid usuarioId, string? email);
     Task<Voluntario> PostularAsync(PostulacionVoluntarioDto dto);
-    Task<ParticipacionVoluntario> RegistrarParticipacionAsync(Guid voluntarioId, Guid? eventoId, string descripcion);
+    Task<ParticipacionVoluntario> RegistrarParticipacionAsync(Guid voluntarioId, Guid? eventoId, string descripcion,
+                                                              decimal? horas = null);
 }
 
 public class VoluntarioService : IVoluntarioService
@@ -43,14 +44,24 @@ public class VoluntarioService : IVoluntarioService
             where ids.Contains(p.VoluntarioId)
             join e in _db.Eventos on p.EventoId equals e.Id into ev
             from e in ev.DefaultIfEmpty()
+            join c in _db.Cursos on p.CursoId equals c.Id into cu
+            from c in cu.DefaultIfEmpty()
             orderby p.Fecha descending
-            select new { p.VoluntarioId, Dto = new ParticipacionDto(p.Id, p.EventoId, e != null ? e.Titulo : null, p.Descripcion, p.Fecha) }
+            select new
+            {
+                p.VoluntarioId,
+                Dto = new ParticipacionDto(p.Id, p.EventoId, e != null ? e.Titulo : null, p.Descripcion, p.Fecha,
+                                           p.Horas, p.CursoId, c != null ? c.Titulo : null)
+            }
         ).ToListAsync();
 
-        return voluntarios.Select(v => new VoluntarioConHistorialDto(
-            v.Id, v.NombreCompleto, v.Email, v.Telefono, v.Estado, v.PostuladoEn,
-            historial.Where(h => h.VoluntarioId == v.Id).Select(h => h.Dto).ToList()
-        )).ToList();
+        return voluntarios.Select(v =>
+        {
+            var propio = historial.Where(h => h.VoluntarioId == v.Id).Select(h => h.Dto).ToList();
+            // FUJ-118: las horas registradas se acumulan en el historial del voluntario
+            return new VoluntarioConHistorialDto(v.Id, v.NombreCompleto, v.Email, v.Telefono, v.Estado, v.PostuladoEn,
+                propio, propio.Sum(h => h.Horas ?? 0));
+        }).ToList();
     }
 
     public async Task<Voluntario> PostularAsync(PostulacionVoluntarioDto dto)
@@ -70,16 +81,19 @@ public class VoluntarioService : IVoluntarioService
         return v;
     }
 
-    public async Task<ParticipacionVoluntario> RegistrarParticipacionAsync(Guid voluntarioId, Guid? eventoId, string descripcion)
+    public async Task<ParticipacionVoluntario> RegistrarParticipacionAsync(Guid voluntarioId, Guid? eventoId, string descripcion,
+                                                                           decimal? horas = null)
     {
         if (await _voluntarios.GetByIdAsync(voluntarioId) == null)
             throw new KeyNotFoundException("Voluntario no encontrado");
+        if (horas is not null) VoluntariadoService.ValidarHoras(horas.Value);
 
         var p = new ParticipacionVoluntario
         {
             VoluntarioId = voluntarioId,
             EventoId = eventoId,
-            Descripcion = descripcion
+            Descripcion = descripcion,
+            Horas = horas
         };
         _db.ParticipacionesVoluntario.Add(p);
         await _db.SaveChangesAsync();

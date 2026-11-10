@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<DestinoTransparencia> DestinosTransparencia => Set<DestinoTransparencia>();
     public DbSet<Voluntario> Voluntarios => Set<Voluntario>();
     public DbSet<ParticipacionVoluntario> ParticipacionesVoluntario => Set<ParticipacionVoluntario>();
+    public DbSet<AsignacionVoluntario> AsignacionesVoluntario => Set<AsignacionVoluntario>();
     public DbSet<Noticia> Noticias => Set<Noticia>();
     public DbSet<GaleriaItem> Galeria => Set<GaleriaItem>();
     public DbSet<Album> Albumes => Set<Album>();
@@ -143,6 +144,15 @@ public class AppDbContext : DbContext
         {
             e.ToTable("participaciones_voluntario");
             e.HasKey(x => x.Id);
+            e.Property(x => x.Horas).HasPrecision(5, 2);
+            e.HasIndex(x => x.AsignacionId).IsUnique();
+        });
+
+        mb.Entity<AsignacionVoluntario>(e =>
+        {
+            e.ToTable("asignaciones_voluntario");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Horas).HasPrecision(5, 2);
         });
 
         mb.Entity<Noticia>(e =>
