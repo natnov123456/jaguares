@@ -118,7 +118,7 @@ export default function Calendario() {
     try {
       await cursosApi.inscribir(a.id);
       setCursosInscritos(new Set([...cursosInscritos, a.id]));
-      setMsg({ tipo: 'success', texto: '✅ Inscripción exitosa. Puedes verla en "Mis cursos".' });
+      setMsg({ tipo: 'success', texto: '✅ Inscripción exitosa. Puedes verla en "Mi panel".' });
       cargar();
       setDetalle({ ...a, cupoDisponible: Math.max(0, (a.cupoDisponible ?? 1) - 1) });
     } catch (err) {
@@ -131,7 +131,7 @@ export default function Calendario() {
     try {
       await eventosApi.inscribir(a.id);
       setEventosInscritos(new Set([...eventosInscritos, a.id]));
-      setMsg({ tipo: 'success', texto: '✅ Inscripción confirmada. Tu código QR de ingreso está en "Mis cursos".' });
+      setMsg({ tipo: 'success', texto: '✅ Inscripción confirmada. Tu código QR de ingreso está en "Mi panel".' });
     } catch (err) {
       setMsg({ tipo: 'error', texto: err.response?.data?.error || 'No se pudo completar la inscripción' });
     }

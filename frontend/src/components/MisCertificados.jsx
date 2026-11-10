@@ -1,19 +1,23 @@
 import { useEffect, useState } from 'react';
-import { archivoUrl, certificadosApi } from '../services/api';
+import { certificadosApi } from '../services/api';
 import { fecha } from '../utils/formato';
+import BotonCertificado from './BotonCertificado';
 
-export default function MisCertificados() {
-  const [certificados, setCertificados] = useState([]);
-  const [loading, setLoading] = useState(true);
+// Si se pasan `certificados` (p. ej. desde "Mi panel") no se vuelven a pedir a la API
+export default function MisCertificados({ certificados: recibidos }) {
+  const [propios, setPropios] = useState([]);
+  const [loading, setLoading] = useState(!recibidos);
   const [error, setError] = useState('');
   const [copiado, setCopiado] = useState(null);
+  const certificados = recibidos ?? propios;
 
   useEffect(() => {
+    if (recibidos) return;
     certificadosApi.mios()
-      .then(r => setCertificados(r.data))
+      .then(r => setPropios(r.data))
       .catch(() => setError('No se pudieron cargar tus certificados'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [recibidos]);
 
   const copiar = async (codigo) => {
     try {
@@ -49,14 +53,12 @@ export default function MisCertificados() {
                 {!c.valido && <span className="badge badge-off" style={{ marginLeft: 8 }}>Anulado</span>}
               </td>
               <td>
-                <button className="btn-secondary" onClick={() => copiar(c.codigoUnico)}>
-                  {copiado === c.codigoUnico ? '¡Copiado!' : 'Copiar código'}
-                </button>
-                {c.valido && c.urlPdf && (
-                  <a className="btn-primary" style={{ marginLeft: 8 }} href={archivoUrl(c.urlPdf)} target="_blank" rel="noreferrer">
-                    Descargar PDF
-                  </a>
-                )}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button className="btn-secondary" onClick={() => copiar(c.codigoUnico)}>
+                    {copiado === c.codigoUnico ? '¡Copiado!' : 'Copiar código'}
+                  </button>
+                  {c.valido && <BotonCertificado id={c.id} codigo={c.codigoUnico} />}
+                </div>
               </td>
             </tr>
           ))}

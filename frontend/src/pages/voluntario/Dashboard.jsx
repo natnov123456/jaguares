@@ -76,7 +76,7 @@ export default function VoluntarioDashboard() {
             <h2>Formación</h2>
             <p className="muted" style={{ marginBottom: 12 }}>Como voluntario/a también puedes tomar cursos de la fundación.</p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Link to="/mi-cuenta" className="btn-primary">Mis cursos</Link>
+              <Link to="/mi-cuenta" className="btn-primary">Mi panel</Link>
               <Link to="/voluntario/certificados" className="btn-secondary">Mis certificados</Link>
             </div>
           </section>

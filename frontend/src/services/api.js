@@ -54,6 +54,7 @@ export const eventosApi = {
   listar: () => api.get('/Eventos'),
   crear: (data) => api.post('/Eventos', data),
   inscribir: (id) => api.post(`/Eventos/${id}/inscribir`),
+  cancelarInscripcion: (id) => api.delete(`/Eventos/${id}/inscripcion`),
   misInscripciones: () => api.get('/Eventos/mis-inscripciones'),
   qr: (inscripcionId) => api.get(`/Eventos/mis-inscripciones/${inscripcionId}/qr`, { responseType: 'blob' }),
   checkin: (id, codigo) => api.post(`/Eventos/${id}/checkin`, { codigo }),
@@ -67,6 +68,12 @@ export const actividadesApi = {
 export const certificadosApi = {
   verificar: (codigo) => api.get(`/Certificados/verificar/${codigo}`),
   mios: () => api.get('/Certificados/mios'),
+  pdf: (id) => api.get(`/Certificados/${id}/pdf`, { responseType: 'blob' }),
+};
+
+// FUJ-112: panel del participante
+export const participanteApi = {
+  panel: () => api.get('/Participante/panel'),
 };
 
 export const plantillasApi = {

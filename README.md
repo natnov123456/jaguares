@@ -172,9 +172,12 @@ Los permisos de la interfaz están centralizados en `frontend/src/config/permiso
 - **Donaciones:** Pasarela para donar en línea (QR, transferencia o tarjeta).
 - **Voluntariado:** Formulario público para postularse como voluntario.
 
-### Mi Cuenta (`/mi-cuenta`) — Participante y Voluntario
-- **Mis inscripciones:** Cursos inscritos con estado; se puede cancelar mientras el curso esté publicado.
-- **Mis certificados:** Certificados emitidos con su código de verificación.
+### Mi panel (`/mi-cuenta`) — Participante y Voluntario
+- **Resumen:** cursos en marcha, próximos eventos, actividades completadas, certificados y lugares en lista de espera.
+- **Próximas actividades:** cursos y eventos inscritos; se pueden cancelar (el cupo pasa a la lista de espera o queda libre) y ver el QR de ingreso a eventos.
+- **Historial:** actividades pasadas con su resultado (asistió / no asistió / certificado emitido).
+- **Certificados:** descarga del PDF (se genera al momento si el certificado es anterior a las plantillas) y código de verificación.
+- **Lista de espera y donaciones:** posición en cada cola y comprobantes de donación.
 
 ### Portal de Administración (`/admin`) — cada rol ve solo sus secciones
 - **Panel:** Tarjetas de las secciones permitidas para el rol.
@@ -198,8 +201,9 @@ Todos los endpoints están documentados en Swagger. Aquí un resumen:
 |--------|-----------------------|
 | **Auth** | `POST /registro`, `POST /login` |
 | **Cursos** | `GET /`, `POST /`, `GET /gestion`, `GET /mis-inscripciones`, `POST /{id}/inscribir`, `DELETE /{id}/inscripcion`, `POST /{id}/finalizar`, `GET /mi-lista-espera`, `POST/DELETE /{id}/lista-espera`, `GET /{id}/lista-espera` (docente/directora) |
-| **Eventos** | `GET /`, `POST /`, `POST /{id}/asistencia` |
-| **Certificados** | `GET /verificar/{codigo}` (Público), `GET /mios`, `GET/POST /plantillas`, `PUT/DELETE /plantillas/{id}`, `POST/DELETE /plantillas/{id}/imagenes/{campo}`, `GET /plantillas/{id}/vista-previa` |
+| **Eventos** | `GET /`, `POST /`, `POST /{id}/asistencia`, `POST /{id}/inscribir`, `DELETE /{id}/inscripcion`, `GET /mis-inscripciones`, `POST /{id}/checkin` |
+| **Certificados** | `GET /verificar/{codigo}` (Público), `GET /mios`, `GET /{id}/pdf` (dueño), `GET/POST /plantillas`, `PUT/DELETE /plantillas/{id}`, `POST/DELETE /plantillas/{id}/imagenes/{campo}`, `GET /plantillas/{id}/vista-previa` |
+| **Participante** | `GET /panel` (cursos y eventos próximos/pasados, certificados y lista de espera) |
 | **Donaciones** | `POST /`, `POST /en-linea`, `GET /mis-registros`, `GET /mias`, `GET /{id}/comprobante`, `GET /reporte/{anio}/{mes}` (solo Directora) |
 | **Campañas** | `GET /` (Público), `GET /admin`, `POST /`, `PUT /{id}` (solo Directora) |
 | **Voluntarios** | `POST /postular`, `GET /` (con historial), `GET /mi-historial`, `POST /{id}/participaciones` |
