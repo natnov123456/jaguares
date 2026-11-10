@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { JaguarCabeza } from './JaguarSvg';
 import { useAuth } from '../context/AuthContext';
 import { ETIQUETA_ROL, SECCIONES_PANEL, esStaff, puede } from '../config/permisos';
 import './Navbar.css';
@@ -7,13 +9,21 @@ export default function Navbar() {
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
   const staff = esStaff(usuario);
+  const [conSombra, setConSombra] = useState(false);
+
+  useEffect(() => {
+    const alBajar = () => setConSombra(window.scrollY > 8);
+    alBajar();
+    window.addEventListener('scroll', alBajar, { passive: true });
+    return () => window.removeEventListener('scroll', alBajar);
+  }, []);
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${conSombra ? 'navbar-scroll' : ''}`}>
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          <img src="/logo-jaguar.png" alt="Jaguar" className="logo-img" onError={(e) => { e.target.style.display = 'none'; }} />
-          Fundación Unión de los Jaguares
+          <JaguarCabeza className="logo-img" titulo="" />
+          <span>Fundación Unión de los Jaguares</span>
         </Link>
 
         <div className="navbar-links">

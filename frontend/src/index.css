@@ -305,3 +305,187 @@ button {
 }
 .pestana:hover { color: #b45309; }
 .pestana.activa { color: #b45309; border-bottom-color: #f59e0b; }
+
+/* ===================== Front mejorado ===================== */
+/* Mismos colores y tipografía; transiciones, profundidad y detalles de jaguar. */
+html { scroll-behavior: smooth; }
+::selection { background: #fde68a; color: #111827; }
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.contenido { flex: 1; }
+
+/* Botones: respuesta al pasar el mouse y foco visible con teclado */
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-primary-large,
+.btn-secondary-large {
+  display: inline-block;
+  transition: background .2s, color .2s, transform .15s, box-shadow .2s;
+}
+.btn-primary { box-shadow: 0 2px 0 #b45309; }
+.btn-primary:hover:not(:disabled),
+.btn-primary-large:hover,
+.btn-secondary-large:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(217, 119, 6, .3);
+}
+.btn-primary:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 1px 0 #b45309; }
+.btn-secondary:hover:not(:disabled) { transform: translateY(-1px); }
+button:disabled { opacity: .75; }
+
+:focus-visible {
+  outline: 3px solid rgba(245, 158, 11, .6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.form-stack input:focus,
+.form-stack select:focus,
+.form-stack textarea:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, .2);
+}
+
+/* Tarjetas y paneles con un poco más de profundidad */
+.card,
+.panel {
+  border: 1px solid rgba(17, 24, 39, .05);
+  box-shadow: 0 1px 2px rgba(17, 24, 39, .06), 0 4px 12px rgba(17, 24, 39, .04);
+  transition: transform .25s, box-shadow .25s;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(17, 24, 39, .1);
+}
+.panel { border-radius: 12px; }
+.card { border-radius: 12px; }
+
+.table tbody tr { transition: background .15s; }
+.table tbody tr:hover { background: #fffbeb; }
+.table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #6b7280;
+}
+
+.stat-box {
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(180, 83, 9, .1);
+}
+
+/* Títulos de página con la "marca" del jaguar */
+.page-header h1 {
+  position: relative;
+  padding-bottom: 10px;
+}
+.page-header h1::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 56px;
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f59e0b, #b45309);
+}
+
+/* Entrada suave de cada página */
+.page { animation: entrar .45s ease-out both; }
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Aparición al hacer scroll (ver RevelarAlScroll) */
+.revelar {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .7s ease-out, transform .7s ease-out;
+}
+.revelar.visible { opacity: 1; transform: none; }
+.revelar-2 { transition-delay: .12s; }
+.revelar-3 { transition-delay: .24s; }
+
+.modal { border-radius: 14px; box-shadow: 0 24px 48px rgba(17, 24, 39, .3); animation: entrar .25s ease-out both; }
+.modal-fondo { backdrop-filter: blur(2px); }
+
+/* Patrón de rosetas de jaguar (fondos decorativos) */
+.fondo-rosetas {
+  background-image:
+    radial-gradient(circle at 20px 20px, transparent 5px, rgba(120, 53, 15, .16) 6px, rgba(120, 53, 15, .16) 8px, transparent 9px),
+    radial-gradient(circle at 60px 55px, transparent 4px, rgba(120, 53, 15, .12) 5px, rgba(120, 53, 15, .12) 7px, transparent 8px);
+  background-size: 80px 80px;
+}
+
+/* Pie de página */
+.pie {
+  position: relative;
+  margin-top: 48px;
+  background: #111827;
+  color: #d1d5db;
+  border-top: 3px solid #f59e0b;
+  overflow: hidden;
+}
+.pie-rosetas {
+  position: absolute;
+  inset: 0;
+  opacity: .5;
+  background-image:
+    radial-gradient(circle at 20px 20px, transparent 5px, rgba(245, 158, 11, .14) 6px, rgba(245, 158, 11, .14) 8px, transparent 9px),
+    radial-gradient(circle at 60px 55px, transparent 4px, rgba(245, 158, 11, .1) 5px, rgba(245, 158, 11, .1) 7px, transparent 8px);
+  background-size: 80px 80px;
+  pointer-events: none;
+}
+.pie-contenido {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.2fr 2fr;
+  gap: 32px;
+  padding-top: 40px;
+  padding-bottom: 32px;
+}
+.pie-marca { display: flex; gap: 14px; align-items: flex-start; }
+.pie-marca strong { color: #f59e0b; font-size: 1.1rem; }
+.pie-marca p { font-size: .9rem; color: #9ca3af; margin-top: 4px; }
+.pie-logo { width: 52px; height: 52px; flex-shrink: 0; }
+.pie-enlaces { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.pie-enlaces h4 {
+  color: #fbbf24;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 8px;
+}
+.pie-enlaces a {
+  display: block;
+  padding: 3px 0;
+  color: #d1d5db;
+  font-size: .92rem;
+  transition: color .2s, transform .2s;
+}
+.pie-enlaces a:hover { color: #f59e0b; transform: translateX(3px); }
+.pie-final {
+  position: relative;
+  text-align: center;
+  font-size: .8rem;
+  color: #6b7280;
+  padding: 14px 24px;
+  border-top: 1px solid #1f2937;
+}
+@media (max-width: 800px) {
+  .pie-contenido { grid-template-columns: 1fr; }
+  .pie-enlaces { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .page, .modal { animation: none; }
+  .revelar { opacity: 1; transform: none; transition: none; }
+}

@@ -1,0 +1,105 @@
+/* Jaguar que baja con el scroll. --progreso va de 0 (arriba) a 1 (final de la página). */
+.jaguar-scroll {
+  --progreso: 0;
+  --ancho: 46px;
+  --alto: 92px;
+  position: fixed;
+  right: 12px;
+  top: 100px;
+  bottom: 20px;
+  width: var(--ancho);
+  z-index: 90;
+  pointer-events: none;
+  transition: opacity .3s;
+}
+.jaguar-scroll.sin-recorrido { opacity: 0; }
+
+/* Liana punteada por la que baja y el tramo ya recorrido */
+.jaguar-scroll-liana,
+.jaguar-scroll-recorrido {
+  position: absolute;
+  left: 14%; /* bajo las patas: el jaguar camina sobre la liana */
+  top: 0;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 3px;
+}
+.jaguar-scroll-liana {
+  bottom: 0;
+  background: repeating-linear-gradient(to bottom, rgba(180, 83, 9, .28) 0 6px, transparent 6px 12px);
+}
+.jaguar-scroll-recorrido {
+  height: calc(var(--progreso) * (100% - var(--alto)) + var(--alto) / 2);
+  background: linear-gradient(to bottom, #fcd34d, #d97706);
+  box-shadow: 0 0 8px rgba(245, 158, 11, .45);
+}
+
+.jaguar-scroll-figura {
+  position: absolute;
+  left: 0;
+  top: calc(var(--progreso) * (100% - var(--alto)));
+  width: var(--ancho);
+  height: var(--alto);
+  padding: 0;
+  border: none;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+  filter: drop-shadow(0 4px 6px rgba(17, 24, 39, .25));
+}
+
+/* El dibujo es horizontal: se gira para que baje de cabeza, y al subir se da la vuelta */
+.jaguar-scroll-svg {
+  position: absolute;
+  width: var(--alto);
+  height: var(--ancho);
+  left: calc((var(--ancho) - var(--alto)) / 2);
+  top: calc((var(--alto) - var(--ancho)) / 2);
+  transform: rotate(90deg);
+  transition: transform .45s cubic-bezier(.34, 1.56, .64, 1);
+  overflow: visible;
+}
+.jaguar-scroll.subiendo .jaguar-scroll-svg { transform: rotate(-90deg) scaleY(-1); }
+.jaguar-scroll-figura:hover .jaguar-scroll-svg { filter: brightness(1.08); }
+
+/* Caminata: las patas se mueven en pares diagonales y la cola se balancea */
+.jaguar-scroll .jag-pata,
+.jaguar-scroll .jag-cola,
+.jaguar-scroll .jag-cabeza {
+  transform-box: fill-box;
+}
+.jaguar-scroll .jag-pata { transform-origin: 50% 8%; }
+.jaguar-scroll .jag-cola { transform-origin: 100% 100%; animation: jag-cola 2.4s ease-in-out infinite; }
+.jaguar-scroll .jag-cabeza { transform-origin: 20% 70%; }
+
+.jaguar-scroll.caminando .jag-pata-a,
+.jaguar-scroll.caminando .jag-pata-d { animation: jag-paso .42s ease-in-out infinite; }
+.jaguar-scroll.caminando .jag-pata-b,
+.jaguar-scroll.caminando .jag-pata-c { animation: jag-paso .42s ease-in-out infinite reverse; }
+.jaguar-scroll.caminando .jag-cabeza { animation: jag-cabeceo .42s ease-in-out infinite; }
+.jaguar-scroll.caminando .jag-cola { animation-duration: .8s; }
+
+/* Al llegar al final se sienta a descansar: las patas se recogen */
+.jaguar-scroll.llego:not(.caminando) .jag-pata { transform: scaleY(.82); transition: transform .3s; }
+
+@keyframes jag-paso {
+  0%, 100% { transform: rotate(-24deg); }
+  50% { transform: rotate(24deg); }
+}
+@keyframes jag-cola {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(10deg); }
+}
+@keyframes jag-cabeceo {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(1.2px); }
+}
+
+@media (max-width: 700px) {
+  .jaguar-scroll { --ancho: 30px; --alto: 60px; right: 4px; opacity: .9; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jaguar-scroll *,
+  .jaguar-scroll.caminando * { animation: none !important; transition: none !important; }
+}

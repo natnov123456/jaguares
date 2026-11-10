@@ -3,6 +3,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import JaguarScroll from './components/JaguarScroll';
+import PiePagina from './components/PiePagina';
+import RevelarAlScroll from './components/RevelarAlScroll';
 
 // Páginas Públicas
 import Home from './pages/Home';
@@ -51,6 +54,9 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Navbar />
+        <JaguarScroll />
+        <RevelarAlScroll />
+        <main className="contenido">
         <Routes>
           {/* Rutas Públicas */}
           <Route path="/" element={<Home />} />
@@ -96,6 +102,8 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </main>
+        <PiePagina />
       </BrowserRouter>
     </AuthProvider>
   );
