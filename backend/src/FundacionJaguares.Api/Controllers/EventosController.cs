@@ -29,6 +29,16 @@ public class EventosController : ControllerBase
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
     }
 
+    // FUJ-112: cancelar la inscripción a un evento desde "Mi panel"
+    [HttpDelete("{id:guid}/inscripcion")]
+    [Authorize(Roles = "PARTICIPANTE,VOLUNTARIO")]
+    public async Task<IActionResult> Cancelar(Guid id)
+    {
+        try { await _asistencia.CancelarAsync(id, UsuarioId()); return NoContent(); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
     [HttpGet("mis-inscripciones")]
     [Authorize(Roles = "PARTICIPANTE,VOLUNTARIO")]
     public async Task<IActionResult> MisInscripciones() => Ok(await _asistencia.MisInscripcionesAsync(UsuarioId()));

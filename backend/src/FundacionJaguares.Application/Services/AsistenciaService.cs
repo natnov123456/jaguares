@@ -13,6 +13,7 @@ public interface IAsistenciaService
 {
     Task<MiInscripcionEventoDto> InscribirAsync(Guid eventoId, Guid participanteId);
     Task<List<MiInscripcionEventoDto>> MisInscripcionesAsync(Guid participanteId);
+    Task CancelarAsync(Guid eventoId, Guid participanteId);
     Task<string> GenerarQrSvgAsync(Guid inscripcionId, Guid participanteId);
     Task<CheckinResultadoDto> CheckinAsync(Guid eventoId, string codigo, Guid registradoPor);
     Task<List<InscritoEventoDto>> ListarInscritosAsync(Guid eventoId);
@@ -70,9 +71,28 @@ public class AsistenciaService : IAsistenciaService
         if (usuario is not null)
             await _email.EnviarAsync(usuario.Email, $"Inscripción confirmada: {evento.Titulo}",
                 $"Hola {usuario.NombreCompleto}, tu inscripción a \"{evento.Titulo}\" está confirmada. " +
-                $"Presenta tu código QR al ingresar (lo encuentras en \"Mis cursos\" del sitio). Código: {insc.CodigoQr}");
+                $"Presenta tu código QR al ingresar (lo encuentras en \"Mi panel\" del sitio). Código: {insc.CodigoQr}");
 
         return ADto(insc, evento);
+    }
+
+    // FUJ-112: cancelar desde "Mi panel". El QR deja de servir y el lugar queda libre;
+    // si cambia de opinión puede volver a inscribirse y recibe un código nuevo.
+    public async Task CancelarAsync(Guid eventoId, Guid participanteId)
+    {
+        var insc = await _db.InscripcionesEvento
+            .FirstOrDefaultAsync(i => i.EventoId == eventoId && i.ParticipanteId == participanteId && i.Estado != "CANCELADA")
+            ?? throw new KeyNotFoundException("Inscripción no encontrada");
+        if (insc.Estado == "ASISTIO")
+            throw new InvalidOperationException("Tu asistencia ya fue registrada: la inscripción no se puede cancelar");
+
+        var evento = await _db.Eventos.FindAsync(eventoId)
+                     ?? throw new KeyNotFoundException("Evento no encontrado");
+        if (evento.FechaInicio <= DateTime.UtcNow)
+            throw new InvalidOperationException("El evento ya comenzó: la inscripción no se puede cancelar");
+
+        insc.Estado = "CANCELADA";
+        await _db.SaveChangesAsync();
     }
 
     public async Task<List<MiInscripcionEventoDto>> MisInscripcionesAsync(Guid participanteId)

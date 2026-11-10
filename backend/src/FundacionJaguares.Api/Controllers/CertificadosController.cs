@@ -32,6 +32,22 @@ public class CertificadosController : ControllerBase
         return Ok(await _certs.ListarPorParticipanteAsync(id));
     }
 
+    // FUJ-112: descarga del PDF desde "Mi panel" (solo el dueño del certificado)
+    [HttpGet("{id:guid}/pdf")]
+    [Authorize(Roles = "PARTICIPANTE,VOLUNTARIO")]
+    public async Task<IActionResult> Pdf(Guid id)
+    {
+        var usuarioId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
+                        ?? User.FindFirstValue("sub")!);
+        try
+        {
+            var pdf = await _certs.DescargarPdfAsync(id, usuarioId);
+            return File(pdf.Pdf, "application/pdf", pdf.NombreArchivo);
+        }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
     // ---- Plantillas (FUJ-115) ----
 
     // Los docentes las consultan para asignarlas a sus cursos; solo la Directora las modifica

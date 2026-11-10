@@ -20,6 +20,19 @@ public record ListaEsperaDto(Guid CursoId, string Titulo, DateOnly FechaInicio, 
                              int Posicion, int TotalEnEspera, DateTime AnotadoEn);
 public record EnEsperaGestionDto(int Posicion, string Nombre, string Email, DateTime AnotadoEn);
 
+// PANEL DEL PARTICIPANTE (FUJ-112)
+// Tipo = "CURSO" | "EVENTO". EstadoInscripcion: CONFIRMADA | ASISTIO | NO_ASISTIO.
+// InscripcionEventoId solo en eventos (para pedir el QR); TodoElDia = true en cursos (fechas sin hora).
+public record ActividadPanelDto(Guid ActividadId, string Tipo, string Titulo, string? Lugar,
+                                DateTime Inicio, DateTime? Fin, bool TodoElDia,
+                                string EstadoActividad, string EstadoInscripcion, bool PuedeCancelar,
+                                Guid? InscripcionEventoId, string? CodigoCertificado);
+public record ResumenPanelDto(int CursosActivos, int EventosProximos, int ActividadesCompletadas,
+                              int Certificados, int EnListaEspera);
+public record PanelParticipanteDto(ResumenPanelDto Resumen, List<ActividadPanelDto> Proximas,
+                                   List<ActividadPanelDto> Pasadas, List<CertificadoDto> Certificados,
+                                   List<ListaEsperaDto> ListaEspera);
+
 // EVENTOS
 public record CrearEventoDto(string Titulo, string? Descripcion, string? Lugar,
                              DateTime FechaInicio, DateTime? FechaFin);
