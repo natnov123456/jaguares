@@ -3,6 +3,7 @@ using FundacionJaguares.Application.DTOs;
 using FundacionJaguares.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace FundacionJaguares.Api.Controllers;
 
@@ -89,7 +90,26 @@ public class EventosController : ControllerBase
                      ?? User.FindFirstValue("sub")!);
         try { return Ok(await _eventos.RegistrarAsistenciaAsync(id, dto.ParticipanteId, quien)); }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
     }
+
+    // FUJ-120: cierra la asistencia, finaliza el evento y envía la encuesta a los asistentes.
+    // El cuerpo es opcional: sin preguntas se usan las de por defecto.
+    [HttpPost("{id:guid}/cerrar-asistencia")]
+    [Authorize(Roles = "ENCARGADO_EVENTOS,DIRECTORA")]
+    public async Task<IActionResult> CerrarAsistencia(Guid id,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CerrarActividadDto? dto)
+    {
+        try { return Ok(await _eventos.CerrarAsistenciaAsync(id, dto?.Preguntas, UsuarioId())); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    // Eventos para la gestión: incluye los ya realizados y cerrados (el listado público solo muestra los abiertos)
+    [HttpGet("gestion")]
+    [Authorize(Roles = "ENCARGADO_EVENTOS,DIRECTORA")]
+    public async Task<IActionResult> Gestion() => Ok(await _eventos.ListarGestionAsync());
 
     [HttpGet("{id:guid}/asistencias")]
     [Authorize(Roles = "ENCARGADO_EVENTOS,DIRECTORA")]

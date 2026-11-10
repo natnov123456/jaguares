@@ -134,6 +134,9 @@ public class AsistenciaService : IAsistenciaService
             return new("OTRO_EVENTO", $"Este QR corresponde a otro evento: {fila.e.Titulo}", fila.NombreCompleto, null);
         if (fila.i.Estado == "ASISTIO")
             return new("YA_REGISTRADO", "La asistencia ya fue registrada", fila.NombreCompleto, fila.i.CheckinEn);
+        // FUJ-120: una vez cerrada la asistencia (y enviada la encuesta) no se aceptan más ingresos
+        if (fila.e.Estado == "FINALIZADO")
+            return new("FUERA_DE_FECHA", "La asistencia de este evento ya fue cerrada", fila.NombreCompleto, null);
 
         var ahora = DateTime.UtcNow;
         if (ahora < fila.e.FechaInicio - VentanaCheckin || ahora > (fila.e.FechaFin ?? fila.e.FechaInicio) + VentanaCheckin)

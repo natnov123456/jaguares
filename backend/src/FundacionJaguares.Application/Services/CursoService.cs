@@ -20,7 +20,9 @@ public interface ICursoService
     Task<List<ListaEsperaDto>> MiListaEsperaAsync(Guid participanteId);
     Task<List<EnEsperaGestionDto>> ListarEsperaGestionAsync(Guid cursoId, Guid? docenteId);
     Task<List<CursoGestionDto>> ListarGestionAsync(Guid? docenteId);
-    Task<int> FinalizarYGenerarCertificadosAsync(Guid cursoId, Guid? docenteId);
+    // FUJ-120: al finalizar se envía la encuesta de satisfacción (preguntas == null: las de por defecto)
+    Task<FinalizarCursoResultadoDto> FinalizarYGenerarCertificadosAsync(Guid cursoId, Guid? docenteId,
+        Guid usuarioId, List<PreguntaEncuestaDto>? preguntas = null);
     Task AsignarPlantillaAsync(Guid cursoId, Guid? plantillaId, Guid? docenteId);
 }
 
@@ -32,12 +34,16 @@ public class CursoService : ICursoService
     private readonly IEmailAdapter _email;
     private readonly IPlantillaService _plantillas;
     private readonly ListaEsperaRepository _espera;
+    private readonly IEncuestaService _encuestas;
 
     private static readonly string[] EstadosAbiertos = ["PUBLICADO", "EN_CURSO"];
 
     public CursoService(CursoRepository cursos, CertificadoRepository certs, AppDbContext db, IEmailAdapter email,
-                        IPlantillaService plantillas, ListaEsperaRepository espera)
-    { _cursos = cursos; _certs = certs; _db = db; _email = email; _plantillas = plantillas; _espera = espera; }
+                        IPlantillaService plantillas, ListaEsperaRepository espera, IEncuestaService encuestas)
+    {
+        _cursos = cursos; _certs = certs; _db = db; _email = email; _plantillas = plantillas; _espera = espera;
+        _encuestas = encuestas;
+    }
 
     public Task<List<Curso>> ListarPublicadosAsync() => _cursos.GetPublicadosAsync();
 
@@ -275,8 +281,11 @@ public class CursoService : ICursoService
     }
 
     // docenteId == null: la directora puede finalizar cualquier curso
-    public async Task<int> FinalizarYGenerarCertificadosAsync(Guid cursoId, Guid? docenteId)
+    public async Task<FinalizarCursoResultadoDto> FinalizarYGenerarCertificadosAsync(Guid cursoId, Guid? docenteId,
+        Guid usuarioId, List<PreguntaEncuestaDto>? preguntas = null)
     {
+        // Se validan antes de cerrar: un curso no puede quedar finalizado con una encuesta inválida
+        var preguntasValidas = EncuestaService.ValidarPreguntas(preguntas);
         var curso = await _cursos.GetByIdAsync(cursoId)
                     ?? throw new KeyNotFoundException("Curso no encontrado");
         if (docenteId != null && curso.DocenteId != docenteId)
@@ -290,6 +299,7 @@ public class CursoService : ICursoService
 
         var diseno = await _plantillas.CargarDisenoAsync(curso.PlantillaId);
         var avisos = new List<(string Email, string Codigo)>();
+        var asistentes = new List<Guid>();
         foreach (var ins in inscripciones)
         {
             var u = await _db.Usuarios.FindAsync(ins.ParticipanteId);
@@ -309,17 +319,28 @@ public class CursoService : ICursoService
                 new DatosCertificado(u.NombreCompleto, curso.Titulo, cert.EmitidoEn, codigo), cursoId, cert.Id);
             _db.Certificados.Add(cert);
             avisos.Add((u.Email, codigo));
+            asistentes.Add(u.Id);
         }
 
-        curso.Estado = "FINALIZADO";
-        await _db.SaveChangesAsync();
-        // FUJ-111: con el curso cerrado, la lista de espera ya no puede recibir cupos
-        await _espera.RetirarTodosAsync(cursoId);
+        EncuestaPreparada encuesta;
+        // Certificados, cierre de la lista de espera y encuesta en una sola transacción
+        await using (var tx = await _db.Database.BeginTransactionAsync())
+        {
+            curso.Estado = "FINALIZADO";
+            await _db.SaveChangesAsync();
+            // FUJ-111: con el curso cerrado, la lista de espera ya no puede recibir cupos
+            await _espera.RetirarTodosAsync(cursoId);
+            // FUJ-120: los asistentes (quienes reciben certificado) reciben el enlace a la encuesta
+            encuesta = await _encuestas.PrepararAsync("CURSO", cursoId, curso.Titulo, asistentes, preguntasValidas, usuarioId);
+            await tx.CommitAsync();
+        }
 
         // Se avisa después de guardar: si algo falla al emitir, nadie recibe un código que no existe
         foreach (var (email, codigo) in avisos)
             await _email.EnviarAsync(email, "¡Felicidades! Tu certificado está listo",
                 $"Código de verificación: {codigo}");
-        return avisos.Count;
+
+        await _encuestas.NotificarAsync(encuesta);
+        return new FinalizarCursoResultadoDto(avisos.Count, encuesta.Invitados.Count, encuesta.EncuestaId);
     }
 }

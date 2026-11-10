@@ -39,6 +39,8 @@ builder.Services.AddScoped<ContenidoRepository>();
 // Correo: sección "Smtp" (guárdala con user-secrets, nunca en appsettings.json). Sin Host, solo se registra en el log.
 builder.Services.AddSingleton(builder.Configuration.GetSection("Smtp").Get<SmtpOpciones>() ?? new SmtpOpciones());
 builder.Services.AddSingleton(builder.Configuration.GetSection("Contacto").Get<ContactoOpciones>() ?? new ContactoOpciones());
+// Dirección pública del frontend, para los enlaces de los correos (encuestas FUJ-120)
+builder.Services.AddSingleton(builder.Configuration.GetSection("App").Get<AppOpciones>() ?? new AppOpciones());
 builder.Services.AddScoped<IEmailAdapter, EmailAdapter>();
 builder.Services.AddScoped<IWhatsAppAdapter, WhatsAppAdapter>();
 builder.Services.AddScoped<IPaymentAdapter, PaymentAdapter>();
@@ -70,6 +72,7 @@ builder.Services.AddScoped<IGaleriaService, GaleriaService>();
 builder.Services.AddScoped<IInstitucionalService, InstitucionalService>();
 builder.Services.AddScoped<IContactoService, ContactoService>();
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
+builder.Services.AddScoped<IEncuestaService, EncuestaService>();
 
 // 5) JWT Auth
 var jwtSecret = cfg["Jwt:Secret"]!;
@@ -100,6 +103,10 @@ builder.Services.AddRateLimiter(o =>
     o.AddPolicy("donacion-en-linea", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
+    // FUJ-120: el enlace de la encuesta es público (token); se limita para frenar intentos de adivinarlo
+    o.AddPolicy("encuesta-publica", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(10) }));
 });
 
 // 7) Swagger (compatible con Swashbuckle 10 / Microsoft.OpenApi 2.x)

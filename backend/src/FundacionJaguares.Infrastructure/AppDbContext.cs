@@ -28,6 +28,10 @@ public class AppDbContext : DbContext
     public DbSet<GaleriaItem> Galeria => Set<GaleriaItem>();
     public DbSet<Album> Albumes => Set<Album>();
     public DbSet<NotificacionLog> NotificacionesLog => Set<NotificacionLog>();
+    public DbSet<Encuesta> Encuestas => Set<Encuesta>();
+    public DbSet<EncuestaPregunta> EncuestaPreguntas => Set<EncuestaPregunta>();
+    public DbSet<EncuestaInvitacion> EncuestaInvitaciones => Set<EncuestaInvitacion>();
+    public DbSet<EncuestaRespuesta> EncuestaRespuestas => Set<EncuestaRespuesta>();
     public DbSet<PaginaInstitucional> PaginaInstitucional => Set<PaginaInstitucional>();
     public DbSet<ConsultaContacto> ConsultasContacto => Set<ConsultaContacto>();
 
@@ -188,6 +192,41 @@ public class AppDbContext : DbContext
             e.ToTable("consultas_contacto");
             e.HasKey(x => x.Id);
             e.HasIndex(x => new { x.Ip, x.CreadoEn });
+        });
+
+        mb.Entity<Encuesta>(e =>
+        {
+            e.ToTable("encuestas");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.CursoId).IsUnique().HasFilter("curso_id IS NOT NULL");
+            e.HasIndex(x => x.EventoId).IsUnique().HasFilter("evento_id IS NOT NULL");
+        });
+
+        mb.Entity<EncuestaPregunta>(e =>
+        {
+            e.ToTable("encuesta_preguntas");
+            e.HasKey(x => x.Id);
+            // Relaciones explícitas: EF inserta la encuesta antes que sus preguntas e invitaciones
+            e.HasOne<Encuesta>().WithMany().HasForeignKey(x => x.EncuestaId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.EncuestaId, x.Orden }).IsUnique();
+        });
+
+        mb.Entity<EncuestaInvitacion>(e =>
+        {
+            e.ToTable("encuesta_invitaciones");
+            e.HasKey(x => x.Id);
+            e.HasOne<Encuesta>().WithMany().HasForeignKey(x => x.EncuestaId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => x.Token).IsUnique();
+            e.HasIndex(x => new { x.EncuestaId, x.ParticipanteId }).IsUnique();
+        });
+
+        mb.Entity<EncuestaRespuesta>(e =>
+        {
+            e.ToTable("encuesta_respuestas");
+            e.HasKey(x => x.Id);
+            e.HasOne<EncuestaInvitacion>().WithMany().HasForeignKey(x => x.InvitacionId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<EncuestaPregunta>().WithMany().HasForeignKey(x => x.PreguntaId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.InvitacionId, x.PreguntaId }).IsUnique();
         });
 
         mb.Entity<NotificacionLog>(e =>

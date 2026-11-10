@@ -114,6 +114,29 @@ public record AsignacionDto(Guid Id, Guid VoluntarioId, string Voluntario, strin
 public record AsignacionOmitidaDto(Guid VoluntarioId, string Motivo);
 public record ResultadoAsignacionDto(List<AsignacionDto> Asignadas, List<AsignacionOmitidaDto> Omitidas);
 
+// ENCUESTAS DE SATISFACCIÓN (FUJ-120). Tipo de pregunta = "ESCALA" (1 a 5) | "TEXTO"
+public record PreguntaEncuestaDto(string Texto, string Tipo);
+// Preguntas == null: se usan las preguntas por defecto
+public record CerrarActividadDto(List<PreguntaEncuestaDto>? Preguntas);
+public record CierreActividadDto(int Asistentes, int EncuestasEnviadas, Guid? EncuestaId);
+public record FinalizarCursoResultadoDto(int certificados_generados, int encuestas_enviadas, Guid? encuesta_id);
+
+public record PreguntaPublicaDto(Guid Id, int Orden, string Texto, string Tipo);
+public record EncuestaPublicaDto(string Actividad, string TipoActividad, DateTime Fecha, string Participante,
+                                 bool YaRespondida, List<PreguntaPublicaDto> Preguntas);
+public record RespuestaDto(Guid PreguntaId, int? Valor, string? Texto);
+public record ResponderEncuestaDto(List<RespuestaDto>? Respuestas);
+public record EncuestaPendienteDto(string Token, string Actividad, string TipoActividad, DateTime EnviadaEn);
+
+public record ResumenEncuestaDto(Guid Id, string TipoActividad, Guid ActividadId, string Actividad, DateTime FechaActividad,
+                                 DateTime CreadaEn, int Invitados, int Respuestas, decimal? PromedioSatisfaccion);
+// Distribucion[i] = cantidad de respuestas con puntaje i+1
+public record ResultadoPreguntaDto(Guid Id, int Orden, string Texto, string Tipo, int Respuestas,
+                                   decimal? Promedio, int[] Distribucion);
+public record ComentarioEncuestaDto(string Pregunta, string Texto, DateTime RespondidoEn);
+public record ResultadoEncuestaDto(ResumenEncuestaDto Resumen, List<ResultadoPreguntaDto> Preguntas,
+                                   List<ComentarioEncuestaDto> Comentarios);
+
 // CONTENIDO
 public record CrearNoticiaDto(string Titulo, string? Resumen, string Contenido, string? ImagenUrl, bool Publicada);
 

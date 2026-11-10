@@ -3,6 +3,7 @@ using FundacionJaguares.Application.DTOs;
 using FundacionJaguares.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace FundacionJaguares.Api.Controllers;
 
@@ -111,15 +112,17 @@ public class CursosController : ControllerBase
 
     [HttpPost("{id:guid}/finalizar")]
     [Authorize(Roles = "DOCENTE,DIRECTORA")]
-    public async Task<IActionResult> Finalizar(Guid id)
+    public async Task<IActionResult> Finalizar(Guid id,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CerrarActividadDto? dto)
     {
         var docenteId = User.IsInRole("DIRECTORA") ? (Guid?)null : UsuarioId();
         try
         {
-            var n = await _cursos.FinalizarYGenerarCertificadosAsync(id, docenteId);
-            return Ok(new { certificados_generados = n });
+            // FUJ-120: el cuerpo es opcional; sin preguntas se envía la encuesta por defecto
+            return Ok(await _cursos.FinalizarYGenerarCertificadosAsync(id, docenteId, UsuarioId(), dto?.Preguntas));
         }
         catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
     }
