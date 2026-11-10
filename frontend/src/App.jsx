@@ -17,6 +17,7 @@ import Calendario from './pages/Calendario';
 import Transparencia from './pages/Transparencia';
 import Galeria from './pages/Galeria';
 import QuienesSomos from './pages/QuienesSomos';
+import Encuesta from './pages/Encuesta';
 
 // Participante / Voluntario
 import MiCuenta from './pages/MiCuenta';
@@ -37,6 +38,7 @@ import AdminGaleria from './pages/admin/Galeria';
 import AdminInstitucional from './pages/admin/Institucional';
 import PlantillasCertificado from './pages/admin/PlantillasCertificado';
 import AdminCampanas from './pages/admin/Campanas';
+import AdminEncuestas from './pages/admin/Encuestas';
 
 // Páginas Voluntario
 import VoluntarioDashboard from './pages/voluntario/Dashboard';
@@ -64,6 +66,8 @@ export default function App() {
           <Route path="/galeria" element={<Galeria />} />
           <Route path="/galeria/:id" element={<Galeria />} />
           <Route path="/quienes-somos" element={<QuienesSomos />} />
+          {/* FUJ-120: enlace personal de la encuesta (no requiere sesión: lo identifica el token) */}
+          <Route path="/encuesta/:token" element={<Encuesta />} />
 
           {/* Participante y Voluntario */}
           <Route path="/mi-cuenta" element={protegida('verMiCuenta', <MiCuenta />)} />
@@ -78,6 +82,8 @@ export default function App() {
           <Route path="/admin/publicar-noticia" element={protegida('publicarNoticias', <PublicarNoticia />)} />
           <Route path="/admin/donaciones" element={protegida('registrarDonaciones', <AdminDonaciones />)} />
           <Route path="/admin/campanas" element={protegida('gestionarCampanas', <AdminCampanas />)} />
+          <Route path="/admin/encuestas" element={protegida('verEncuestas', <AdminEncuestas />)} />
+          <Route path="/admin/encuestas/:id" element={protegida('verEncuestas', <AdminEncuestas />)} />
           <Route path="/admin/voluntarios" element={protegida('gestionarVoluntarios', <AdminVoluntarios />)} />
           <Route path="/admin/voluntarios/asignaciones" element={protegida('gestionarVoluntarios', <AsignacionesVoluntarios />)} />
           <Route path="/admin/transparencia" element={protegida('publicarTransparencia', <AdminTransparencia />)} />

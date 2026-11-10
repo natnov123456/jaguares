@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { cursosApi, plantillasApi } from '../../services/api';
+import { cursosApi, encuestasApi, plantillasApi } from '../../services/api';
 import Estado from '../../components/Estado';
+import EditorEncuesta from '../../components/EditorEncuesta';
 import SelectorPlantilla from '../../components/SelectorPlantilla';
 import { fecha, fechaHora } from '../../utils/formato';
 
@@ -14,11 +15,16 @@ export default function AdminCursos() {
   const [msg, setMsg] = useState(null);
   const [finalizando, setFinalizando] = useState(null);
   const [cola, setCola] = useState(null); // { curso, personas } (FUJ-111)
+  const [confirmando, setConfirmando] = useState(null); // curso a finalizar (FUJ-120)
+  const [encuestas, setEncuestas] = useState(new Map()); // cursoId -> resumen de su encuesta
   const esDirectora = usuario?.rol === 'DIRECTORA';
 
   const cargar = () =>
-    cursosApi.gestion()
-      .then(r => setCursos(r.data))
+    Promise.all([cursosApi.gestion(), encuestasApi.listar()])
+      .then(([cu, en]) => {
+        setCursos(cu.data);
+        setEncuestas(new Map(en.data.filter(x => x.tipoActividad === 'CURSO').map(x => [x.actividadId, x])));
+      })
       .catch(() => setMsg({ tipo: 'error', texto: 'No se pudieron cargar los cursos' }))
       .finally(() => setLoading(false));
 
@@ -49,15 +55,18 @@ export default function AdminCursos() {
     }
   };
 
-  const finalizar = async (c) => {
-    if (!window.confirm(
-      `¿Finalizar "${c.titulo}"?\n\nSe emitirá un certificado para cada uno de los ${c.inscritos} inscritos y se les notificará por email. Esta acción no se puede deshacer.`
-    )) return;
+  // FUJ-120: al confirmar se emiten los certificados y se envía la encuesta (editable) a los inscritos
+  const finalizar = async (preguntas) => {
+    const c = confirmando;
     setFinalizando(c.id);
     setMsg(null);
     try {
-      const { data } = await cursosApi.finalizar(c.id);
-      setMsg({ tipo: 'success', texto: `Curso finalizado: ${data.certificados_generados} certificado(s) emitido(s).` });
+      const { data } = await cursosApi.finalizar(c.id, { preguntas });
+      setMsg({
+        tipo: 'success',
+        texto: `Curso finalizado: ${data.certificados_generados} certificado(s) emitido(s) y ${data.encuestas_enviadas} encuesta(s) de satisfacción enviada(s).`,
+      });
+      setConfirmando(null);
       cargar();
     } catch (err) {
       const texto = err.response?.status === 403
@@ -125,10 +134,14 @@ export default function AdminCursos() {
                     </td>
                     <td>
                       {c.estado === 'FINALIZADO' ? (
-                        <span className="muted">Certificados emitidos</span>
+                        encuestas.has(c.id) ? (
+                          <Link to={`/admin/encuestas/${encuestas.get(c.id).id}`} className="btn-secondary">
+                            Encuesta ({encuestas.get(c.id).respuestas}/{encuestas.get(c.id).invitados})
+                          </Link>
+                        ) : <span className="muted">Certificados emitidos</span>
                       ) : c.estado !== 'CANCELADO' && (
                         <button className="btn-primary" style={{ padding: '6px 12px' }}
-                                disabled={finalizando === c.id} onClick={() => finalizar(c)}>
+                                disabled={finalizando === c.id} onClick={() => setConfirmando(c)}>
                           {finalizando === c.id ? 'Emitiendo...' : 'Finalizar y certificar'}
                         </button>
                       )}
@@ -162,6 +175,17 @@ export default function AdminCursos() {
             )}
           </div>
         </div>
+      )}
+
+      {confirmando && (
+        <EditorEncuesta
+          titulo={`Finalizar: ${confirmando.titulo}`}
+          aviso={`Se emitirá un certificado para cada uno de los ${confirmando.inscritos} inscritos y se les notificará por email junto con el enlace a esta encuesta de satisfacción. Esta acción no se puede deshacer.`}
+          textoConfirmar="Finalizar, certificar y enviar encuesta"
+          procesando={finalizando === confirmando.id}
+          onConfirmar={finalizar}
+          onCerrar={() => setConfirmando(null)}
+        />
       )}
     </div>
   );

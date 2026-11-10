@@ -97,6 +97,8 @@ dotnet user-secrets set "ConnectionStrings:Default" "Host=localhost;Port=5432;Da
 ```
 *Se ejecuta una sola vez; el backend la usa automáticamente al correr en modo desarrollo.*
 
+**Enlaces en los correos.** Las encuestas de satisfacción se envían con un enlace al frontend (`App:FrontendUrl`, por defecto `http://localhost:5173`). En producción configúralo con la dirección pública: `dotnet user-secrets set "App:FrontendUrl" "https://tu-dominio"`.
+
 **Correo (opcional).** Sin configuración, los correos (confirmaciones, formulario de contacto) **no se envían**: solo se escriben en la consola del backend, lo cual alcanza para desarrollar. Para enviarlos de verdad, configura un servidor SMTP con *user-secrets* (por ejemplo, Gmail con una contraseña de aplicación):
 ```powershell
 cd backend/src/FundacionJaguares.Api
@@ -158,6 +160,7 @@ El sistema cuenta con 3 portales diferentes según el rol del usuario. Estos usu
 | Asignar voluntarios a actividades y registrar horas | — | — | — | — | ✅ | ✅ |
 | Registrar donaciones en efectivo | — | — | — | — | ✅ (ve solo lo que registró) | ✅ |
 | Reporte financiero mensual (RF-06) | — | — | — | — | — | ✅ |
+| Ver resultados de encuestas de satisfacción | — | — | — | Sus cursos | Eventos | Todas |
 | Publicar noticias | — | — | — | — | — | ✅ |
 
 Los permisos de la interfaz están centralizados en `frontend/src/config/permisos.js` (navbar, rutas y panel se arman desde ahí) y deben coincidir con los `[Authorize(Roles = ...)]` de los controladores, que son los que realmente protegen los datos. Un usuario con `activo = false` no puede iniciar sesión.
@@ -174,6 +177,7 @@ Los permisos de la interfaz están centralizados en `frontend/src/config/permiso
 - **Verificar Certificado:** Búsqueda pública por código para validar autenticidad.
 - **Donaciones:** Pasarela para donar en línea (QR, transferencia o tarjeta).
 - **Voluntariado:** Formulario público para postularse como voluntario.
+- **Encuesta (`/encuesta/:token`):** Enlace personal que llega por email al terminar una actividad; 3 a 5 preguntas, se responde una sola vez sin iniciar sesión.
 
 ### Mi panel (`/mi-cuenta`) — Participante y Voluntario
 - **Resumen:** cursos en marcha, próximos eventos, actividades completadas, certificados y lugares en lista de espera.
@@ -184,8 +188,9 @@ Los permisos de la interfaz están centralizados en `frontend/src/config/permiso
 
 ### Portal de Administración (`/admin`) — cada rol ve solo sus secciones
 - **Panel:** Tarjetas de las secciones permitidas para el rol.
-- **Mis cursos:** Cursos con inscritos/cupo y botón "Finalizar y certificar" (docente: solo los suyos).
-- **Eventos:** Listado y creación de eventos.
+- **Mis cursos:** Cursos con inscritos/cupo y botón "Finalizar y certificar" (docente: solo los suyos), que también envía la encuesta de satisfacción.
+- **Encuestas:** Promedio de satisfacción, resultados por pregunta y comentarios (sin nombres) de cada actividad. Directora: todas; docente: sus cursos; encargado: eventos.
+- **Eventos:** Listado (incluye los ya realizados) y creación de eventos. Al terminar, **Cerrar asistencia** finaliza el evento y envía la encuesta de satisfacción a quienes asistieron.
 - **Voluntarios:** Registro único con historial de actividades y total de horas aportadas.
 - **Asignaciones:** Asignar voluntarios a eventos o cursos publicados (cada uno recibe un aviso por email/WhatsApp) y registrar sus horas cuando la actividad termina; las horas se suman a su historial.
 - **Donaciones:** La directora ve el reporte mensual con selector de mes; el encargado registra efectivo y ve sus registros.
@@ -211,6 +216,7 @@ Todos los endpoints están documentados en Swagger. Aquí un resumen:
 | **Donaciones** | `POST /`, `POST /en-linea`, `GET /mis-registros`, `GET /mias`, `GET /{id}/comprobante`, `GET /reporte/{anio}/{mes}` (solo Directora) |
 | **Campañas** | `GET /` (Público), `GET /admin`, `POST /`, `PUT /{id}` (solo Directora) |
 | **Voluntarios** | `POST /postular`, `GET /` (con historial y horas), `GET /mi-historial`, `POST /{id}/participaciones`, `GET /actividades-asignables`, `GET/POST /asignaciones`, `DELETE /asignaciones/{id}`, `PUT /asignaciones/{id}/horas`, `GET /mis-asignaciones` |
+| **Encuestas** | `GET/POST /responder/{token}` (público), `GET /mis-pendientes`, `GET /`, `GET /{id}`, `GET /preguntas-por-defecto`; se crean con `POST /Eventos/{id}/cerrar-asistencia` y `POST /Cursos/{id}/finalizar` |
 | **Contenido** | `GET /noticias`, `POST /noticias`, `GET /galeria` |
 
 ---

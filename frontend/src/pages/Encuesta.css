@@ -1,0 +1,85 @@
+/* FUJ-120: formulario público de la encuesta de satisfacción */
+.encuesta-tarjeta {
+  max-width: 680px;
+  margin: 0 auto;
+}
+.encuesta-tarjeta h1 {
+  font-size: 1.6rem;
+  color: #111827;
+  margin-bottom: 4px;
+}
+.encuesta-pregunta {
+  border: none;
+  margin-bottom: 24px;
+}
+.encuesta-pregunta legend {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.encuesta-pregunta textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font: inherit;
+}
+.encuesta-escala {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.encuesta-opcion {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 4px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color .15s, background .15s;
+}
+.encuesta-opcion:hover { border-color: #fcd34d; }
+.encuesta-opcion input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.encuesta-opcion:focus-within { outline: 2px solid #f59e0b; outline-offset: 2px; }
+.encuesta-opcion.elegida {
+  border-color: #f59e0b;
+  background: #fef3c7;
+}
+.encuesta-numero {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #b45309;
+}
+.encuesta-etiqueta {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+@media (max-width: 480px) {
+  .encuesta-etiqueta { display: none; }
+}
+
+/* Resultados en el panel de administración */
+.barra-resultado {
+  display: grid;
+  grid-template-columns: 28px 1fr 36px;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.barra-resultado-pista {
+  height: 10px;
+  background: #f3f4f6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.barra-resultado-relleno {
+  height: 100%;
+  background: #d97706;
+}

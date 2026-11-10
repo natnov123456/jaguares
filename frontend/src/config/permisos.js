@@ -42,6 +42,8 @@ export const PERMISOS = {
   gestionarGaleria: [DIRECTORA],
   gestionarPlantillas: [DIRECTORA],
   gestionarCampanas: [DIRECTORA],
+  // FUJ-120: el backend filtra: docente (sus cursos), encargado (eventos), directora (todas)
+  verEncuestas: [DOCENTE, ENCARGADO_EVENTOS, DIRECTORA],
   editarInstitucional: [DIRECTORA],
 };
 
@@ -70,6 +72,8 @@ export const SECCIONES_PANEL = [
     descripcion: 'Programar eventos y actividades de la fundación.' },
   { permiso: 'registrarCheckin', ruta: '/admin/checkin', titulo: 'Check-in QR', icono: '📷',
     descripcion: 'Registrar la asistencia escaneando el QR del participante desde el celular.' },
+  { permiso: 'verEncuestas', ruta: '/admin/encuestas', titulo: 'Encuestas', icono: '⭐',
+    descripcion: 'Promedio de satisfacción y comentarios de las encuestas enviadas al terminar cada actividad.' },
   { permiso: 'gestionarVoluntarios', ruta: '/admin/voluntarios', titulo: 'Voluntarios', icono: '🤝',
     descripcion: 'Registro único de voluntarios con su historial de actividades.' },
   { permiso: 'gestionarVoluntarios', ruta: '/admin/voluntarios/asignaciones', titulo: 'Asignaciones', icono: '🗓️',

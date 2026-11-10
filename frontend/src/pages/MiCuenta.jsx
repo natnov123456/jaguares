@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { cursosApi, eventosApi, participanteApi } from '../services/api';
+import { cursosApi, encuestasApi, eventosApi, participanteApi } from '../services/api';
 import MisCertificados from '../components/MisCertificados';
 import MisDonaciones from '../components/MisDonaciones';
 import MiListaEspera from '../components/MiListaEspera';
@@ -42,6 +42,7 @@ export default function MiCuenta() {
   const [pestana, setPestana] = useState('proximas');
   const [qr, setQr] = useState(null);
   const [cancelando, setCancelando] = useState(null);
+  const [encuestas, setEncuestas] = useState([]); // FUJ-120: encuestas sin responder
 
   const cargar = useCallback(() =>
     participanteApi.panel()
@@ -50,6 +51,10 @@ export default function MiCuenta() {
       .finally(() => setLoading(false)), []);
 
   useEffect(() => { cargar(); }, [cargar]);
+
+  useEffect(() => {
+    encuestasApi.misPendientes().then(r => setEncuestas(r.data)).catch(() => { /* el panel funciona sin el aviso */ });
+  }, []);
 
   const cancelar = async (a) => {
     const aviso = a.tipo === 'CURSO'
@@ -93,6 +98,19 @@ export default function MiCuenta() {
       </div>
 
       {msg && <div className={`${msg.tipo}-msg`} role="status">{msg.texto}</div>}
+
+      {encuestas.length > 0 && (
+        <div className="info-msg" role="status">
+          <strong>⭐ Tienes {encuestas.length === 1 ? 'una encuesta' : `${encuestas.length} encuestas`} de satisfacción por responder.</strong>
+          <ul style={{ margin: '6px 0 0 20px' }}>
+            {encuestas.map(e => (
+              <li key={e.token}>
+                {e.actividad} — <Link to={`/encuesta/${e.token}`} style={{ textDecoration: 'underline', fontWeight: 600 }}>Responder (1 minuto)</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {loading ? (
         <p>Cargando...</p>

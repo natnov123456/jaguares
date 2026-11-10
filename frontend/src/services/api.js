@@ -41,7 +41,8 @@ export const cursosApi = {
   cancelarInscripcion: (id) => api.delete(`/Cursos/${id}/inscripcion`),
   misInscripciones: () => api.get('/Cursos/mis-inscripciones'),
   gestion: () => api.get('/Cursos/gestion'),
-  finalizar: (id) => api.post(`/Cursos/${id}/finalizar`),
+  // FUJ-120: data = { preguntas } opcional (sin preguntas se envía la encuesta por defecto)
+  finalizar: (id, data) => api.post(`/Cursos/${id}/finalizar`, data ?? {}),
   asignarPlantilla: (id, plantillaId) => api.put(`/Cursos/${id}/plantilla`, { plantillaId }),
   // FUJ-111: lista de espera
   unirseListaEspera: (id) => api.post(`/Cursos/${id}/lista-espera`),
@@ -52,7 +53,9 @@ export const cursosApi = {
 
 export const eventosApi = {
   listar: () => api.get('/Eventos'),
+  gestion: () => api.get('/Eventos/gestion'),
   crear: (data) => api.post('/Eventos', data),
+  cerrarAsistencia: (id, data) => api.post(`/Eventos/${id}/cerrar-asistencia`, data ?? {}),
   inscribir: (id) => api.post(`/Eventos/${id}/inscribir`),
   cancelarInscripcion: (id) => api.delete(`/Eventos/${id}/inscripcion`),
   misInscripciones: () => api.get('/Eventos/mis-inscripciones'),
@@ -69,6 +72,16 @@ export const certificadosApi = {
   verificar: (codigo) => api.get(`/Certificados/verificar/${codigo}`),
   mios: () => api.get('/Certificados/mios'),
   pdf: (id) => api.get(`/Certificados/${id}/pdf`, { responseType: 'blob' }),
+};
+
+// FUJ-120: encuestas de satisfacción
+export const encuestasApi = {
+  porDefecto: () => api.get('/Encuestas/preguntas-por-defecto'),
+  obtener: (token) => api.get(`/Encuestas/responder/${encodeURIComponent(token)}`),
+  responder: (token, respuestas) => api.post(`/Encuestas/responder/${encodeURIComponent(token)}`, { respuestas }),
+  misPendientes: () => api.get('/Encuestas/mis-pendientes'),
+  listar: () => api.get('/Encuestas'),
+  resultados: (id) => api.get(`/Encuestas/${id}`),
 };
 
 // FUJ-112: panel del participante

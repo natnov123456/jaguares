@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { eventosApi } from '../../services/api';
+import { Link } from 'react-router-dom';
+import { encuestasApi, eventosApi } from '../../services/api';
 import Estado from '../../components/Estado';
+import EditorEncuesta from '../../components/EditorEncuesta';
 import { fechaHora } from '../../utils/formato';
 
 const VACIO = { titulo: '', descripcion: '', lugar: '', fechaInicio: '', fechaFin: '' };
@@ -10,10 +12,17 @@ export default function AdminEventos() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(VACIO);
   const [msg, setMsg] = useState(null);
+  const [encuestas, setEncuestas] = useState(new Map()); // eventoId -> resumen de su encuesta (FUJ-120)
+  const [cerrando, setCerrando] = useState(null);
+  const [procesando, setProcesando] = useState(false);
 
+  // Gestión: incluye los eventos ya realizados y cerrados (el listado público solo muestra los abiertos)
   const cargar = () =>
-    eventosApi.listar()
-      .then(r => setEventos([...r.data].sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio))))
+    Promise.all([eventosApi.gestion(), encuestasApi.listar()])
+      .then(([ev, en]) => {
+        setEventos([...ev.data].sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio)));
+        setEncuestas(new Map(en.data.filter(x => x.tipoActividad === 'EVENTO').map(x => [x.actividadId, x])));
+      })
       .catch(() => setMsg({ tipo: 'error', texto: 'No se pudieron cargar los eventos' }))
       .finally(() => setLoading(false));
 
@@ -41,15 +50,53 @@ export default function AdminEventos() {
     }
   };
 
+  // FUJ-120: cerrar la asistencia finaliza el evento y envía la encuesta a quienes asistieron
+  const cerrarAsistencia = async (preguntas) => {
+    setProcesando(true);
+    setMsg(null);
+    try {
+      const { data } = await eventosApi.cerrarAsistencia(cerrando.id, { preguntas });
+      setMsg({
+        tipo: 'success',
+        texto: data.asistentes === 0
+          ? `Asistencia de "${cerrando.titulo}" cerrada. No hubo asistentes registrados, así que no se envió encuesta.`
+          : `Asistencia de "${cerrando.titulo}" cerrada: ${data.asistentes} asistente(s) y ${data.encuestasEnviadas} encuesta(s) enviada(s).`,
+      });
+      setCerrando(null);
+      cargar();
+    } catch (err) {
+      setMsg({ tipo: 'error', texto: err.response?.data?.error || 'No se pudo cerrar la asistencia' });
+    } finally {
+      setProcesando(false);
+    }
+  };
+
   const ahora = new Date();
-  const proximos = eventos.filter(e => new Date(e.fechaFin ?? e.fechaInicio) >= ahora);
+  const proximos = eventos.filter(e => e.estado !== 'FINALIZADO' && new Date(e.fechaFin ?? e.fechaInicio) >= ahora);
+
+  const accionAsistencia = (ev) => {
+    if (ev.estado === 'FINALIZADO') {
+      const encuesta = encuestas.get(ev.id);
+      return encuesta
+        ? <Link to={`/admin/encuestas/${encuesta.id}`} className="btn-secondary">Encuesta ({encuesta.respuestas}/{encuesta.invitados})</Link>
+        : <span className="muted">Cerrada</span>;
+    }
+    if (ev.estado !== 'CANCELADO' && new Date(ev.fechaInicio) <= ahora) {
+      return (
+        <button className="btn-primary" style={{ padding: '6px 12px' }} onClick={() => setCerrando(ev)}>
+          Cerrar asistencia
+        </button>
+      );
+    }
+    return <span className="muted">—</span>;
+  };
 
   return (
     <div className="container page">
       <div className="page-header">
         <div>
           <h1>Eventos</h1>
-          <p>Programa las actividades de la fundación. Los eventos publicados son visibles para el público.</p>
+          <p>Programa las actividades de la fundación. Al terminar, cierra la asistencia para enviar la encuesta de satisfacción.</p>
         </div>
         <div className="stat-box">
           <p>Próximos eventos</p>
@@ -57,9 +104,11 @@ export default function AdminEventos() {
         </div>
       </div>
 
+      {msg && <div className={`${msg.tipo}-msg`} role="status">{msg.texto}</div>}
+
       <div className="split">
         <section className="panel">
-          <h2>Eventos publicados</h2>
+          <h2>Eventos</h2>
           {loading ? (
             <p>Cargando...</p>
           ) : eventos.length === 0 ? (
@@ -67,19 +116,25 @@ export default function AdminEventos() {
           ) : (
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Evento</th><th>Fecha</th><th>Lugar</th><th>Estado</th></tr></thead>
+                <thead><tr><th>Evento</th><th>Fecha</th><th>Lugar</th><th>Estado</th><th>Asistencia</th></tr></thead>
                 <tbody>
                   {eventos.map(ev => {
                     const pasado = new Date(ev.fechaFin ?? ev.fechaInicio) < ahora;
+                    const cerrado = ev.estado === 'FINALIZADO';
                     return (
-                      <tr key={ev.id} style={pasado ? { opacity: 0.6 } : undefined}>
+                      <tr key={ev.id} style={pasado || cerrado ? { opacity: 0.75 } : undefined}>
                         <td>
                           <strong>{ev.titulo}</strong>
                           {ev.descripcion && <div className="muted" style={{ fontSize: '0.9rem' }}>{ev.descripcion}</div>}
                         </td>
                         <td>{fechaHora(ev.fechaInicio)}</td>
                         <td>{ev.lugar || '-'}</td>
-                        <td>{pasado ? <span className="badge">Realizado</span> : <Estado valor={ev.estado} />}</td>
+                        <td>
+                          {cerrado ? <span className="badge">Cerrado</span>
+                            : pasado ? <span className="badge">Realizado</span>
+                            : <Estado valor={ev.estado} />}
+                        </td>
+                        <td>{accionAsistencia(ev)}</td>
                       </tr>
                     );
                   })}
@@ -91,7 +146,6 @@ export default function AdminEventos() {
 
         <section className="panel">
           <h2>Nuevo evento</h2>
-          {msg && <div className={`${msg.tipo}-msg`}>{msg.texto}</div>}
           <form onSubmit={crear} className="form-stack">
             <div>
               <label>Título</label>
@@ -117,6 +171,17 @@ export default function AdminEventos() {
           </form>
         </section>
       </div>
+
+      {cerrando && (
+        <EditorEncuesta
+          titulo={`Cerrar asistencia: ${cerrando.titulo}`}
+          aviso="El evento quedará finalizado y no se aceptarán más check-ins. Quienes asistieron (por QR o registro manual) recibirán por email el enlace a esta encuesta."
+          textoConfirmar="Cerrar y enviar encuesta"
+          procesando={procesando}
+          onConfirmar={cerrarAsistencia}
+          onCerrar={() => setCerrando(null)}
+        />
+      )}
     </div>
   );
 }
