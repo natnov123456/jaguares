@@ -72,6 +72,8 @@ export const SECCIONES_PANEL = [
     descripcion: 'Registrar la asistencia escaneando el QR del participante desde el celular.' },
   { permiso: 'gestionarVoluntarios', ruta: '/admin/voluntarios', titulo: 'Voluntarios', icono: '🤝',
     descripcion: 'Registro único de voluntarios con su historial de actividades.' },
+  { permiso: 'gestionarVoluntarios', ruta: '/admin/voluntarios/asignaciones', titulo: 'Asignaciones', icono: '🗓️',
+    descripcion: 'Asignar voluntarios a eventos y cursos, y registrar sus horas al terminar.' },
   { permiso: 'registrarDonaciones', ruta: '/admin/donaciones', titulo: 'Donaciones', icono: '💵',
     descripcion: 'Registrar aportes en efectivo recibidos en oficina o eventos.' },
   { permiso: 'gestionarCampanas', ruta: '/admin/campanas', titulo: 'Campañas', icono: '🎯',

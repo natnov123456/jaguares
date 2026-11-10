@@ -31,6 +31,7 @@ const Checkin = lazy(() => import('./pages/admin/Checkin'));
 import PublicarNoticia from './pages/admin/PublicarNoticia';
 import AdminDonaciones from './pages/admin/Donaciones';
 import AdminVoluntarios from './pages/admin/Voluntarios';
+import AsignacionesVoluntarios from './pages/admin/AsignacionesVoluntarios';
 import AdminTransparencia from './pages/admin/Transparencia';
 import AdminGaleria from './pages/admin/Galeria';
 import AdminInstitucional from './pages/admin/Institucional';
@@ -78,6 +79,7 @@ export default function App() {
           <Route path="/admin/donaciones" element={protegida('registrarDonaciones', <AdminDonaciones />)} />
           <Route path="/admin/campanas" element={protegida('gestionarCampanas', <AdminCampanas />)} />
           <Route path="/admin/voluntarios" element={protegida('gestionarVoluntarios', <AdminVoluntarios />)} />
+          <Route path="/admin/voluntarios/asignaciones" element={protegida('gestionarVoluntarios', <AsignacionesVoluntarios />)} />
           <Route path="/admin/transparencia" element={protegida('publicarTransparencia', <AdminTransparencia />)} />
           <Route path="/admin/galeria" element={protegida('gestionarGaleria', <AdminGaleria />)} />
           <Route path="/admin/institucional" element={protegida('editarInstitucional', <AdminInstitucional />)} />

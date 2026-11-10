@@ -1,13 +1,15 @@
 import { Fragment, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { voluntariosApi } from '../../services/api';
 import Estado from '../../components/Estado';
-import { fecha } from '../../utils/formato';
+import { fecha, horas as formatoHoras } from '../../utils/formato';
 
 export default function AdminVoluntarios() {
   const [voluntarios, setVoluntarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [abierto, setAbierto] = useState(null);
   const [actividad, setActividad] = useState('');
+  const [horasManual, setHorasManual] = useState('');
   const [mensaje, setMensaje] = useState('');
 
   const cargar = async () => {
@@ -29,16 +31,20 @@ export default function AdminVoluntarios() {
     e.preventDefault();
     setMensaje('');
     try {
-      await voluntariosApi.registrarParticipacion(voluntarioId, { eventoId: null, descripcion: actividad });
+      await voluntariosApi.registrarParticipacion(voluntarioId, {
+        eventoId: null, descripcion: actividad, horas: horasManual ? Number(horasManual) : null,
+      });
       setActividad('');
+      setHorasManual('');
       setMensaje('✅ Actividad registrada');
       cargar();
-    } catch {
-      setMensaje('❌ Error al registrar la actividad');
+    } catch (err) {
+      setMensaje(`❌ ${err.response?.data?.error || 'Error al registrar la actividad'}`);
     }
   };
 
   const activos = voluntarios.filter(v => v.estado === 'ACTIVO').length;
+  const totalHoras = voluntarios.reduce((n, v) => n + (v.totalHoras ?? 0), 0);
 
   return (
     <div className="container" style={{ padding: '48px 24px' }}>
@@ -47,9 +53,16 @@ export default function AdminVoluntarios() {
           <h1 style={{ fontSize: '2rem', color: '#111827' }}>Voluntarios</h1>
           <p style={{ color: '#6b7280' }}>Listado único de voluntarios con su historial de actividades</p>
         </div>
-        <div style={{ background: '#fef3c7', padding: '16px 24px', borderRadius: '8px', borderLeft: '4px solid #f59e0b' }}>
-          <p style={{ fontSize: '0.9rem', color: '#92400e', margin: 0 }}>Activos</p>
-          <h2 style={{ fontSize: '2rem', color: '#b45309', margin: 0 }}>{activos} / {voluntarios.length}</h2>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="stat-box">
+            <p>Activos</p>
+            <h2>{activos} / {voluntarios.length}</h2>
+          </div>
+          <div className="stat-box">
+            <p>Horas aportadas</p>
+            <h2>{formatoHoras(totalHoras)}</h2>
+          </div>
+          <Link to="/admin/voluntarios/asignaciones" className="btn-primary">Asignar a actividades</Link>
         </div>
       </div>
 
@@ -66,6 +79,7 @@ export default function AdminVoluntarios() {
                 <th style={{ padding: '8px' }}>Contacto</th>
                 <th style={{ padding: '8px' }}>Estado</th>
                 <th style={{ padding: '8px' }}>Postulado</th>
+                <th style={{ padding: '8px' }}>Horas</th>
                 <th style={{ padding: '8px' }}>Actividades</th>
               </tr>
             </thead>
@@ -79,6 +93,7 @@ export default function AdminVoluntarios() {
                     </td>
                     <td style={{ padding: '12px 8px' }}><Estado valor={v.estado} /></td>
                     <td style={{ padding: '12px 8px' }}>{fecha(v.postuladoEn)}</td>
+                    <td style={{ padding: '12px 8px', fontWeight: 600 }}>{formatoHoras(v.totalHoras)}</td>
                     <td style={{ padding: '12px 8px' }}>
                       <button className="btn-primary" style={{ padding: '4px 12px' }}
                               onClick={() => { setAbierto(abierto === v.id ? null : v.id); setMensaje(''); }}>
@@ -88,7 +103,7 @@ export default function AdminVoluntarios() {
                   </tr>
                   {abierto === v.id && (
                     <tr>
-                      <td colSpan="5" style={{ padding: '16px', background: '#f9fafb' }}>
+                      <td colSpan="6" style={{ padding: '16px', background: '#f9fafb' }}>
                         {v.historial.length === 0 ? (
                           <p style={{ color: '#6b7280' }}>Sin actividades registradas.</p>
                         ) : (
@@ -96,15 +111,19 @@ export default function AdminVoluntarios() {
                             {v.historial.map(h => (
                               <li key={h.id}>
                                 <strong>{new Date(h.fecha).toLocaleDateString('es-BO')}</strong>
-                                {h.eventoTitulo && ` — ${h.eventoTitulo}`}: {h.descripcion}
+                                {(h.eventoTitulo || h.cursoTitulo) && ` — ${h.eventoTitulo || h.cursoTitulo}`}: {h.descripcion}
+                                {h.horas != null && <span className="badge badge-ok" style={{ marginLeft: 8 }}>{formatoHoras(h.horas)}</span>}
                               </li>
                             ))}
                           </ul>
                         )}
-                        <form onSubmit={(e) => registrarActividad(e, v.id)} style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                        <form onSubmit={(e) => registrarActividad(e, v.id)} style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                           <input type="text" value={actividad} onChange={e => setActividad(e.target.value)} required
                                  placeholder="Ej: Apoyo en feria de reciclaje" maxLength={300}
                                  style={{ flex: 1, padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px' }} />
+                          <input type="number" min="0.25" max="200" step="0.25" value={horasManual}
+                                 onChange={e => setHorasManual(e.target.value)} placeholder="Horas" aria-label="Horas (opcional)"
+                                 style={{ width: 90, padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px' }} />
                           <button type="submit" className="btn-primary">Registrar actividad</button>
                         </form>
                         {mensaje && <p style={{ marginTop: 8, fontSize: '0.9rem' }}>{mensaje}</p>}

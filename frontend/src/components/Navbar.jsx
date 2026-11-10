@@ -22,7 +22,7 @@ export default function Navbar() {
             <>
               <NavLink to="/admin" end>Panel</NavLink>
               {SECCIONES_PANEL.filter(s => puede(usuario, s.permiso)).map(s => (
-                <NavLink key={s.ruta} to={s.ruta}>{s.titulo}</NavLink>
+                <NavLink key={s.ruta} to={s.ruta} end>{s.titulo}</NavLink>
               ))}
             </>
           ) : (

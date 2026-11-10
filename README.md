@@ -154,6 +154,7 @@ El sistema cuenta con 3 portales diferentes según el rol del usuario. Estos usu
 | Ver inscritos y finalizar curso (emite certificados) | — | — | — | Solo sus cursos | — | Todos |
 | Crear eventos | — | — | — | — | ✅ | ✅ |
 | Registro de voluntarios y sus actividades | — | — | — | — | ✅ | ✅ |
+| Asignar voluntarios a actividades y registrar horas | — | — | — | — | ✅ | ✅ |
 | Registrar donaciones en efectivo | — | — | — | — | ✅ (ve solo lo que registró) | ✅ |
 | Reporte financiero mensual (RF-06) | — | — | — | — | — | ✅ |
 | Publicar noticias | — | — | — | — | — | ✅ |
@@ -184,12 +185,13 @@ Los permisos de la interfaz están centralizados en `frontend/src/config/permiso
 - **Panel:** Tarjetas de las secciones permitidas para el rol.
 - **Mis cursos:** Cursos con inscritos/cupo y botón "Finalizar y certificar" (docente: solo los suyos).
 - **Eventos:** Listado y creación de eventos.
-- **Voluntarios:** Registro único con historial de actividades.
+- **Voluntarios:** Registro único con historial de actividades y total de horas aportadas.
+- **Asignaciones:** Asignar voluntarios a eventos o cursos publicados (cada uno recibe un aviso por email/WhatsApp) y registrar sus horas cuando la actividad termina; las horas se suman a su historial.
 - **Donaciones:** La directora ve el reporte mensual con selector de mes; el encargado registra efectivo y ve sus registros.
 - **Noticias:** Editor para publicar novedades en el sitio público.
 
 ### Portal del Voluntario (`/voluntario`)
-- **Dashboard:** Historial de participaciones, datos del registro y acceso a sus cursos.
+- **Dashboard:** Próximas asignaciones, historial de participaciones con horas, total de horas aportadas y acceso a sus cursos.
 - **Mis Certificados:** Certificados obtenidos en cursos.
 
 ---
@@ -207,7 +209,7 @@ Todos los endpoints están documentados en Swagger. Aquí un resumen:
 | **Participante** | `GET /panel` (cursos y eventos próximos/pasados, certificados y lista de espera) |
 | **Donaciones** | `POST /`, `POST /en-linea`, `GET /mis-registros`, `GET /mias`, `GET /{id}/comprobante`, `GET /reporte/{anio}/{mes}` (solo Directora) |
 | **Campañas** | `GET /` (Público), `GET /admin`, `POST /`, `PUT /{id}` (solo Directora) |
-| **Voluntarios** | `POST /postular`, `GET /` (con historial), `GET /mi-historial`, `POST /{id}/participaciones` |
+| **Voluntarios** | `POST /postular`, `GET /` (con historial y horas), `GET /mi-historial`, `POST /{id}/participaciones`, `GET /actividades-asignables`, `GET/POST /asignaciones`, `DELETE /asignaciones/{id}`, `PUT /asignaciones/{id}/horas`, `GET /mis-asignaciones` |
 | **Contenido** | `GET /noticias`, `POST /noticias`, `GET /galeria` |
 
 ---

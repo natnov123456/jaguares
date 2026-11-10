@@ -146,6 +146,13 @@ export const voluntariosApi = {
   listar: () => api.get('/Voluntarios'),
   miHistorial: () => api.get('/Voluntarios/mi-historial'),
   registrarParticipacion: (id, data) => api.post(`/Voluntarios/${id}/participaciones`, data),
+  // FUJ-118: asignación a actividades y registro de horas
+  actividadesAsignables: () => api.get('/Voluntarios/actividades-asignables'),
+  asignaciones: (params) => api.get('/Voluntarios/asignaciones', { params }),
+  asignar: (data) => api.post('/Voluntarios/asignaciones', data),
+  cancelarAsignacion: (id) => api.delete(`/Voluntarios/asignaciones/${id}`),
+  registrarHoras: (id, horas) => api.put(`/Voluntarios/asignaciones/${id}/horas`, { horas }),
+  misAsignaciones: () => api.get('/Voluntarios/mis-asignaciones'),
 };
 
 export const contenidoApi = {

@@ -33,4 +33,17 @@ export const ESTADO_BADGE = {
   CANCELADA: 'badge-off',
   ASISTIO: 'badge-ok',
   NO_ASISTIO: 'badge-off',
+  ASIGNADA: 'badge-warn',
+  COMPLETADA: 'badge-ok',
 };
+
+// FUJ-118: horas de voluntariado ("6.5" -> "6,5 h")
+export function horas(valor) {
+  return `${Number(valor ?? 0).toLocaleString('es-BO', { maximumFractionDigits: 2 })} h`;
+}
+
+// Fecha de una actividad: los cursos (todoElDia) llegan sin hora y se muestran como rango de días
+export function fechaActividad(a) {
+  if (a.todoElDia) return `${fecha(a.inicio.slice(0, 10))} – ${fecha((a.fin ?? a.inicio).slice(0, 10))}`;
+  return fechaHora(a.inicio);
+}
