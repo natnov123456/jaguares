@@ -9,10 +9,16 @@ public record TokenDto(string Token, string NombreCompleto, string Rol, DateTime
 public record CrearCursoDto(string Titulo, string? Descripcion, DateOnly FechaInicio, DateOnly FechaFin,
                             int CupoMaximo, int AsistenciaMinimaPct = 80, Guid? PlantillaId = null);
 public record CursoGestionDto(Guid Id, string Titulo, DateOnly FechaInicio, DateOnly FechaFin,
-                              int CupoMaximo, int CupoDisponible, string Estado, int Inscritos, Guid? PlantillaId);
+                              int CupoMaximo, int CupoDisponible, string Estado, int Inscritos, Guid? PlantillaId,
+                              int EnEspera = 0);
 public record AsignarPlantillaDto(Guid? PlantillaId);
 public record MiInscripcionDto(Guid CursoId, string Titulo, DateOnly FechaInicio, DateOnly FechaFin,
                                string EstadoCurso, string EstadoInscripcion, DateTime FechaInscripcion);
+
+// LISTA DE ESPERA (FUJ-111): Posicion empieza en 1; TotalEnEspera = personas en la cola del curso
+public record ListaEsperaDto(Guid CursoId, string Titulo, DateOnly FechaInicio, DateOnly FechaFin,
+                             int Posicion, int TotalEnEspera, DateTime AnotadoEn);
+public record EnEsperaGestionDto(int Posicion, string Nombre, string Email, DateTime AnotadoEn);
 
 // EVENTOS
 public record CrearEventoDto(string Titulo, string? Descripcion, string? Lugar,

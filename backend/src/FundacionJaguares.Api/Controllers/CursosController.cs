@@ -54,6 +54,41 @@ public class CursosController : ControllerBase
     {
         var participanteId = UsuarioId();
         try { await _cursos.CancelarInscripcionAsync(id, participanteId); return NoContent(); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    // ---- FUJ-111: lista de espera ----
+
+    [HttpGet("mi-lista-espera")]
+    [Authorize(Roles = "PARTICIPANTE,VOLUNTARIO")]
+    public async Task<IActionResult> MiListaEspera() => Ok(await _cursos.MiListaEsperaAsync(UsuarioId()));
+
+    [HttpPost("{id:guid}/lista-espera")]
+    [Authorize(Roles = "PARTICIPANTE,VOLUNTARIO")]
+    public async Task<IActionResult> UnirseListaEspera(Guid id)
+    {
+        try { return Ok(await _cursos.UnirseListaEsperaAsync(id, UsuarioId())); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    [HttpDelete("{id:guid}/lista-espera")]
+    [Authorize(Roles = "PARTICIPANTE,VOLUNTARIO")]
+    public async Task<IActionResult> SalirListaEspera(Guid id)
+    {
+        try { await _cursos.SalirListaEsperaAsync(id, UsuarioId()); return NoContent(); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    // El docente ve la lista de sus cursos; la directora, la de todos
+    [HttpGet("{id:guid}/lista-espera")]
+    [Authorize(Roles = "DOCENTE,DIRECTORA")]
+    public async Task<IActionResult> ListaEspera(Guid id)
+    {
+        var docenteId = User.IsInRole("DIRECTORA") ? (Guid?)null : UsuarioId();
+        try { return Ok(await _cursos.ListarEsperaGestionAsync(id, docenteId)); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
     }
 

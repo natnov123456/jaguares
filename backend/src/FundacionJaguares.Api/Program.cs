@@ -27,6 +27,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 
 // 2) Repositorios
 builder.Services.AddScoped<CursoRepository>();
+builder.Services.AddScoped<ListaEsperaRepository>();
 builder.Services.AddScoped<EventoRepository>();
 builder.Services.AddScoped<CertificadoRepository>();
 builder.Services.AddScoped<DonacionRepository>();

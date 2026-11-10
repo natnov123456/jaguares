@@ -66,6 +66,39 @@ public class CursoRepository : Repository<Curso>
         await Db.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE cursos SET cupo_disponible = cupo_disponible + 1 WHERE id = {cursoId} AND cupo_disponible < cupo_maximo");
     }
+
+    // FUJ-111: bloquea la fila del curso hasta el fin de la transacción actual. Serializa las
+    // cancelaciones y las altas en la lista de espera del mismo curso, para que un cupo liberado
+    // no se pierda ni se entregue dos veces.
+    public Task BloquearAsync(Guid cursoId) =>
+        Db.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM cursos WHERE id = {cursoId} FOR UPDATE");
+}
+
+// FUJ-111: lista de espera de cursos llenos
+public class ListaEsperaRepository : Repository<ListaEspera>
+{
+    public ListaEsperaRepository(AppDbContext db) : base(db) { }
+
+    private IQueryable<ListaEspera> EnEspera(Guid cursoId) =>
+        Set.Where(l => l.CursoId == cursoId && l.Estado == "EN_ESPERA");
+
+    public Task<ListaEspera?> GetActivaAsync(Guid cursoId, Guid participanteId) =>
+        EnEspera(cursoId).FirstOrDefaultAsync(l => l.ParticipanteId == participanteId);
+
+    // Cola en orden de llegada (el Id desempata registros creados en el mismo instante)
+    public Task<List<ListaEspera>> ColaAsync(Guid cursoId) =>
+        EnEspera(cursoId).OrderBy(l => l.CreadoEn).ThenBy(l => l.Id).ToListAsync();
+
+    public Task<List<ListaEspera>> ColasAsync(IReadOnlyCollection<Guid> cursoIds) =>
+        Set.Where(l => cursoIds.Contains(l.CursoId) && l.Estado == "EN_ESPERA")
+           .OrderBy(l => l.CreadoEn).ThenBy(l => l.Id).ToListAsync();
+
+    public Task<List<Guid>> CursosDeAsync(Guid participanteId) =>
+        Set.Where(l => l.ParticipanteId == participanteId && l.Estado == "EN_ESPERA")
+           .Select(l => l.CursoId).ToListAsync();
+
+    public Task<int> RetirarTodosAsync(Guid cursoId) =>
+        EnEspera(cursoId).ExecuteUpdateAsync(s => s.SetProperty(l => l.Estado, "RETIRADO"));
 }
 
 public class EventoRepository : Repository<Evento>
