@@ -2,12 +2,15 @@ using Microsoft.Extensions.Logging;
 
 namespace FundacionJaguares.Infrastructure.Adapters;
 
-public record AdjuntoCorreo(string Nombre, byte[] Contenido, string TipoContenido);
+// ContentId: si se indica y el correo tiene HTML, la imagen se incrusta (<img src="cid:...">) en lugar de adjuntarse
+public record AdjuntoCorreo(string Nombre, byte[] Contenido, string TipoContenido, string? ContentId = null);
 
 public interface IEmailAdapter
 {
     // responderA: dirección a la que se responde (p. ej. el correo de quien escribió el formulario de contacto)
-    Task EnviarAsync(string para, string asunto, string cuerpo, string? responderA = null, AdjuntoCorreo? adjunto = null);
+    // html: versión con formato (JAG-66); cuerpo queda como texto plano para clientes que no muestran HTML
+    Task EnviarAsync(string para, string asunto, string cuerpo, string? responderA = null, AdjuntoCorreo? adjunto = null,
+                     string? html = null);
 }
 public interface IWhatsAppAdapter { Task EnviarAsync(string telefono, string mensaje); }
 public interface IPaymentAdapter  { Task<bool> ProcesarPagoAsync(decimal monto, string referencia); }
@@ -33,7 +36,8 @@ public class EmailAdapter : IEmailAdapter
 
     public EmailAdapter(ILogger<EmailAdapter> log, SmtpOpciones smtp) { _log = log; _smtp = smtp; }
 
-    public async Task EnviarAsync(string para, string asunto, string cuerpo, string? responderA = null, AdjuntoCorreo? adjunto = null)
+    public async Task EnviarAsync(string para, string asunto, string cuerpo, string? responderA = null, AdjuntoCorreo? adjunto = null,
+                                  string? html = null)
     {
         if (!_smtp.Configurado)
         {
@@ -54,7 +58,19 @@ public class EmailAdapter : IEmailAdapter
         };
         mensaje.To.Add(para);
         if (!string.IsNullOrWhiteSpace(responderA)) mensaje.ReplyToList.Add(responderA);
-        if (adjunto is not null)
+        if (html is not null)
+        {
+            // multipart/alternative: Body (texto plano) + vista HTML; la imagen con ContentId va incrustada en el HTML
+            var vistaHtml = System.Net.Mail.AlternateView.CreateAlternateViewFromString(html, System.Text.Encoding.UTF8, "text/html");
+            if (adjunto?.ContentId is { } cid)
+                vistaHtml.LinkedResources.Add(new System.Net.Mail.LinkedResource(new MemoryStream(adjunto.Contenido), adjunto.TipoContenido)
+                {
+                    ContentId = cid,
+                    ContentType = { Name = adjunto.Nombre }
+                });
+            mensaje.AlternateViews.Add(vistaHtml);
+        }
+        if (adjunto is not null && (html is null || adjunto.ContentId is null))
             mensaje.Attachments.Add(new System.Net.Mail.Attachment(new MemoryStream(adjunto.Contenido), adjunto.Nombre, adjunto.TipoContenido));
 
         using var cliente = new System.Net.Mail.SmtpClient(_smtp.Host, _smtp.Puerto) { EnableSsl = _smtp.UsarSsl };
