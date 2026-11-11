@@ -5,4 +5,7 @@
     <Project Path="src/FundacionJaguares.Domain/FundacionJaguares.Domain.csproj" />
     <Project Path="src/FundacionJaguares.Infrastructure/FundacionJaguares.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FundacionJaguares.Tests/FundacionJaguares.Tests.csproj" />
+  </Folder>
 </Solution>

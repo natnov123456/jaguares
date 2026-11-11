@@ -6,3 +6,6 @@ node_modules/
 
 # Archivos subidos a la galeria (se generan al usar la app)
 backend/src/FundacionJaguares.Api/wwwroot/uploads/
+
+# Resultados de pruebas y cobertura
+backend/tests/TestResults/
