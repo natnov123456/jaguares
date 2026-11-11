@@ -44,6 +44,9 @@ export const cursosApi = {
   // FUJ-120: data = { preguntas } opcional (sin preguntas se envía la encuesta por defecto)
   finalizar: (id, data) => api.post(`/Cursos/${id}/finalizar`, data ?? {}),
   asignarPlantilla: (id, plantillaId) => api.put(`/Cursos/${id}/plantilla`, { plantillaId }),
+  // FUJ-119: avisan por correo a inscritos y lista de espera
+  reprogramar: (id, data) => api.put(`/Cursos/${id}/reprogramar`, data),
+  cancelar: (id, data) => api.post(`/Cursos/${id}/cancelar`, data ?? {}),
   // FUJ-111: lista de espera
   unirseListaEspera: (id) => api.post(`/Cursos/${id}/lista-espera`),
   salirListaEspera: (id) => api.delete(`/Cursos/${id}/lista-espera`),
@@ -56,6 +59,9 @@ export const eventosApi = {
   gestion: () => api.get('/Eventos/gestion'),
   crear: (data) => api.post('/Eventos', data),
   cerrarAsistencia: (id, data) => api.post(`/Eventos/${id}/cerrar-asistencia`, data ?? {}),
+  // FUJ-119: avisan por correo a todos los inscritos
+  reprogramar: (id, data) => api.put(`/Eventos/${id}/reprogramar`, data),
+  cancelar: (id, data) => api.post(`/Eventos/${id}/cancelar`, data ?? {}),
   inscribir: (id) => api.post(`/Eventos/${id}/inscribir`),
   cancelarInscripcion: (id) => api.delete(`/Eventos/${id}/inscripcion`),
   misInscripciones: () => api.get('/Eventos/mis-inscripciones'),

@@ -5,6 +5,7 @@ import { cursosApi, encuestasApi, plantillasApi } from '../../services/api';
 import Estado from '../../components/Estado';
 import EditorEncuesta from '../../components/EditorEncuesta';
 import SelectorPlantilla from '../../components/SelectorPlantilla';
+import CambioActividad from '../../components/CambioActividad';
 import { fecha, fechaHora } from '../../utils/formato';
 
 export default function AdminCursos() {
@@ -17,6 +18,7 @@ export default function AdminCursos() {
   const [cola, setCola] = useState(null); // { curso, personas } (FUJ-111)
   const [confirmando, setConfirmando] = useState(null); // curso a finalizar (FUJ-120)
   const [encuestas, setEncuestas] = useState(new Map()); // cursoId -> resumen de su encuesta
+  const [cambio, setCambio] = useState(null); // { modo: 'reprogramar' | 'cancelar', curso } (FUJ-119)
   const esDirectora = usuario?.rol === 'DIRECTORA';
 
   const cargar = () =>
@@ -76,6 +78,21 @@ export default function AdminCursos() {
     } finally {
       setFinalizando(null);
     }
+  };
+
+  // FUJ-119: el backend avisa a inscritos y lista de espera; si falla, el diálogo muestra el error
+  const aplicarCambio = async (datos) => {
+    const { modo, curso } = cambio;
+    const { data } = modo === 'reprogramar'
+      ? await cursosApi.reprogramar(curso.id, datos)
+      : await cursosApi.cancelar(curso.id, datos);
+    setCambio(null);
+    setMsg({
+      tipo: 'success',
+      texto: `${modo === 'reprogramar' ? 'Curso reprogramado' : 'Curso cancelado'}: "${curso.titulo}". ` +
+             `Se avisó por correo a ${data.notificados} persona(s).`,
+    });
+    cargar();
   };
 
   const activos = cursos.filter(c => c.estado !== 'FINALIZADO' && c.estado !== 'CANCELADO');
@@ -140,10 +157,16 @@ export default function AdminCursos() {
                           </Link>
                         ) : <span className="muted">Certificados emitidos</span>
                       ) : c.estado !== 'CANCELADO' && (
-                        <button className="btn-primary" style={{ padding: '6px 12px' }}
-                                disabled={finalizando === c.id} onClick={() => setConfirmando(c)}>
-                          {finalizando === c.id ? 'Emitiendo...' : 'Finalizar y certificar'}
-                        </button>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          <button className="btn-primary" style={{ padding: '6px 12px' }}
+                                  disabled={finalizando === c.id} onClick={() => setConfirmando(c)}>
+                            {finalizando === c.id ? 'Emitiendo...' : 'Finalizar y certificar'}
+                          </button>
+                          <button className="btn-secondary" style={{ padding: '4px 10px' }}
+                                  onClick={() => setCambio({ modo: 'reprogramar', curso: c })}>Reprogramar</button>
+                          <button className="btn-secondary" style={{ padding: '4px 10px', color: '#991b1b', borderColor: '#fca5a5' }}
+                                  onClick={() => setCambio({ modo: 'cancelar', curso: c })}>Cancelar</button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -175,6 +198,11 @@ export default function AdminCursos() {
             )}
           </div>
         </div>
+      )}
+
+      {cambio && (
+        <CambioActividad modo={cambio.modo} tipo="CURSO" actividad={cambio.curso}
+                         onConfirmar={aplicarCambio} onCerrar={() => setCambio(null)} />
       )}
 
       {confirmando && (

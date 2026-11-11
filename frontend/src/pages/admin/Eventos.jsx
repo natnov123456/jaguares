@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { encuestasApi, eventosApi } from '../../services/api';
 import Estado from '../../components/Estado';
 import EditorEncuesta from '../../components/EditorEncuesta';
+import CambioActividad from '../../components/CambioActividad';
 import { fechaHora } from '../../utils/formato';
 
 const VACIO = { titulo: '', descripcion: '', lugar: '', fechaInicio: '', fechaFin: '' };
@@ -15,6 +16,7 @@ export default function AdminEventos() {
   const [encuestas, setEncuestas] = useState(new Map()); // eventoId -> resumen de su encuesta (FUJ-120)
   const [cerrando, setCerrando] = useState(null);
   const [procesando, setProcesando] = useState(false);
+  const [cambio, setCambio] = useState(null); // { modo: 'reprogramar' | 'cancelar', evento } (FUJ-119)
 
   // Gestión: incluye los eventos ya realizados y cerrados (el listado público solo muestra los abiertos)
   const cargar = () =>
@@ -71,6 +73,21 @@ export default function AdminEventos() {
     }
   };
 
+  // FUJ-119: el backend avisa por correo a los inscritos; si falla, el diálogo muestra el error
+  const aplicarCambio = async (datos) => {
+    const { modo, evento } = cambio;
+    const { data } = modo === 'reprogramar'
+      ? await eventosApi.reprogramar(evento.id, datos)
+      : await eventosApi.cancelar(evento.id, datos);
+    setCambio(null);
+    setMsg({
+      tipo: 'success',
+      texto: `${modo === 'reprogramar' ? 'Evento reprogramado' : 'Evento cancelado'}: "${evento.titulo}". ` +
+             `Se avisó por correo a ${data.notificados} inscrito(s).`,
+    });
+    cargar();
+  };
+
   const ahora = new Date();
   const proximos = eventos.filter(e => e.estado !== 'FINALIZADO' && new Date(e.fechaFin ?? e.fechaInicio) >= ahora);
 
@@ -116,7 +133,7 @@ export default function AdminEventos() {
           ) : (
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Evento</th><th>Fecha</th><th>Lugar</th><th>Estado</th><th>Asistencia</th></tr></thead>
+                <thead><tr><th>Evento</th><th>Fecha</th><th>Lugar</th><th>Estado</th><th>Asistencia</th><th>Cambios</th></tr></thead>
                 <tbody>
                   {eventos.map(ev => {
                     const pasado = new Date(ev.fechaFin ?? ev.fechaInicio) < ahora;
@@ -135,6 +152,16 @@ export default function AdminEventos() {
                             : <Estado valor={ev.estado} />}
                         </td>
                         <td>{accionAsistencia(ev)}</td>
+                        <td>
+                          {!pasado && ev.estado !== 'FINALIZADO' && ev.estado !== 'CANCELADO' ? (
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                              <button className="btn-secondary" style={{ padding: '4px 10px' }}
+                                      onClick={() => setCambio({ modo: 'reprogramar', evento: ev })}>Reprogramar</button>
+                              <button className="btn-secondary" style={{ padding: '4px 10px', color: '#991b1b', borderColor: '#fca5a5' }}
+                                      onClick={() => setCambio({ modo: 'cancelar', evento: ev })}>Cancelar</button>
+                            </div>
+                          ) : <span className="muted">—</span>}
+                        </td>
                       </tr>
                     );
                   })}
@@ -171,6 +198,11 @@ export default function AdminEventos() {
           </form>
         </section>
       </div>
+
+      {cambio && (
+        <CambioActividad modo={cambio.modo} tipo="EVENTO" actividad={cambio.evento}
+                         onConfirmar={aplicarCambio} onCerrar={() => setCambio(null)} />
+      )}
 
       {cerrando && (
         <EditorEncuesta
