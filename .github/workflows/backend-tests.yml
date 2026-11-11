@@ -1,0 +1,41 @@
+# RNF-05: en cada push y pull request se ejecutan las pruebas del backend y se exige cobertura >= 70 %
+name: Pruebas del backend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      JAGUARES_TEST_PG: Host=localhost;Port=5432;Username=postgres;Password=postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Pruebas con cobertura
+        working-directory: backend
+        run: >
+          dotnet test tests/FundacionJaguares.Tests
+          --settings tests/FundacionJaguares.Tests/coverage.runsettings
+          --results-directory tests/TestResults
+      - name: Verificar cobertura mínima (70 %)
+        working-directory: backend
+        run: |
+          archivo=$(find tests/TestResults -name coverage.cobertura.xml | head -1)
+          tasa=$(grep -o 'line-rate="[0-9.]*"' "$archivo" | head -1 | grep -o '[0-9.]*')
+          porcentaje=$(awk "BEGIN { printf \"%.1f\", $tasa * 100 }")
+          echo "Cobertura de líneas: $porcentaje %"
+          echo "### Cobertura de líneas del backend: $porcentaje %" >> "$GITHUB_STEP_SUMMARY"
+          awk "BEGIN { exit !($tasa >= 0.70) }" || { echo "La cobertura bajó del 70 %"; exit 1; }
