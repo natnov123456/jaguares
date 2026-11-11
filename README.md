@@ -131,6 +131,21 @@ npm run dev
 ```
 *La página web se abrirá en: `http://localhost:5173`*
 
+### 6. Pruebas automáticas y cobertura (RNF-05)
+El backend tiene pruebas unitarias y de integración en `backend/tests/FundacionJaguares.Tests` (xUnit).
+Las de integración levantan la API completa contra **PostgreSQL real**: cada ejecución crea una base temporal
+`jaguares_test_xxxx` con los scripts de `db/` y la **borra al terminar**, así que tu base `fundacion_jaguares` no se toca.
+
+```powershell
+cd backend
+# Solo si tu PostgreSQL no usa la contraseña "postgres" (se guarda solo en esta terminal):
+$env:JAGUARES_TEST_PG = "Host=localhost;Port=5432;Username=postgres;Password=TU_CONTRASEÑA"
+
+dotnet test                      # ejecuta todas las pruebas
+.\tests\cobertura.ps1            # pruebas + porcentaje de cobertura (falla si baja de 70 %)
+```
+También corren solas en GitHub Actions en cada push y pull request (`.github/workflows/backend-tests.yml`).
+
 ---
 
 ## 🔐 Roles y Credenciales de Prueba
