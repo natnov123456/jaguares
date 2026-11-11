@@ -13,8 +13,32 @@ public class EventosController : ControllerBase
 {
     private readonly IEventoService _eventos;
     private readonly IAsistenciaService _asistencia;
-    public EventosController(IEventoService eventos, IAsistenciaService asistencia)
-    { _eventos = eventos; _asistencia = asistencia; }
+    private readonly ICambiosActividadService _cambios;
+    public EventosController(IEventoService eventos, IAsistenciaService asistencia, ICambiosActividadService cambios)
+    { _eventos = eventos; _asistencia = asistencia; _cambios = cambios; }
+
+    // ---- FUJ-119: reprogramar o cancelar avisa por correo a todos los inscritos ----
+
+    [HttpPut("{id:guid}/reprogramar")]
+    [Authorize(Roles = "ENCARGADO_EVENTOS,DIRECTORA")]
+    public async Task<IActionResult> Reprogramar(Guid id, ReprogramarEventoDto dto)
+    {
+        try { return Ok(await _cambios.ReprogramarEventoAsync(id, dto)); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    [HttpPost("{id:guid}/cancelar")]
+    [Authorize(Roles = "ENCARGADO_EVENTOS,DIRECTORA")]
+    public async Task<IActionResult> CancelarEvento(Guid id,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CancelarActividadDto? dto)
+    {
+        try { return Ok(await _cambios.CancelarEventoAsync(id, dto?.Motivo)); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
 
     private Guid UsuarioId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
                                            ?? User.FindFirstValue("sub")!);

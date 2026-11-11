@@ -64,6 +64,7 @@ public class AsistenciaService : IAsistenciaService
         insc.CodigoQr = NuevoCodigo(); // si se reinscribe tras cancelar, el código anterior deja de servir
         insc.InscritoEn = DateTime.UtcNow;
         insc.CheckinEn = null;
+        insc.RecordatorioEnviadoEn = null; // FUJ-119: si se reinscribe, vuelve a recibir su recordatorio
         if (existente is null) _db.InscripcionesEvento.Add(insc);
         await _db.SaveChangesAsync();
 
@@ -134,6 +135,9 @@ public class AsistenciaService : IAsistenciaService
             return new("OTRO_EVENTO", $"Este QR corresponde a otro evento: {fila.e.Titulo}", fila.NombreCompleto, null);
         if (fila.i.Estado == "ASISTIO")
             return new("YA_REGISTRADO", "La asistencia ya fue registrada", fila.NombreCompleto, fila.i.CheckinEn);
+        // FUJ-119: un evento cancelado no admite ingresos
+        if (fila.e.Estado == "CANCELADO")
+            return new("FUERA_DE_FECHA", "El evento fue cancelado", fila.NombreCompleto, null);
         // FUJ-120: una vez cerrada la asistencia (y enviada la encuesta) no se aceptan más ingresos
         if (fila.e.Estado == "FINALIZADO")
             return new("FUERA_DE_FECHA", "La asistencia de este evento ya fue cerrada", fila.NombreCompleto, null);

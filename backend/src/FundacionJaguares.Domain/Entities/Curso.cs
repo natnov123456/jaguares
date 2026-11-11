@@ -23,6 +23,7 @@ public class Inscripcion
     public Guid ParticipanteId { get; set; }
     public string Estado { get; set; } = "CONFIRMADA";
     public DateTime FechaInscripcion { get; set; } = DateTime.UtcNow;
+    public DateTime? RecordatorioEnviadoEn { get; set; } // FUJ-119: recordatorio 24 h antes ya enviado
 }
 // FUJ-111: lugar en la lista de espera de un curso lleno.
 // La posición se calcula por orden de llegada (CreadoEn) entre los que siguen EN_ESPERA.

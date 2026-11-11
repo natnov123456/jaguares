@@ -12,7 +12,35 @@ namespace FundacionJaguares.Api.Controllers;
 public class CursosController : ControllerBase
 {
     private readonly ICursoService _cursos;
-    public CursosController(ICursoService cursos) => _cursos = cursos;
+    private readonly ICambiosActividadService _cambios;
+    public CursosController(ICursoService cursos, ICambiosActividadService cambios) { _cursos = cursos; _cambios = cambios; }
+
+    // ---- FUJ-119: reprogramar o cancelar avisa a inscritos y lista de espera. El docente solo sus cursos ----
+
+    [HttpPut("{id:guid}/reprogramar")]
+    [Authorize(Roles = "DOCENTE,DIRECTORA")]
+    public async Task<IActionResult> Reprogramar(Guid id, ReprogramarCursoDto dto)
+    {
+        var docenteId = User.IsInRole("DIRECTORA") ? (Guid?)null : UsuarioId();
+        try { return Ok(await _cambios.ReprogramarCursoAsync(id, dto, docenteId)); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    [HttpPost("{id:guid}/cancelar")]
+    [Authorize(Roles = "DOCENTE,DIRECTORA")]
+    public async Task<IActionResult> CancelarCurso(Guid id,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CancelarActividadDto? dto)
+    {
+        var docenteId = User.IsInRole("DIRECTORA") ? (Guid?)null : UsuarioId();
+        try { return Ok(await _cambios.CancelarCursoAsync(id, dto?.Motivo, docenteId)); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
 
     [HttpGet]
     public async Task<IActionResult> Listar() => Ok(await _cursos.ListarPublicadosAsync());

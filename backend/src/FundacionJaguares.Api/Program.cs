@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+using FundacionJaguares.Api;
 using FundacionJaguares.Application.Services;
 using FundacionJaguares.Domain.Entities;
 using FundacionJaguares.Infrastructure;
@@ -73,6 +74,11 @@ builder.Services.AddScoped<IInstitucionalService, InstitucionalService>();
 builder.Services.AddScoped<IContactoService, ContactoService>();
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 builder.Services.AddScoped<IEncuestaService, EncuestaService>();
+// FUJ-119: recordatorios 24 h antes (tarea programada cada hora) y avisos de reprogramación/cancelación
+builder.Services.AddScoped<IRecordatorioService, RecordatorioService>();
+builder.Services.AddScoped<ICambiosActividadService, CambiosActividadService>();
+builder.Services.AddSingleton(builder.Configuration.GetSection("Recordatorios").Get<RecordatoriosOpciones>() ?? new RecordatoriosOpciones());
+builder.Services.AddHostedService<RecordatoriosWorker>();
 
 // 5) JWT Auth
 var jwtSecret = cfg["Jwt:Secret"]!;

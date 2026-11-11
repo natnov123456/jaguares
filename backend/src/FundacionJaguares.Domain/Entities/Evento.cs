@@ -23,6 +23,7 @@ public class InscripcionEvento
     public string Estado { get; set; } = "CONFIRMADA"; // CONFIRMADA | CANCELADA | ASISTIO
     public DateTime InscritoEn { get; set; } = DateTime.UtcNow;
     public DateTime? CheckinEn { get; set; }
+    public DateTime? RecordatorioEnviadoEn { get; set; } // FUJ-119: recordatorio 24 h antes ya enviado
 }
 
 public class AsistenciaEvento

@@ -48,6 +48,14 @@ public record CheckinResultadoDto(string Resultado, string Mensaje, string? Part
 public record InscritoEventoDto(Guid InscripcionId, string Nombre, string Email, string Estado,
                                 DateTime InscritoEn, DateTime? CheckinEn);
 
+// RECORDATORIOS, REPROGRAMACIÓN Y CANCELACIÓN (FUJ-119)
+public record ReprogramarEventoDto(DateTime FechaInicio, DateTime? FechaFin, string? Lugar, string? Motivo);
+public record ReprogramarCursoDto(DateOnly FechaInicio, DateOnly FechaFin, string? Motivo);
+public record CancelarActividadDto(string? Motivo);
+// Notificados: inscritos (y, en cursos, personas en lista de espera) a quienes se envió el aviso
+public record CambioActividadDto(Guid Id, string Estado, int Notificados);
+public record ResultadoRecordatoriosDto(int Enviados, int Fallidos);
+
 // CALENDARIO (FUJ-114): Tipo = "CURSO" | "EVENTO"; TodoElDia = true en cursos (fechas sin hora)
 public record ActividadDto(Guid Id, string Tipo, string Titulo, string? Descripcion, string? Lugar,
                            DateTime Inicio, DateTime? Fin, bool TodoElDia,
