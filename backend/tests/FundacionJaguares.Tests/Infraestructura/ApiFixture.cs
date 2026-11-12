@@ -153,6 +153,23 @@ public sealed class ApiFixture : IAsyncLifetime
         return db.Usuarios.Single(u => u.Email == email).Id;
     }
 
+    // Solo la directora crea cursos y asigna el docente a cargo: por defecto, el docente del seed
+    public Task<Guid> DocenteIdAsync() => IdDeAsync(Usuarios.Docente);
+
+    // Un segundo docente para comprobar que nadie gestiona cursos que no le asignaron
+    private Guid? _otroDocente;
+    public async Task<Guid> OtroDocenteIdAsync()
+    {
+        if (_otroDocente is { } id) return id;
+        var u = new FundacionJaguares.Domain.Entities.User
+        {
+            NombreCompleto = "Otro Docente", Email = $"d{Guid.NewGuid().ToString("N")[..10]}@jaguares.org",
+            PasswordHash = "x", Rol = FundacionJaguares.Domain.Entities.Rol.DOCENTE
+        };
+        await EnBdAsync(db => { db.Usuarios.Add(u); return Task.CompletedTask; });
+        return (_otroDocente = u.Id).Value;
+    }
+
     // Acceso directo a servicios/BD para preparar datos que la API no permite crear (p. ej. fechas pasadas)
     public async Task EnBdAsync(Func<AppDbContext, Task> accion)
     {

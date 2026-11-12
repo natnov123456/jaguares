@@ -203,7 +203,7 @@ public class ContenidoTests(ApiFixture api)
         {
             titulo = "Curso con plantilla", descripcion = (string?)null,
             fechaInicio = DateOnly.FromDateTime(DateTime.Today.AddDays(1)), fechaFin = DateOnly.FromDateTime(DateTime.Today.AddDays(5)),
-            cupoMaximo = 5, asistenciaMinimaPct = 80, plantillaId = p.Id()
+            cupoMaximo = 5, asistenciaMinimaPct = 80, plantillaId = p.Id(), docenteId = await api.DocenteIdAsync()
         })).JsonAsync();
         await (await dir.DeleteAsync($"/api/Certificados/plantillas/{p.Id()}")).EsperarAsync(HttpStatusCode.BadRequest);
         await (await dir.PutJsonAsync($"/api/Cursos/{curso.Id()}/plantilla", new { plantillaId = (Guid?)null })).EsperarAsync(HttpStatusCode.NoContent);

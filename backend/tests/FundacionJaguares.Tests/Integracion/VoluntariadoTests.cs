@@ -106,11 +106,11 @@ public class VoluntariadoTests(ApiFixture api)
     {
         var dir = await api.DirectoraAsync();
         var voluntarioId = await VoluntarioSeedIdAsync();
-        var curso = await (await (await api.DocenteAsync()).PostJsonAsync("/api/Cursos", new
+        var curso = await (await dir.PostJsonAsync("/api/Cursos", new
         {
             titulo = "Curso con voluntarios", descripcion = (string?)null,
             fechaInicio = DateOnly.FromDateTime(DateTime.Today.AddDays(2)), fechaFin = DateOnly.FromDateTime(DateTime.Today.AddDays(9)),
-            cupoMaximo = 5, asistenciaMinimaPct = 80
+            cupoMaximo = 5, asistenciaMinimaPct = 80, docenteId = await api.DocenteIdAsync()
         })).JsonAsync();
 
         var r = await (await dir.PostJsonAsync("/api/Voluntarios/asignaciones",

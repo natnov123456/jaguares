@@ -8,26 +8,38 @@ namespace FundacionJaguares.Tests.Integracion;
 [Collection(ColeccionApi.Nombre)]
 public class CursosTests(ApiFixture api)
 {
-    private static object Curso(string titulo, int cupo = 10, int diasInicio = 1, int diasFin = 10, Guid? plantillaId = null) => new
+    private static object Curso(string titulo, Guid? docenteId, int cupo = 10, int diasInicio = 1, int diasFin = 10,
+                                Guid? plantillaId = null) => new
     {
         titulo, descripcion = "Curso de prueba",
         fechaInicio = DateOnly.FromDateTime(DateTime.Today.AddDays(diasInicio)),
         fechaFin = DateOnly.FromDateTime(DateTime.Today.AddDays(diasFin)),
-        cupoMaximo = cupo, asistenciaMinimaPct = 80, plantillaId
+        cupoMaximo = cupo, asistenciaMinimaPct = 80, plantillaId, docenteId
     };
 
-    private async Task<JsonElement> CrearCursoAsync(HttpClient c, string titulo, int cupo = 10) =>
-        await (await c.PostJsonAsync("/api/Cursos", Curso(titulo, cupo))).JsonAsync();
+    // La directora crea el curso y lo asigna al docente del seed (o a otro docente si deOtroDocente)
+    private async Task<JsonElement> CrearCursoAsync(string titulo, int cupo = 10, bool deOtroDocente = false)
+    {
+        var docenteId = deOtroDocente ? await api.OtroDocenteIdAsync() : await api.DocenteIdAsync();
+        return await (await (await api.DirectoraAsync()).PostJsonAsync("/api/Cursos", Curso(titulo, docenteId, cupo))).JsonAsync();
+    }
 
     [Fact]
-    public async Task Crear_curso_valida_fechas_y_cupo()
+    public async Task Crear_curso_valida_fechas_cupo_y_docente()
     {
+        var directora = await api.DirectoraAsync();
         var docente = await api.DocenteAsync();
-        await (await docente.PostJsonAsync("/api/Cursos", Curso("Malo", diasInicio: 5, diasFin: 1))).EsperarAsync(HttpStatusCode.BadRequest);
-        await (await docente.PostJsonAsync("/api/Cursos", Curso("Malo", cupo: 0))).EsperarAsync(HttpStatusCode.BadRequest);
-        await (await docente.PostJsonAsync("/api/Cursos", Curso("Malo", plantillaId: Guid.NewGuid()))).EsperarAsync(HttpStatusCode.BadRequest);
+        var docenteId = await api.DocenteIdAsync();
+        await (await directora.PostJsonAsync("/api/Cursos", Curso("Malo", docenteId, diasInicio: 5, diasFin: 1))).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await directora.PostJsonAsync("/api/Cursos", Curso("Malo", docenteId, cupo: 0))).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await directora.PostJsonAsync("/api/Cursos", Curso("Malo", docenteId, plantillaId: Guid.NewGuid()))).EsperarAsync(HttpStatusCode.BadRequest);
+        // El docente a cargo es obligatorio y debe tener rol Docente
+        await (await directora.PostJsonAsync("/api/Cursos", Curso("Malo", null))).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await directora.PostJsonAsync("/api/Cursos", Curso("Malo", await api.IdDeAsync(Usuarios.Juan)))).EsperarAsync(HttpStatusCode.BadRequest);
+        // Solo la directora crea cursos
+        await (await docente.PostJsonAsync("/api/Cursos", Curso("Malo", docenteId))).EsperarAsync(HttpStatusCode.Forbidden);
 
-        var curso = await CrearCursoAsync(docente, "Taller de reciclaje");
+        var curso = await CrearCursoAsync("Taller de reciclaje");
         Assert.Equal("PUBLICADO", curso.Str("estado"));
 
         var publicos = await (await api.Anonimo().GetAsync("/api/Cursos")).JsonAsync();
@@ -43,7 +55,7 @@ public class CursosTests(ApiFixture api)
     public async Task Inscripcion_con_cupos_lista_de_espera_y_promocion_al_cancelar()
     {
         var docente = await api.DocenteAsync();
-        var curso = await CrearCursoAsync(docente, "Curso con un cupo", cupo: 1);
+        var curso = await CrearCursoAsync("Curso con un cupo", cupo: 1);
         var id = curso.Id();
         var (ana, _, _) = await api.NuevoParticipanteAsync("Ana");
         var (beto, _, _) = await api.NuevoParticipanteAsync("Beto");
@@ -80,7 +92,7 @@ public class CursosTests(ApiFixture api)
     [Fact]
     public async Task Salir_de_la_lista_de_espera()
     {
-        var curso = await CrearCursoAsync(await api.DirectoraAsync(), "Curso lleno", cupo: 1);
+        var curso = await CrearCursoAsync("Curso lleno", cupo: 1, deOtroDocente: true);
         var (ana, _, _) = await api.NuevoParticipanteAsync();
         var (beto, _, _) = await api.NuevoParticipanteAsync();
         await (await ana.PostAsync($"/api/Cursos/{curso.Id()}/inscribir", null)).EsperarAsync(HttpStatusCode.OK);
@@ -108,7 +120,7 @@ public class CursosTests(ApiFixture api)
             firmaUnoNombre = "María", firmaUnoCargo = "Directora", firmaDosNombre = (string?)null, firmaDosCargo = (string?)null
         })).JsonAsync();
 
-        var curso = await CrearCursoAsync(docente, "Curso a finalizar");
+        var curso = await CrearCursoAsync("Curso a finalizar");
         var id = curso.Id();
         await (await docente.PutJsonAsync($"/api/Cursos/{id}/plantilla", new { plantillaId = plantilla.Id() })).EsperarAsync(HttpStatusCode.NoContent);
         await (await docente.PutJsonAsync($"/api/Cursos/{id}/plantilla", new { plantillaId = Guid.NewGuid() })).EsperarAsync(HttpStatusCode.BadRequest);
@@ -183,7 +195,7 @@ public class CursosTests(ApiFixture api)
     [Fact]
     public async Task Docente_no_puede_finalizar_ni_cambiar_cursos_ajenos()
     {
-        var curso = await CrearCursoAsync(await api.DirectoraAsync(), "Curso de la directora");
+        var curso = await CrearCursoAsync("Curso de otro docente", deOtroDocente: true);
         var docente = await api.DocenteAsync();
         await (await docente.PostAsync($"/api/Cursos/{curso.Id()}/finalizar", null)).EsperarAsync(HttpStatusCode.Forbidden);
         await (await docente.PutJsonAsync($"/api/Cursos/{curso.Id()}/plantilla", new { plantillaId = (Guid?)null })).EsperarAsync(HttpStatusCode.Forbidden);

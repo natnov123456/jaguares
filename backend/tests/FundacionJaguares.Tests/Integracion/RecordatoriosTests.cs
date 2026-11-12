@@ -18,11 +18,16 @@ public class RecordatoriosTests(ApiFixture api)
             fechaInicio = Http.Z(inicio), fechaFin = Http.Z(fin ?? inicio.AddHours(2))
         })).JsonAsync();
 
-    private async Task<JsonElement> CursoAsync(HttpClient c, string titulo, DateOnly inicio, int cupo = 10) =>
-        await (await c.PostJsonAsync("/api/Cursos", new
+    // La directora crea el curso y lo asigna al docente del seed (o a otro docente si deOtroDocente)
+    private async Task<JsonElement> CursoAsync(string titulo, DateOnly inicio, int cupo = 10, bool deOtroDocente = false)
+    {
+        var docenteId = deOtroDocente ? await api.OtroDocenteIdAsync() : await api.DocenteIdAsync();
+        return await (await (await api.DirectoraAsync()).PostJsonAsync("/api/Cursos", new
         {
-            titulo, descripcion = (string?)null, fechaInicio = inicio, fechaFin = inicio.AddDays(5), cupoMaximo = cupo, asistenciaMinimaPct = 80
+            titulo, descripcion = (string?)null, fechaInicio = inicio, fechaFin = inicio.AddDays(5), cupoMaximo = cupo,
+            asistenciaMinimaPct = 80, docenteId
         })).JsonAsync();
+    }
 
     private async Task<ResultadoRecordatoriosDto> EjecutarTareaAsync(DateTime ahora)
     {
@@ -73,7 +78,7 @@ public class RecordatoriosTests(ApiFixture api)
     {
         var inicio = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(-4).AddDays(3));
         var titulo = "Curso recordatorio " + Guid.NewGuid().ToString("N")[..5];
-        var curso = await CursoAsync(await api.DocenteAsync(), titulo, inicio);
+        var curso = await CursoAsync(titulo, inicio);
         var (ana, _, email) = await api.NuevoParticipanteAsync("Ana Curso");
         await (await ana.PostAsync($"/api/Cursos/{curso.Id()}/inscribir", null)).EsperarAsync(HttpStatusCode.OK);
 
@@ -173,7 +178,7 @@ public class RecordatoriosTests(ApiFixture api)
         var docente = await api.DocenteAsync();
         var inicio = DateOnly.FromDateTime(DateTime.Today.AddDays(10));
         var titulo = "Curso cambios " + Guid.NewGuid().ToString("N")[..5];
-        var curso = await CursoAsync(docente, titulo, inicio, cupo: 1);
+        var curso = await CursoAsync(titulo, inicio, cupo: 1);
         var (ana, _, emailAna) = await api.NuevoParticipanteAsync("Ana");
         var (beto, _, emailBeto) = await api.NuevoParticipanteAsync("Beto");
         await (await ana.PostAsync($"/api/Cursos/{curso.Id()}/inscribir", null)).EsperarAsync(HttpStatusCode.OK);
@@ -204,7 +209,7 @@ public class RecordatoriosTests(ApiFixture api)
     public async Task Docente_no_modifica_cursos_ajenos()
     {
         var inicio = DateOnly.FromDateTime(DateTime.Today.AddDays(10));
-        var curso = await CursoAsync(await api.DirectoraAsync(), "Curso de la directora " + Guid.NewGuid().ToString("N")[..5], inicio);
+        var curso = await CursoAsync("Curso de otro docente " + Guid.NewGuid().ToString("N")[..5], inicio, deOtroDocente: true);
         var docente = await api.DocenteAsync();
         await (await docente.PutJsonAsync($"/api/Cursos/{curso.Id()}/reprogramar",
             new { fechaInicio = inicio.AddDays(1), fechaFin = inicio.AddDays(2), motivo = (string?)null })).EsperarAsync(HttpStatusCode.Forbidden);
