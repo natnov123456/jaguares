@@ -8,6 +8,27 @@ import BotonComprobante from '../../components/BotonComprobante';
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
                'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
+// FUJ-106: el reporte mensual se descarga como CSV (separado por ";" y con BOM para que Excel lo abra bien)
+function descargarReporte(reporte, periodo) {
+  const celda = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const filas = [
+    ['Reporte financiero', `${MESES[periodo.mes - 1]} ${periodo.anio}`],
+    [],
+    ['N° comprobante', 'Fecha', 'Monto (Bs.)', 'Medio', 'Referencia', 'Estado'],
+    ...reporte.detalle.map(d => [numeroComprobante(d.numeroComprobante), fechaHora(d.fecha),
+                                 Number(d.monto).toFixed(2), d.medio, d.referencia, d.estado]),
+    [],
+    ['Total del período', '', Number(reporte.total).toFixed(2), `${reporte.cantidad} aportes`],
+  ];
+  const csv = '﻿' + filas.map(f => f.map(celda).join(';')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `reporte-donaciones-${periodo.anio}-${String(periodo.mes).padStart(2, '0')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function TablaDonaciones({ donaciones, vacio }) {
   if (donaciones.length === 0) return <p className="muted" style={{ textAlign: 'center', padding: 24 }}>{vacio}</p>;
   return (
@@ -128,6 +149,10 @@ export default function AdminDonaciones() {
               <p>Total recaudado ({reporte.cantidad} aportes)</p>
               <h2>{bs(reporte.total)}</h2>
             </div>
+            <button type="button" className="btn-secondary" disabled={loading}
+                    onClick={() => descargarReporte(reporte, periodo)}>
+              ⬇ Descargar reporte (CSV)
+            </button>
           </div>
         )}
       </div>
