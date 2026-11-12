@@ -45,7 +45,7 @@ export default function Cursos() {
   };
 
   const inscribir = (id) => ejecutar(id, cursosApi.inscribir,
-    () => 'Inscripción exitosa ✅ Te enviamos la confirmación por email.');
+    () => 'Inscripción exitosa ✅ ');
 
   const unirse = (id) => ejecutar(id, cursosApi.unirseListaEspera,
     (d) => `Te anotaste en la lista de espera ⏳ Tu posición es la ${d.posicion}. Si se libera un cupo quedarás inscrito/a automáticamente y te avisaremos por email.`);

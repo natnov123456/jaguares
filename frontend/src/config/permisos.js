@@ -32,6 +32,8 @@ export const PERMISOS = {
   // Staff
   verPanel: ROLES_STAFF,
   gestionarCursos: [DOCENTE, DIRECTORA],
+  // Solo la directora crea cursos y asigna al docente; el docente gestiona los que le asignan
+  crearCursos: [DIRECTORA],
   gestionarEventos: [ENCARGADO_EVENTOS, DIRECTORA],
   registrarCheckin: [ENCARGADO_EVENTOS, DIRECTORA],
   gestionarVoluntarios: [ENCARGADO_EVENTOS, DIRECTORA],
@@ -65,7 +67,7 @@ export function rutaInicio(usuario) {
 // Secciones del panel de administración. El navbar y el dashboard se arman desde aquí.
 export const SECCIONES_PANEL = [
   { permiso: 'gestionarCursos', ruta: '/admin/cursos', titulo: 'Mis cursos', icono: '📚',
-    descripcion: 'Crear talleres, ver inscritos y emitir certificados al finalizar.' },
+    descripcion: 'Ver inscritos, registrar la asistencia de cada clase y emitir certificados al finalizar.' },
   { permiso: 'gestionarPlantillas', ruta: '/admin/plantillas-certificado', titulo: 'Plantillas de certificado', icono: '🎓',
     descripcion: 'Configurar logo, firmas y texto de los certificados por tipo de actividad.' },
   { permiso: 'gestionarEventos', ruta: '/admin/eventos', titulo: 'Eventos', icono: '📅',

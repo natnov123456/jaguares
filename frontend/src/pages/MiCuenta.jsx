@@ -6,6 +6,7 @@ import MisCertificados from '../components/MisCertificados';
 import MisDonaciones from '../components/MisDonaciones';
 import MiListaEspera from '../components/MiListaEspera';
 import ModalQr from '../components/ModalQr';
+import ModalAsistencia from '../components/ModalAsistencia';
 import BotonCertificado from '../components/BotonCertificado';
 import Estado from '../components/Estado';
 import { fecha, fechaHora } from '../utils/formato';
@@ -30,6 +31,16 @@ function Cuando({ a }) {
   return <>{fechaHora(a.inicio)}</>;
 }
 
+// Porcentaje de asistencia del curso; al tocarlo se abre el detalle por día
+function BotonAsistencia({ a, onVer }) {
+  if (a.tipo !== 'CURSO') return null;
+  return (
+    <button type="button" className="btn-secondary" style={{ padding: '6px 12px' }} onClick={() => onVer(a)}>
+      {a.asistenciaPct != null ? `Asistencia: ${a.asistenciaPct.toLocaleString('es-BO')} %` : 'Mi asistencia'}
+    </button>
+  );
+}
+
 function TipoActividad({ tipo }) {
   return <span className={`badge ${tipo === 'CURSO' ? 'badge-warn' : ''}`}>{tipo === 'CURSO' ? '📚 Curso' : '📅 Evento'}</span>;
 }
@@ -41,6 +52,7 @@ export default function MiCuenta() {
   const [msg, setMsg] = useState(null);
   const [pestana, setPestana] = useState('proximas');
   const [qr, setQr] = useState(null);
+  const [asistencia, setAsistencia] = useState(null); // curso cuya asistencia se está viendo
   const [cancelando, setCancelando] = useState(null);
   const [encuestas, setEncuestas] = useState([]); // FUJ-120: encuestas sin responder
 
@@ -156,6 +168,7 @@ export default function MiCuenta() {
                           <td><Estado valor={a.estadoInscripcion} /></td>
                           <td>
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              <BotonAsistencia a={a} onVer={setAsistencia} />
                               {a.tipo === 'EVENTO' && a.inscripcionEventoId && (
                                 <button className="btn-primary" style={{ padding: '6px 12px' }}
                                         onClick={() => setQr({ inscripcionId: a.inscripcionEventoId, titulo: a.titulo, inicio: a.inicio })}>
@@ -198,10 +211,13 @@ export default function MiCuenta() {
                                 : <Estado valor={a.estadoActividad} />}
                             </td>
                             <td>
-                              {a.codigoCertificado && (() => {
-                                const cert = panel.certificados.find(c => c.codigoUnico === a.codigoCertificado);
-                                return cert && <BotonCertificado id={cert.id} codigo={cert.codigoUnico} className="btn-secondary" />;
-                              })()}
+                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                <BotonAsistencia a={a} onVer={setAsistencia} />
+                                {a.codigoCertificado && (() => {
+                                  const cert = panel.certificados.find(c => c.codigoUnico === a.codigoCertificado);
+                                  return cert && <BotonCertificado id={cert.id} codigo={cert.codigoUnico} className="btn-secondary" />;
+                                })()}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -220,6 +236,7 @@ export default function MiCuenta() {
       )}
 
       {qr && <ModalQr inscripcion={qr} onCerrar={() => setQr(null)} />}
+      {asistencia && <ModalAsistencia curso={asistencia} onCerrar={() => setAsistencia(null)} />}
     </div>
   );
 }

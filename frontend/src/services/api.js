@@ -52,6 +52,15 @@ export const cursosApi = {
   salirListaEspera: (id) => api.delete(`/Cursos/${id}/lista-espera`),
   miListaEspera: () => api.get('/Cursos/mi-lista-espera'),
   listaEspera: (id) => api.get(`/Cursos/${id}/lista-espera`),
+  // La directora asigna el docente a cargo
+  docentes: () => api.get('/Cursos/docentes'),
+  asignarDocente: (id, docenteId) => api.put(`/Cursos/${id}/docente`, { docenteId }),
+  // Gestión del curso (docente a cargo o directora)
+  detalle: (id) => api.get(`/Cursos/${id}/gestion`),
+  editar: (id, data) => api.put(`/Cursos/${id}`, data),
+  asistencia: (id, fecha) => api.get(`/Cursos/${id}/asistencia`, { params: { fecha } }),
+  registrarAsistencia: (id, fecha, registros) => api.post(`/Cursos/${id}/asistencia`, { fecha, registros }),
+  miAsistencia: (id) => api.get(`/Cursos/${id}/mi-asistencia`),
 };
 
 export const eventosApi = {

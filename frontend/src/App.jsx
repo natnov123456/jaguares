@@ -29,6 +29,7 @@ import MiCuenta from './pages/MiCuenta';
 import Dashboard from './pages/admin/Dashboard';
 import AdminCursos from './pages/admin/Cursos';
 import CrearCurso from './pages/admin/CrearCurso';
+import CursoDetalle from './pages/admin/CursoDetalle';
 import AdminEventos from './pages/admin/Eventos';
 // El lector QR (jsQR) solo lo usa el personal de eventos: se descarga aparte al abrir la página
 const Checkin = lazy(() => import('./pages/admin/Checkin'));
@@ -81,7 +82,8 @@ export default function App() {
           {/* Staff — cada ruta exige el permiso de su sección (ver config/permisos.js) */}
           <Route path="/admin" element={protegida('verPanel', <Dashboard />)} />
           <Route path="/admin/cursos" element={protegida('gestionarCursos', <AdminCursos />)} />
-          <Route path="/admin/crear-curso" element={protegida('gestionarCursos', <CrearCurso />)} />
+          <Route path="/admin/cursos/:id" element={protegida('gestionarCursos', <CursoDetalle />)} />
+          <Route path="/admin/crear-curso" element={protegida('crearCursos', <CrearCurso />)} />
           <Route path="/admin/plantillas-certificado" element={protegida('gestionarPlantillas', <PlantillasCertificado />)} />
           <Route path="/admin/eventos" element={protegida('gestionarEventos', <AdminEventos />)} />
           <Route path="/admin/checkin" element={protegida('registrarCheckin', <Suspense fallback={<p className="container page">Cargando...</p>}><Checkin /></Suspense>)} />

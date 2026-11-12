@@ -19,6 +19,7 @@ export default function AdminCursos() {
   const [confirmando, setConfirmando] = useState(null); // curso a finalizar (FUJ-120)
   const [encuestas, setEncuestas] = useState(new Map()); // cursoId -> resumen de su encuesta
   const [cambio, setCambio] = useState(null); // { modo: 'reprogramar' | 'cancelar', curso } (FUJ-119)
+  const [docentes, setDocentes] = useState([]);
   const esDirectora = usuario?.rol === 'DIRECTORA';
 
   const cargar = () =>
@@ -35,7 +36,23 @@ export default function AdminCursos() {
     plantillasApi.listar()
       .then(r => setPlantillas(r.data))
       .catch(() => setMsg({ tipo: 'error', texto: 'No se pudieron cargar las plantillas de certificado' }));
-  }, []);
+    if (esDirectora)
+      cursosApi.docentes().then(r => setDocentes(r.data))
+        .catch(() => setMsg({ tipo: 'error', texto: 'No se pudo cargar la lista de docentes' }));
+  }, [esDirectora]);
+
+  const asignarDocente = async (c, docenteId) => {
+    if (!docenteId) return;
+    setMsg(null);
+    try {
+      await cursosApi.asignarDocente(c.id, docenteId);
+      const nombre = docentes.find(d => d.id === docenteId)?.nombre;
+      setCursos(lista => lista.map(x => x.id === c.id ? { ...x, docenteId, docenteNombre: nombre } : x));
+      setMsg({ tipo: 'success', texto: `${nombre} quedó a cargo de "${c.titulo}" y se le avisó por email.` });
+    } catch (err) {
+      setMsg({ tipo: 'error', texto: err.response?.data?.error || 'No se pudo asignar el docente' });
+    }
+  };
 
   const asignarPlantilla = async (c, plantillaId) => {
     setMsg(null);
@@ -72,7 +89,7 @@ export default function AdminCursos() {
       cargar();
     } catch (err) {
       const texto = err.response?.status === 403
-        ? 'Solo puedes finalizar los cursos que tú creaste.'
+        ? 'Solo puedes finalizar los cursos que te asignaron.'
         : err.response?.data?.error || 'No se pudo finalizar el curso';
       setMsg({ tipo: 'error', texto });
     } finally {
@@ -103,14 +120,16 @@ export default function AdminCursos() {
       <div className="page-header">
         <div>
           <h1>{esDirectora ? 'Cursos de la fundación' : 'Mis cursos'}</h1>
-          <p>{esDirectora ? 'Todos los cursos, de todos los docentes.' : 'Solo ves los cursos que tú creaste.'}</p>
+          <p>{esDirectora
+            ? 'Todos los cursos de la fundación. Tú los creas y eliges al docente a cargo.'
+            : 'Los cursos que la dirección te asignó. Entra a cada uno para registrar la asistencia y editar sus datos.'}</p>
         </div>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
           <div className="stat-box">
             <p>Inscritos en cursos activos</p>
             <h2>{totalInscritos}</h2>
           </div>
-          <Link to="/admin/crear-curso" className="btn-primary">+ Crear curso</Link>
+          {esDirectora && <Link to="/admin/crear-curso" className="btn-primary">+ Crear curso</Link>}
         </div>
       </div>
 
@@ -121,18 +140,35 @@ export default function AdminCursos() {
           <p>Cargando...</p>
         ) : cursos.length === 0 ? (
           <p className="muted" style={{ textAlign: 'center', padding: 24 }}>
-            Aún no hay cursos. <Link to="/admin/crear-curso" style={{ color: '#b45309' }}>Crea el primero →</Link>
+            {esDirectora
+              ? <>Aún no hay cursos. <Link to="/admin/crear-curso" style={{ color: '#b45309' }}>Crea el primero →</Link></>
+              : 'Todavía no tienes cursos asignados. La dirección te avisará por email cuando te asigne uno.'}
           </p>
         ) : (
           <div className="table-wrap">
             <table className="table">
               <thead>
-                <tr><th>Curso</th><th>Fechas</th><th>Inscritos / Cupo</th><th>En espera</th><th>Estado</th><th>Plantilla de certificado</th><th>Acciones</th></tr>
+                <tr><th>Curso</th>{esDirectora && <th>Docente</th>}<th>Fechas</th><th>Inscritos / Cupo</th><th>En espera</th><th>Estado</th><th>Plantilla de certificado</th><th>Acciones</th></tr>
               </thead>
               <tbody>
                 {cursos.map(c => (
                   <tr key={c.id}>
-                    <td style={{ fontWeight: 600 }}>{c.titulo}</td>
+                    <td style={{ fontWeight: 600 }}>
+                      <Link to={`/admin/cursos/${c.id}`} style={{ color: 'inherit', textDecoration: 'underline' }}>{c.titulo}</Link>
+                    </td>
+                    {esDirectora && (
+                      <td>
+                        <select value={c.docenteId ?? ''} aria-label={`Docente de ${c.titulo}`}
+                                disabled={c.estado === 'FINALIZADO' || c.estado === 'CANCELADO'}
+                                onChange={e => asignarDocente(c, e.target.value)}>
+                          {!c.docenteId && <option value="">⚠ Sin docente</option>}
+                          {c.docenteId && !docentes.some(d => d.id === c.docenteId) && (
+                            <option value={c.docenteId}>{c.docenteNombre ?? 'Docente inactivo'}</option>
+                          )}
+                          {docentes.map(d => <option key={d.id} value={d.id}>{d.nombre}</option>)}
+                        </select>
+                      </td>
+                    )}
                     <td>{fecha(c.fechaInicio)} – {fecha(c.fechaFin)}</td>
                     <td>{c.inscritos} / {c.cupoMaximo}</td>
                     <td>
@@ -150,6 +186,10 @@ export default function AdminCursos() {
                                          onChange={id => asignarPlantilla(c, id)} />
                     </td>
                     <td>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <Link to={`/admin/cursos/${c.id}`} className="btn-secondary" style={{ padding: '6px 12px' }}>
+                        {c.estado === 'FINALIZADO' || c.estado === 'CANCELADO' ? 'Ver asistencia' : 'Asistencia y datos'}
+                      </Link>
                       {c.estado === 'FINALIZADO' ? (
                         encuestas.has(c.id) ? (
                           <Link to={`/admin/encuestas/${encuestas.get(c.id).id}`} className="btn-secondary">
@@ -168,6 +208,7 @@ export default function AdminCursos() {
                                   onClick={() => setCambio({ modo: 'cancelar', curso: c })}>Cancelar</button>
                         </div>
                       )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -208,7 +249,7 @@ export default function AdminCursos() {
       {confirmando && (
         <EditorEncuesta
           titulo={`Finalizar: ${confirmando.titulo}`}
-          aviso={`Se emitirá un certificado para cada uno de los ${confirmando.inscritos} inscritos y se les notificará por email junto con el enlace a esta encuesta de satisfacción. Esta acción no se puede deshacer.`}
+          aviso={`Se emitirá un certificado a los inscritos que alcancen la asistencia mínima del curso (si no se registró asistencia, a los ${confirmando.inscritos} inscritos) y se les notificará por email junto con el enlace a esta encuesta de satisfacción. Esta acción no se puede deshacer.`}
           textoConfirmar="Finalizar, certificar y enviar encuesta"
           procesando={finalizando === confirmando.id}
           onConfirmar={finalizar}

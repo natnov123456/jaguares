@@ -4,7 +4,7 @@ import { ETIQUETA_ROL, SECCIONES_PANEL, puede } from '../../config/permisos';
 
 const RESUMEN_ROL = {
   DIRECTORA: 'Tienes acceso completo: cursos, eventos, voluntarios, finanzas y contenido público.',
-  DOCENTE: 'Gestionas tus propios cursos: creas talleres, sigues las inscripciones y emites certificados al finalizar.',
+  DOCENTE: 'Gestionas los cursos que la dirección te asigna: ves a los inscritos, registras la asistencia, editas los datos del curso y emites los certificados al finalizar.',
   ENCARGADO_EVENTOS: 'Coordinas eventos y voluntarios, y registras las donaciones en efectivo que recibes.',
 };
 

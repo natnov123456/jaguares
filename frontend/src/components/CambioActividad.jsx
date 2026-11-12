@@ -47,7 +47,7 @@ export default function CambioActividad({ modo, tipo, actividad, onConfirmar, on
       await onConfirmar(datos);
     } catch (err) {
       setError(err.response?.status === 403
-        ? 'Solo puedes modificar las actividades que tú creaste.'
+        ? 'Solo puedes modificar las actividades que tienes a cargo.'
         : err.response?.data?.error || 'No se pudo guardar el cambio');
       setEnviando(false);
     }
