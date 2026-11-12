@@ -6,11 +6,31 @@ public record LoginDto(string Email, string Password);
 public record TokenDto(string Token, string NombreCompleto, string Rol, DateTime Expira);
 
 // CURSOS
+// Solo la directora crea cursos y elige el docente a cargo
 public record CrearCursoDto(string Titulo, string? Descripcion, DateOnly FechaInicio, DateOnly FechaFin,
-                            int CupoMaximo, int AsistenciaMinimaPct = 80, Guid? PlantillaId = null);
+                            int CupoMaximo, Guid? DocenteId, int AsistenciaMinimaPct = 80, Guid? PlantillaId = null);
+// El docente del curso (o la directora) edita sus datos. Las fechas se cambian con "Reprogramar" (FUJ-119),
+// que avisa a los inscritos y vuelve a programar el recordatorio.
+public record EditarCursoDto(string Titulo, string? Descripcion, int CupoMaximo, int AsistenciaMinimaPct);
+public record AsignarDocenteDto(Guid? DocenteId);
+public record DocenteDto(Guid Id, string Nombre, string Email);
 public record CursoGestionDto(Guid Id, string Titulo, DateOnly FechaInicio, DateOnly FechaFin,
                               int CupoMaximo, int CupoDisponible, string Estado, int Inscritos, Guid? PlantillaId,
-                              int EnEspera = 0);
+                              int EnEspera = 0, Guid? DocenteId = null, string? DocenteNombre = null);
+public record CursoDetalleDto(Guid Id, string Titulo, string? Descripcion, DateOnly FechaInicio, DateOnly FechaFin,
+                              int CupoMaximo, int CupoDisponible, int AsistenciaMinimaPct, string Estado,
+                              Guid? DocenteId, string? DocenteNombre, int Inscritos, List<DateOnly> DiasConAsistencia);
+
+// ASISTENCIA A CURSOS
+// Porcentaje = días presente / días en que se tomó asistencia en el curso (null si aún no hubo clases)
+public record AsistenciaParticipanteDto(Guid ParticipanteId, string Nombre, string Email, bool? Presente,
+                                        int DiasPresente, int DiasRegistrados, double? Porcentaje);
+public record AsistenciaDiaDto(DateOnly Fecha, int AsistenciaMinimaPct, List<AsistenciaParticipanteDto> Participantes);
+public record RegistroAsistenciaDto(Guid ParticipanteId, bool Presente);
+public record RegistrarAsistenciaCursoDto(DateOnly Fecha, List<RegistroAsistenciaDto> Registros);
+public record MiDiaAsistenciaDto(DateOnly Fecha, bool Presente);
+public record MiAsistenciaCursoDto(Guid CursoId, string Titulo, int AsistenciaMinimaPct, int DiasPresente,
+                                   int DiasRegistrados, double? Porcentaje, List<MiDiaAsistenciaDto> Dias);
 public record AsignarPlantillaDto(Guid? PlantillaId);
 public record MiInscripcionDto(Guid CursoId, string Titulo, DateOnly FechaInicio, DateOnly FechaFin,
                                string EstadoCurso, string EstadoInscripcion, DateTime FechaInscripcion);
@@ -26,7 +46,8 @@ public record EnEsperaGestionDto(int Posicion, string Nombre, string Email, Date
 public record ActividadPanelDto(Guid ActividadId, string Tipo, string Titulo, string? Lugar,
                                 DateTime Inicio, DateTime? Fin, bool TodoElDia,
                                 string EstadoActividad, string EstadoInscripcion, bool PuedeCancelar,
-                                Guid? InscripcionEventoId, string? CodigoCertificado);
+                                Guid? InscripcionEventoId, string? CodigoCertificado,
+                                double? AsistenciaPct = null);
 public record ResumenPanelDto(int CursosActivos, int EventosProximos, int ActividadesCompletadas,
                               int Certificados, int EnListaEspera);
 public record PanelParticipanteDto(ResumenPanelDto Resumen, List<ActividadPanelDto> Proximas,

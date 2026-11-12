@@ -48,12 +48,78 @@ public class CursosController : ControllerBase
     private Guid UsuarioId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
                                            ?? User.FindFirstValue("sub")!);
 
+    // null: la directora gestiona cualquier curso; el docente, solo los que le asignaron
+    private Guid? DocenteFiltro() => User.IsInRole("DIRECTORA") ? null : UsuarioId();
+
+    // Solo la directora crea cursos y elige al docente a cargo
     [HttpPost]
-    [Authorize(Roles = "DOCENTE,DIRECTORA")]
+    [Authorize(Roles = "DIRECTORA")]
     public async Task<IActionResult> Crear(CrearCursoDto dto)
     {
-        try { return Ok(await _cursos.CrearAsync(dto, UsuarioId())); }
+        try { return Ok(await _cursos.CrearAsync(dto)); }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    [HttpGet("docentes")]
+    [Authorize(Roles = "DIRECTORA")]
+    public async Task<IActionResult> Docentes() => Ok(await _cursos.ListarDocentesAsync());
+
+    [HttpPut("{id:guid}/docente")]
+    [Authorize(Roles = "DIRECTORA")]
+    public async Task<IActionResult> AsignarDocente(Guid id, AsignarDocenteDto dto)
+    {
+        try { await _cursos.AsignarDocenteAsync(id, dto.DocenteId); return NoContent(); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    [HttpGet("{id:guid}/gestion")]
+    [Authorize(Roles = "DOCENTE,DIRECTORA")]
+    public async Task<IActionResult> Detalle(Guid id)
+    {
+        try { return Ok(await _cursos.DetalleAsync(id, DocenteFiltro())); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = "DOCENTE,DIRECTORA")]
+    public async Task<IActionResult> Editar(Guid id, EditarCursoDto dto)
+    {
+        try { return Ok(await _cursos.EditarAsync(id, dto, DocenteFiltro())); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    // Asistencia de un día: inscritos con su marca de ese día y su porcentaje acumulado
+    [HttpGet("{id:guid}/asistencia")]
+    [Authorize(Roles = "DOCENTE,DIRECTORA")]
+    public async Task<IActionResult> Asistencia(Guid id, [FromQuery] DateOnly fecha)
+    {
+        try { return Ok(await _cursos.AsistenciaDiaAsync(id, fecha, DocenteFiltro())); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    [HttpPost("{id:guid}/asistencia")]
+    [Authorize(Roles = "DOCENTE,DIRECTORA")]
+    public async Task<IActionResult> RegistrarAsistencia(Guid id, RegistrarAsistenciaCursoDto dto)
+    {
+        try { return Ok(await _cursos.RegistrarAsistenciaAsync(id, dto, DocenteFiltro(), UsuarioId())); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    [HttpGet("{id:guid}/mi-asistencia")]
+    [Authorize(Roles = "PARTICIPANTE,VOLUNTARIO")]
+    public async Task<IActionResult> MiAsistencia(Guid id)
+    {
+        try { return Ok(await _cursos.MiAsistenciaAsync(id, UsuarioId())); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
     }
 
     // Panel de gestión: el docente ve solo sus cursos, la directora todos

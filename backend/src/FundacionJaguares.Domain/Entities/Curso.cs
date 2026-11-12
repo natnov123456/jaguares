@@ -25,6 +25,18 @@ public class Inscripcion
     public DateTime FechaInscripcion { get; set; } = DateTime.UtcNow;
     public DateTime? RecordatorioEnviadoEn { get; set; } // FUJ-119: recordatorio 24 h antes ya enviado
 }
+// Asistencia de un inscrito en un día de clase. El docente marca presente o ausente.
+public class AsistenciaCurso
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid CursoId { get; set; }
+    public Guid ParticipanteId { get; set; }
+    public DateOnly Fecha { get; set; }
+    public bool Presente { get; set; }
+    public Guid? RegistradoPor { get; set; }
+    public DateTime RegistradoEn { get; set; } = DateTime.UtcNow;
+}
+
 // FUJ-111: lugar en la lista de espera de un curso lleno.
 // La posición se calcula por orden de llegada (CreadoEn) entre los que siguen EN_ESPERA.
 public class ListaEspera

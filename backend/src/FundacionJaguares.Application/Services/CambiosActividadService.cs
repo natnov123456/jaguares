@@ -91,14 +91,20 @@ public class CambiosActividadService : ICambiosActividadService
         var motivo = Motivo(dto.Motivo);
         var c = await _db.Cursos.FindAsync(cursoId) ?? throw new KeyNotFoundException("Curso no encontrado");
         if (docenteId is not null && c.DocenteId != docenteId)
-            throw new UnauthorizedAccessException("Solo puedes modificar tus propios cursos");
+            throw new UnauthorizedAccessException("Solo puedes modificar los cursos que te asignaron");
         ValidarModificable(c.Estado, "curso");
 
         var hoy = DateOnly.FromDateTime(PlantillasCorreo.ABolivia(DateTime.UtcNow));
-        if (dto.FechaInicio < hoy) throw new ArgumentException("La nueva fecha de inicio no puede estar en el pasado");
+        // Un curso ya empezado puede conservar su inicio (p. ej. para extender la fecha de fin)
+        if (dto.FechaInicio < hoy && dto.FechaInicio != c.FechaInicio)
+            throw new ArgumentException("La nueva fecha de inicio no puede estar en el pasado");
+        if (dto.FechaFin < hoy) throw new ArgumentException("La nueva fecha de fin no puede estar en el pasado");
         if (dto.FechaFin < dto.FechaInicio) throw new ArgumentException("La fecha de fin no puede ser anterior a la de inicio");
         if (dto.FechaInicio == c.FechaInicio && dto.FechaFin == c.FechaFin)
             throw new ArgumentException("No hay cambios: indica fechas distintas");
+        // Las clases con asistencia ya registrada deben quedar dentro del nuevo rango (si no, cambiaría el porcentaje)
+        if (await _db.AsistenciasCurso.AnyAsync(a => a.CursoId == cursoId && (a.Fecha < dto.FechaInicio || a.Fecha > dto.FechaFin)))
+            throw new ArgumentException("Ya hay clases con asistencia registrada fuera de esas fechas: elige un rango que las incluya");
 
         var anterior = new ActividadCorreo("CURSO", c.Titulo, PlantillasCorreo.CuandoCurso(c.FechaInicio, c.FechaFin), null);
         c.FechaInicio = dto.FechaInicio;
@@ -119,7 +125,7 @@ public class CambiosActividadService : ICambiosActividadService
         var m = Motivo(motivo);
         var c = await _db.Cursos.FindAsync(cursoId) ?? throw new KeyNotFoundException("Curso no encontrado");
         if (docenteId is not null && c.DocenteId != docenteId)
-            throw new UnauthorizedAccessException("Solo puedes modificar tus propios cursos");
+            throw new UnauthorizedAccessException("Solo puedes modificar los cursos que te asignaron");
         ValidarModificable(c.Estado, "curso");
 
         // Se leen antes de cerrar la lista de espera: también se les avisa

@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<Curso> Cursos => Set<Curso>();
     public DbSet<Inscripcion> Inscripciones => Set<Inscripcion>();
     public DbSet<ListaEspera> ListaEspera => Set<ListaEspera>();
+    public DbSet<AsistenciaCurso> AsistenciasCurso => Set<AsistenciaCurso>();
     public DbSet<Evento> Eventos => Set<Evento>();
     public DbSet<AsistenciaEvento> AsistenciasEvento => Set<AsistenciaEvento>();
     public DbSet<InscripcionEvento> InscripcionesEvento => Set<InscripcionEvento>();
@@ -55,6 +56,13 @@ public class AppDbContext : DbContext
             e.ToTable("inscripciones");
             e.HasKey(x => x.Id);
             e.HasIndex(x => new { x.CursoId, x.ParticipanteId }).IsUnique();
+        });
+
+        mb.Entity<AsistenciaCurso>(e =>
+        {
+            e.ToTable("asistencias_curso");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.CursoId, x.ParticipanteId, x.Fecha }).IsUnique();
         });
 
         mb.Entity<ListaEspera>(e =>

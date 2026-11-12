@@ -43,15 +43,30 @@ public class ParticipanteService : IParticipanteService
                             where i.ParticipanteId == participanteId && i.Estado != "CANCELADA"
                             select new { i, c }).ToListAsync();
 
+        // Porcentaje de asistencia por curso: días presente / días en que se tomó asistencia
+        var idsCursos = cursos.Select(x => x.c.Id).ToList();
+        var diasPorCurso = await _db.AsistenciasCurso.Where(a => idsCursos.Contains(a.CursoId))
+            .GroupBy(a => a.CursoId)
+            .Select(g => new { g.Key, Dias = g.Select(a => a.Fecha).Distinct().Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Dias);
+        var presentePorCurso = await _db.AsistenciasCurso
+            .Where(a => a.ParticipanteId == participanteId && a.Presente && idsCursos.Contains(a.CursoId))
+            .GroupBy(a => a.CursoId)
+            .Select(g => new { g.Key, N = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.N);
+
         var actividades = cursos.Select(x =>
         {
             var abierto = EstadosAbiertos.Contains(x.c.Estado) && x.c.FechaFin >= hoy;
             certPorCurso.TryGetValue(x.c.Id, out var codigo);
+            double? pct = diasPorCurso.TryGetValue(x.c.Id, out var dias) && dias > 0
+                ? Math.Round(presentePorCurso.GetValueOrDefault(x.c.Id) * 100.0 / dias, 1)
+                : null;
             return new ActividadPanelDto(x.c.Id, "CURSO", x.c.Titulo, null,
                 x.c.FechaInicio.ToDateTime(TimeOnly.MinValue), x.c.FechaFin.ToDateTime(TimeOnly.MinValue), true,
                 x.c.Estado, x.i.Estado,
                 PuedeCancelar: abierto && x.i.Estado == "CONFIRMADA",
-                InscripcionEventoId: null, CodigoCertificado: codigo);
+                InscripcionEventoId: null, CodigoCertificado: codigo, AsistenciaPct: pct);
         }).ToList();
 
         // ---- Eventos ----
