@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { transparenciaApi } from '../../services/api';
 import { bs, fechaHora, MESES } from '../../utils/formato';
 import '../Transparencia.css';
+import BarraFiltros from '../../components/filtros/BarraFiltros';
+import BotonExportar from '../../components/BotonExportar';
+import useFiltros from '../../hooks/useFiltros';
 
 // FUJ-121: la Directora publica en el sitio el resumen del mes (total del reporte financiero + destinos)
 
@@ -19,6 +22,7 @@ export default function AdminTransparencia() {
   const [msg, setMsg] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [recarga, setRecarga] = useState(0);
+  const { valores, cambiar, limpiar } = useFiltros(['q', 'desde', 'hasta']);
 
   useEffect(() => {
     let vigente = true;
@@ -166,6 +170,13 @@ export default function AdminTransparencia() {
           )}
         </section>
       </div>
+      {/* Evaluación: el destino de los fondos de los meses publicados se exporta con filtros */}
+      <section className="panel" style={{ marginTop: 24 }}>
+        <h2>Exportar meses publicados</h2>
+        <BarraFiltros valores={valores} cambiar={cambiar} limpiar={limpiar} texto="Categoría o descripción" fechas="Meses">
+          <BotonExportar reporte="transparencia" filtros={valores} />
+        </BarraFiltros>
+      </section>
     </div>
   );
 }

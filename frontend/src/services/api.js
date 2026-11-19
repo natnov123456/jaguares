@@ -189,6 +189,7 @@ export const voluntariosApi = {
 };
 
 export const contenidoApi = {
+  noticiasAdmin: () => api.get('/Contenido/noticias/admin'),
   noticias: () => api.get('/Contenido/noticias'),
   crearNoticia: (data) => api.post('/Contenido/noticias', data),
   galeria: () => api.get('/Contenido/galeria'),

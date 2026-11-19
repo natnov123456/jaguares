@@ -4,6 +4,12 @@ import LectorQr from '../../components/LectorQr';
 import Estado from '../../components/Estado';
 import { fechaHora } from '../../utils/formato';
 import './Checkin.css';
+import BarraFiltros from '../../components/filtros/BarraFiltros';
+import BotonExportar from '../../components/BotonExportar';
+import useFiltros from '../../hooks/useFiltros';
+import { aplicarFiltros } from '../../utils/filtros';
+
+const ESTADOS_INSCRIPCION = [{ valor: 'ASISTIO', etiqueta: 'Asistió' }, { valor: 'CONFIRMADA', etiqueta: 'Sin ingresar' }];
 
 // FUJ-113: check-in en la puerta del evento escaneando el QR del participante (pensado para celular)
 
@@ -26,6 +32,7 @@ export default function Checkin() {
   const [procesando, setProcesando] = useState(false);
   const [camara, setCamara] = useState(false);
   const [manual, setManual] = useState('');
+  const { valores, cambiar, limpiar } = useFiltros(['q', 'estado']);
   const [error, setError] = useState(null);
   const eventoRef = useRef('');
 
@@ -152,6 +159,11 @@ export default function Checkin() {
       {eventoId && (
         <section className="panel">
           <h2>Inscritos</h2>
+          <BarraFiltros valores={valores} cambiar={cambiar} limpiar={limpiar} texto="Nombre o correo" estados={ESTADOS_INSCRIPCION}
+                        etiquetaEstado="Asistencia" total={inscritos.length}
+                        visibles={aplicarFiltros(inscritos, valores, { texto: i => [i.nombre, i.email], estado: i => i.estado }).length}>
+            <BotonExportar reporte="asistencia-evento" etiqueta="Exportar asistencia" filtros={{ ...valores, actividadId: eventoId }} />
+          </BarraFiltros>
           {inscritos.length === 0 ? (
             <p className="muted">Todavía no hay inscritos en este evento.</p>
           ) : (
@@ -159,7 +171,7 @@ export default function Checkin() {
               <table className="table">
                 <thead><tr><th>Participante</th><th>Estado</th><th>Ingreso</th></tr></thead>
                 <tbody>
-                  {inscritos.map(i => (
+                  {aplicarFiltros(inscritos, valores, { texto: i => [i.nombre, i.email], estado: i => i.estado }).map(i => (
                     <tr key={i.inscripcionId}>
                       <td><strong>{i.nombre}</strong><div className="muted" style={{ fontSize: '0.85rem' }}>{i.email}</div></td>
                       <td><Estado valor={i.estado} /></td>

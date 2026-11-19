@@ -4,6 +4,12 @@ import { galeriaApi } from '../../services/api';
 import { Miniatura } from '../Galeria';
 import VisorGaleria from '../../components/VisorGaleria';
 import '../Galeria.css';
+import BarraFiltros from '../../components/filtros/BarraFiltros';
+import BotonExportar from '../../components/BotonExportar';
+import useFiltros from '../../hooks/useFiltros';
+import { aplicarFiltros } from '../../utils/filtros';
+
+const ESTADOS_ALBUM = [{ valor: 'PUBLICADO', etiqueta: 'Publicados' }, { valor: 'OCULTO', etiqueta: 'Ocultos' }];
 
 // FUJ-126: la Directora crea álbumes, sube fotos (JPG/PNG ≤ 5 MB) y agrega enlaces de video
 
@@ -31,6 +37,9 @@ export default function AdminGaleria() {
   const [errores, setErrores] = useState([]);
   const [msg, setMsg] = useState(null);
   const [visor, setVisor] = useState(null);
+  const { valores, cambiar, limpiar } = useFiltros();
+  const albumesVisibles = aplicarFiltros(albumes, valores,
+    { texto: a => [a.titulo, a.descripcion], estado: a => (a.publicado ? 'PUBLICADO' : 'OCULTO'), fecha: a => a.creadoEn });
   const cerrarVisor = useCallback(() => setVisor(null), []);
 
   const cargarAlbumes = useCallback(() =>
@@ -228,9 +237,15 @@ export default function AdminGaleria() {
         <div>
           <section className="panel">
             <h2>Álbumes</h2>
-            {albumes.length === 0 ? <p className="muted">Todavía no hay álbumes.</p> : (
+            <BarraFiltros valores={valores} cambiar={cambiar} limpiar={limpiar} texto="Título o descripción" estados={ESTADOS_ALBUM}
+                          fechas="Creado" total={albumes.length} visibles={albumesVisibles.length}>
+              <BotonExportar reporte="galeria" filtros={valores} />
+            </BarraFiltros>
+            {albumes.length === 0 ? <p className="muted">Todavía no hay álbumes.</p> : albumesVisibles.length === 0 ? (
+              <p className="muted">Ningún álbum coincide con los filtros.</p>
+            ) : (
               <ul className="gal-lista-albumes">
-                {albumes.map(a => (
+                {albumesVisibles.map(a => (
                   <li key={a.id}>
                     <button className={a.id === selId ? 'activo' : ''} onClick={() => seleccionar(a.id)}>
                       <span><strong>{a.titulo}</strong><br /><small className="muted">{a.cantidadImagenes} fotos · {a.cantidadVideos} videos</small></span>
