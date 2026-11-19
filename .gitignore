@@ -9,3 +9,7 @@ backend/src/FundacionJaguares.Api/wwwroot/uploads/
 
 # Resultados de pruebas y cobertura
 backend/tests/TestResults/
+
+# Despliegue (JAG-77): secretos y respaldos solo en el servidor
+deploy/.env
+deploy/respaldos/
