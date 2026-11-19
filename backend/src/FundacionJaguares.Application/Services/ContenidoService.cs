@@ -9,6 +9,8 @@ namespace FundacionJaguares.Application.Services;
 public interface IContenidoService
 {
     Task<List<Noticia>> ListarPublicadasAsync();
+    // Gestión: todas las noticias, también los borradores
+    Task<List<Noticia>> ListarTodasAsync();
     Task<Noticia> CrearNoticiaAsync(CrearNoticiaDto dto, Guid autorId);
     Task<List<GaleriaItem>> ListarGaleriaAsync();
 }
@@ -25,6 +27,9 @@ public class ContenidoService : IContenidoService
     }
 
     public Task<List<Noticia>> ListarPublicadasAsync() => _noticias.GetPublicadasAsync();
+
+    public async Task<List<Noticia>> ListarTodasAsync() =>
+        (await _noticias.GetAllAsync()).OrderByDescending(n => n.PublicadoEn ?? n.CreadoEn).ToList();
 
     public async Task<Noticia> CrearNoticiaAsync(CrearNoticiaDto dto, Guid autorId)
     {

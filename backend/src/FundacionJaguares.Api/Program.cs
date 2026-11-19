@@ -94,6 +94,7 @@ else
     builder.Services.AddDistributedMemoryCache();
 builder.Services.AddScoped<IIndicadorService, IndicadorService>();
 builder.Services.AddScoped<IProveedorReportes, ReportesIndicadores>();
+builder.Services.AddScoped<IProveedorReportes, ReportesContenido>();
 // FUJ-119: recordatorios 24 h antes (tarea programada cada hora) y avisos de reprogramación/cancelación
 builder.Services.AddScoped<IRecordatorioService, RecordatorioService>();
 builder.Services.AddScoped<ICambiosActividadService, CambiosActividadService>();

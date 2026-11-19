@@ -24,6 +24,11 @@ public class ContenidoController : ControllerBase
         return Ok(await _contenido.ListarPublicadasAsync());
     }
 
+    // Gestión: todas las noticias (publicadas y borradores), con filtros en la pantalla y exportación
+    [HttpGet("noticias/admin")]
+    [Authorize(Roles = "DIRECTORA")]
+    public async Task<IActionResult> NoticiasAdmin() => Ok(await _contenido.ListarTodasAsync());
+
     [HttpPost("noticias")]
     [Authorize(Roles = "DIRECTORA")]
     public async Task<IActionResult> CrearNoticia(CrearNoticiaDto dto)
