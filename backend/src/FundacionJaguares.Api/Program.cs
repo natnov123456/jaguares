@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using FundacionJaguares.Api;
+using FundacionJaguares.Application.Reportes;
 using FundacionJaguares.Application.Services;
 using FundacionJaguares.Domain.Entities;
 using FundacionJaguares.Infrastructure;
@@ -76,6 +77,9 @@ builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 builder.Services.AddScoped<IEncuestaService, EncuestaService>();
 // FUJ-122: cuentas del personal y roles
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+// FUJ-124: reportes exportables (PDF institucional / Excel). Cada módulo aporta sus reportes con un IProveedorReportes.
+builder.Services.AddScoped<IReporteService, ReporteService>();
+builder.Services.AddScoped<IProveedorReportes, ReportesActividades>();
 // FUJ-119: recordatorios 24 h antes (tarea programada cada hora) y avisos de reprogramación/cancelación
 builder.Services.AddScoped<IRecordatorioService, RecordatorioService>();
 builder.Services.AddScoped<ICambiosActividadService, CambiosActividadService>();

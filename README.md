@@ -83,6 +83,8 @@ psql -U postgres -d fundacion_jaguares -f db/11_fuj118_asignaciones_voluntario.s
 psql -U postgres -d fundacion_jaguares -f db/12_fuj120_encuestas_satisfaccion.sql
 psql -U postgres -d fundacion_jaguares -f db/13_jag38_recordatorios.sql
 psql -U postgres -d fundacion_jaguares -f db/14_asistencia_cursos.sql
+psql -U postgres -d fundacion_jaguares -f db/15_fuj122_usuarios_roles.sql
+psql -U postgres -d fundacion_jaguares -f db/16_fuj124_exportaciones.sql
 ```
 
 > Si ya tenías la base creada, basta con ejecutar los scripts `03_...` en adelante que te falten.
