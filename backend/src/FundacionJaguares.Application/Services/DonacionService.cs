@@ -21,6 +21,9 @@ public interface IDonacionService
     Task<List<CampanaDto>> ListarCampanasAsync(bool soloVigentes);
     Task<CampanaDto> CrearCampanaAsync(GuardarCampanaDto dto, Guid creadoPor);
     Task<CampanaDto> ActualizarCampanaAsync(Guid id, GuardarCampanaDto dto);
+    // FUJ-125: cada cambio queda en la bitácora de auditoría
+    Task<Donacion> EditarAsync(Guid donacionId, EditarDonacionDto dto, Guid usuarioId);
+    Task<Donacion> AnularAsync(Guid donacionId, string? motivo, Guid usuarioId);
 }
 
 public class DonacionService : IDonacionService
@@ -68,7 +71,7 @@ public class DonacionService : IDonacionService
             d.UsuarioId = await _db.Usuarios.Where(u => u.Email.ToLower() == minusculas)
                                             .Select(u => (Guid?)u.Id).FirstOrDefaultAsync();
         }
-        return await GuardarYEnviarAsync(d, donante);
+        return await GuardarYEnviarAsync(d, donante, await ActorAsync(registradoPor));
     }
 
     public async Task<Donacion> RegistrarDonacionEnLineaAsync(CrearDonacionDto dto, Guid? usuarioId)
@@ -95,6 +98,9 @@ public class DonacionService : IDonacionService
         if (!ok) throw new InvalidOperationException("Pago rechazado");
 
         if (usuario is not null) _db.Donantes.Add(donante!);
+        var actor = usuario is not null
+            ? new ActorAuditoria(usuario.Id, usuario.NombreCompleto, usuario.Rol.ToString())
+            : new ActorAuditoria(null, "Donación en línea (sin cuenta)", null);
         return await GuardarYEnviarAsync(new Donacion
         {
             Monto = dto.Monto,
@@ -103,7 +109,7 @@ public class DonacionService : IDonacionService
             CampanaId = dto.CampanaId,
             UsuarioId = usuario?.Id,
             Estado = "CONFIRMADA"
-        }, donante);
+        }, donante, actor);
     }
 
     public Task<decimal> TotalPeriodoAsync(int anio, int mes) => _donaciones.TotalPeriodoAsync(anio, mes);
@@ -218,11 +224,19 @@ public class DonacionService : IDonacionService
         GeneradorComprobantePdf.Generar(new DatosComprobante(d.NumeroComprobante, d.Fecha, d.Monto, d.Moneda, d.Medio, d.Referencia,
             donante is null || donante.EsAnonimo ? "Donante anónimo" : donante.Nombre));
 
-    private async Task<Donacion> GuardarYEnviarAsync(Donacion d, Donante? donante)
+    private async Task<Donacion> GuardarYEnviarAsync(Donacion d, Donante? donante, ActorAuditoria actor)
     {
         d.DonanteId = donante?.Id;
-        await _donaciones.AddAsync(d);
-        await _donaciones.SaveChangesAsync();
+        // FUJ-125: la donación y su registro de auditoría se guardan juntos (o ninguno)
+        await using (var tx = await _db.Database.BeginTransactionAsync())
+        {
+            await _donaciones.AddAsync(d);
+            await _donaciones.SaveChangesAsync(); // asigna el número de comprobante
+            AuditoriaService.Registrar(_db, d, AuditoriaDonacion.Alta, actor, null,
+                AuditoriaService.Instantanea(d, NombreDonante(donante), await NombreCampanaAsync(d.CampanaId)));
+            await _db.SaveChangesAsync();
+            await tx.CommitAsync();
+        }
         if (string.IsNullOrWhiteSpace(donante?.Email)) return d;
 
         var numero = GeneradorComprobantePdf.Numero(d.NumeroComprobante);
@@ -242,4 +256,73 @@ public class DonacionService : IDonacionService
         }
         return d;
     }
+
+    // ---------- Edición y anulación (FUJ-125) ----------
+
+    public const int MaxMotivo = 300;
+
+    public async Task<Donacion> EditarAsync(Guid donacionId, EditarDonacionDto dto, Guid usuarioId)
+    {
+        var d = await _db.Donaciones.FindAsync(donacionId) ?? throw new KeyNotFoundException("Donación no encontrada");
+        if (d.Estado != "CONFIRMADA") throw new InvalidOperationException("Solo se pueden corregir donaciones confirmadas");
+        if (dto.Monto <= 0) throw new ArgumentException("El monto debe ser mayor a 0");
+        if (!Enum.TryParse<MedioPago>(dto.Medio, true, out var medio)) throw new ArgumentException("Medio de pago inválido");
+        if (dto.Referencia?.Length > 100) throw new ArgumentException("La referencia no puede superar 100 caracteres");
+        var motivo = Motivo(dto.Motivo, obligatorio: false);
+        if (dto.CampanaId != d.CampanaId) await ValidarCampanaAsync(dto.CampanaId);
+
+        var referencia = string.IsNullOrWhiteSpace(dto.Referencia) ? null : dto.Referencia.Trim();
+        if (d.Monto == dto.Monto && d.Medio == medio && d.Referencia == referencia && d.CampanaId == dto.CampanaId)
+            throw new ArgumentException("No hay cambios para guardar");
+
+        var donante = await NombreDonanteAsync(d.DonanteId);
+        var antes = AuditoriaService.Instantanea(d, donante, await NombreCampanaAsync(d.CampanaId));
+        d.Monto = dto.Monto;
+        d.Medio = medio;
+        d.Referencia = referencia;
+        d.CampanaId = dto.CampanaId;
+        AuditoriaService.Registrar(_db, d, AuditoriaDonacion.Edicion, await ActorAsync(usuarioId), antes,
+            AuditoriaService.Instantanea(d, donante, await NombreCampanaAsync(d.CampanaId)), motivo);
+        await _db.SaveChangesAsync(); // un solo SaveChanges: el cambio y su auditoría son atómicos
+        return d;
+    }
+
+    public async Task<Donacion> AnularAsync(Guid donacionId, string? motivo, Guid usuarioId)
+    {
+        var m = Motivo(motivo, obligatorio: true);
+        var d = await _db.Donaciones.FindAsync(donacionId) ?? throw new KeyNotFoundException("Donación no encontrada");
+        if (d.Estado == "ANULADA") throw new InvalidOperationException("La donación ya está anulada");
+
+        var donante = await NombreDonanteAsync(d.DonanteId);
+        var campana = await NombreCampanaAsync(d.CampanaId);
+        var antes = AuditoriaService.Instantanea(d, donante, campana);
+        d.Estado = "ANULADA"; // deja de sumar en reportes, campañas y transparencia
+        AuditoriaService.Registrar(_db, d, AuditoriaDonacion.Anulacion, await ActorAsync(usuarioId), antes,
+            AuditoriaService.Instantanea(d, donante, campana), m);
+        await _db.SaveChangesAsync();
+        return d;
+    }
+
+    private static string? Motivo(string? motivo, bool obligatorio)
+    {
+        var m = string.IsNullOrWhiteSpace(motivo) ? null : motivo.Trim();
+        if (obligatorio && (m is null || m.Length < 5)) throw new ArgumentException("Indica el motivo de la anulación (al menos 5 caracteres)");
+        if (m?.Length > MaxMotivo) throw new ArgumentException($"El motivo no puede superar {MaxMotivo} caracteres");
+        return m;
+    }
+
+    private async Task<ActorAuditoria> ActorAsync(Guid? usuarioId)
+    {
+        if (usuarioId is null) return new ActorAuditoria(null, "Sistema", null);
+        var u = await _db.Usuarios.Where(x => x.Id == usuarioId).Select(x => new { x.NombreCompleto, x.Rol }).FirstOrDefaultAsync();
+        return new ActorAuditoria(usuarioId, u?.NombreCompleto ?? "Usuario eliminado", u?.Rol.ToString());
+    }
+
+    private static string? NombreDonante(Donante? d) => d is null || d.EsAnonimo ? null : d.Nombre;
+
+    private async Task<string?> NombreDonanteAsync(Guid? donanteId) =>
+        donanteId is { } id ? NombreDonante(await _db.Donantes.FindAsync(id)) : null;
+
+    private async Task<string?> NombreCampanaAsync(Guid? campanaId) =>
+        campanaId is { } id ? await _db.Campanas.Where(c => c.Id == id).Select(c => c.Nombre).FirstOrDefaultAsync() : null;
 }

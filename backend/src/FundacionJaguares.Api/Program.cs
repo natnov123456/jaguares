@@ -81,6 +81,9 @@ builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<IProveedorReportes, ReportesActividades>();
 builder.Services.AddScoped<IProveedorReportes, ReportesGestion>();
+// FUJ-125: bitácora de auditoría de donaciones y su reporte exportable
+builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
+builder.Services.AddScoped<IProveedorReportes, ReportesFinanzas>();
 // FUJ-119: recordatorios 24 h antes (tarea programada cada hora) y avisos de reprogramación/cancelación
 builder.Services.AddScoped<IRecordatorioService, RecordatorioService>();
 builder.Services.AddScoped<ICambiosActividadService, CambiosActividadService>();

@@ -72,6 +72,27 @@ public class DonacionesController : ControllerBase
         return Ok(await _donaciones.ListarRegistradasPorAsync(id));
     }
 
+    // FUJ-125: corregir o anular una donación (queda en la bitácora de auditoría)
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR")]
+    public async Task<IActionResult> Editar(Guid id, EditarDonacionDto dto)
+    {
+        try { return Ok(await _donaciones.EditarAsync(id, dto, UsuarioId())); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    [HttpPost("{id:guid}/anular")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR")]
+    public async Task<IActionResult> Anular(Guid id, AnularDonacionDto dto)
+    {
+        try { return Ok(await _donaciones.AnularAsync(id, dto.Motivo, UsuarioId())); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
     // RF-06: reporte financiero mensual (solo dirección)
     [HttpGet("reporte/{anio:int}/{mes:int}")]
     [Authorize(Roles = "DIRECTORA,CONTADOR")]

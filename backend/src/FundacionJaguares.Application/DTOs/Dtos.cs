@@ -108,6 +108,9 @@ public record PlantillaCertificadoDto(Guid Id, string Nombre, string TipoActivid
 // DONACIONES
 public record CrearDonacionDto(decimal Monto, string Medio, string? Referencia, Guid? DonanteId,
                                string? DonanteNombre = null, string? DonanteEmail = null, Guid? CampanaId = null);
+// FUJ-125: corrección y anulación de una donación (quedan en la bitácora de auditoría)
+public record EditarDonacionDto(decimal Monto, string Medio, string? Referencia, Guid? CampanaId, string? Motivo = null);
+public record AnularDonacionDto(string Motivo);
 
 // CAMPAÑAS (FUJ-117)
 public record GuardarCampanaDto(string? Nombre, string? Descripcion, decimal Meta, DateOnly FechaLimite, bool Activa = true);
