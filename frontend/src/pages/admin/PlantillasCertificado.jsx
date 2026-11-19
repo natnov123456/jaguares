@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { archivoUrl, plantillasApi } from '../../services/api';
 import { TIPOS_ACTIVIDAD } from '../../config/certificados';
+import BarraFiltros from '../../components/filtros/BarraFiltros';
+import BotonExportar from '../../components/BotonExportar';
+import useFiltros from '../../hooks/useFiltros';
+import { aplicarFiltros } from '../../utils/filtros';
+
+const OPCIONES_TIPO = Object.entries(TIPOS_ACTIVIDAD).map(([valor, etiqueta]) => ({ valor, etiqueta }));
+const ESTADOS_CERT = [{ valor: 'VALIDO', etiqueta: 'Válidos' }, { valor: 'ANULADO', etiqueta: 'Anulados' }];
 
 // FUJ-115: la Directora configura logo, firmas y texto de los certificados por tipo de actividad
 
@@ -20,6 +27,9 @@ const aFormulario = (p) => Object.fromEntries(Object.keys(VACIA).map(k => [k, p[
 
 export default function PlantillasCertificado() {
   const [plantillas, setPlantillas] = useState([]);
+  // Filtros de la lista de plantillas (texto y tipo) y de la exportación de certificados emitidos
+  const { valores, cambiar, limpiar } = useFiltros(['q', 'estado']);
+  const cert = useFiltros(['cq', 'cestado', 'desde', 'hasta']);
   const [selId, setSelId] = useState(null);
   const [form, setForm] = useState(VACIA);
   const [vista, setVista] = useState(null);
@@ -218,9 +228,12 @@ export default function PlantillasCertificado() {
         <div>
           <section className="panel">
             <h2>Plantillas</h2>
+            <BarraFiltros valores={valores} cambiar={cambiar} limpiar={limpiar} texto="Nombre o título" estados={OPCIONES_TIPO}
+                          etiquetaEstado="Tipo de actividad" total={plantillas.length}
+                          visibles={aplicarFiltros(plantillas, valores, { texto: p => [p.nombre, p.titulo], estado: p => p.tipoActividad }).length} />
             {plantillas.length === 0 ? <p className="muted">Todavía no hay plantillas.</p> : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {plantillas.map(p => (
+                {aplicarFiltros(plantillas, valores, { texto: p => [p.nombre, p.titulo], estado: p => p.tipoActividad }).map(p => (
                   <button key={p.id} className={p.id === selId ? 'btn-primary' : 'btn-secondary'}
                           style={{ textAlign: 'left' }} onClick={() => seleccionar(p)}>
                     <strong>{p.nombre}</strong><br /><small>{TIPOS_ACTIVIDAD[p.tipoActividad]}</small>
@@ -228,6 +241,17 @@ export default function PlantillasCertificado() {
                 ))}
               </div>
             )}
+          </section>
+
+          <section className="panel">
+            <h2>Certificados emitidos</h2>
+            <p className="muted" style={{ fontSize: '0.85rem' }}>Exporta los certificados emitidos con su código de verificación.</p>
+            <BarraFiltros valores={{ q: cert.valores.cq, estado: cert.valores.cestado, desde: cert.valores.desde, hasta: cert.valores.hasta }}
+                          cambiar={(k, v) => cert.cambiar(k === 'q' ? 'cq' : k === 'estado' ? 'cestado' : k, v)} limpiar={cert.limpiar}
+                          texto="Código, participante o actividad" estados={ESTADOS_CERT} fechas="Emitidos">
+              <BotonExportar reporte="certificados"
+                             filtros={{ q: cert.valores.cq, estado: cert.valores.cestado, desde: cert.valores.desde, hasta: cert.valores.hasta }} />
+            </BarraFiltros>
           </section>
         </div>
       </div>
