@@ -491,18 +491,121 @@ button:disabled { opacity: .75; }
 }
 
 /* ---- Filtros combinados y exportación (corrección de la evaluación) ---- */
-.barra-filtros { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
-.barra-filtros-campos { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
-.barra-filtros .filtro { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: #6b7280; min-width: 150px; flex: 1 1 150px; }
-.barra-filtros .filtro input, .barra-filtros .filtro select { padding: 7px 9px; font-size: 0.9rem; }
-.barra-filtros-pie { display: flex; gap: 12px; align-items: center; margin-top: 8px; font-size: 0.85rem; min-height: 1.2em; }
+/* Barra neutra que se integra al panel: mismos bordes, radios y naranja de acento que los formularios */
+.barra-filtros {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.barra-filtros-campos { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: flex-end; }
+
+.barra-filtros .filtro { display: flex; flex-direction: column; gap: 5px; min-width: 160px; flex: 1 1 160px; }
+.barra-filtros .filtro > span:first-child {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+.barra-filtros .filtro input,
+.barra-filtros .filtro select {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #1f2937;
+  font-family: inherit;
+  font-size: .9rem;
+  transition: border-color .15s, box-shadow .15s;
+}
+.barra-filtros .filtro select {
+  appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  cursor: pointer;
+}
+.barra-filtros .filtro input:hover,
+.barra-filtros .filtro select:hover { border-color: #9ca3af; }
+.barra-filtros .filtro input:focus,
+.barra-filtros .filtro select:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, .2);
+}
+
+/* Buscador: más ancho y con lupa */
+.barra-filtros .filtro-buscar { flex: 2 1 240px; }
+.filtro-buscar-caja { position: relative; display: block; }
+.filtro-buscar-caja svg {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  fill: none;
+  stroke: #9ca3af;
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.barra-filtros .filtro-buscar input { padding-left: 34px; }
+
+/* Rango de fechas en un solo campo: desde – hasta */
+.barra-filtros .filtro-rango { flex: 2 1 280px; }
+.filtro-rango-campos { display: flex; align-items: center; gap: 6px; }
+.filtro-rango-campos input { flex: 1 1 0; min-width: 0; }
+.filtro-rango-guion { color: #9ca3af; }
+
+/* Las acciones (exportar) van al final de la fila */
+.barra-filtros-campos > .exportar { margin-left: auto; min-height: 38px; }
+
+.barra-filtros-pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  font-size: .85rem;
+  color: #6b7280;
+}
+.barra-filtros-total strong { color: #1f2937; }
+.barra-filtros-limpiar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border: 1px solid #fcd34d;
+  border-radius: 999px;
+  background: #fffbeb;
+  color: #b45309;
+  font-size: .8rem;
+  font-weight: 600;
+  transition: background .15s;
+}
+.barra-filtros-limpiar:hover { background: #fef3c7; }
+.barra-filtros-limpiar span { font-size: 1rem; line-height: 1; }
+.barra-filtros-error { margin: 10px 0 0; }
+
 .btn-link { background: none; border: none; color: #b45309; text-decoration: underline; cursor: pointer; padding: 0; font-size: 0.85rem; }
 .exportar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.exportar .btn-secondary { padding: 6px 10px; font-size: 0.85rem; }
+.exportar .btn-secondary { height: 34px; padding: 0 12px; font-size: 0.85rem; border-radius: 6px; }
+.exportar .btn-secondary:disabled { opacity: .5; cursor: not-allowed; }
 .exportar-etiqueta { font-size: 0.85rem; color: #6b7280; }
 .exportar-aviso { font-size: 0.85rem; color: #991b1b; flex-basis: 100%; }
 @media (max-width: 600px) {
-  .barra-filtros .filtro { flex-basis: 100%; }
+  .barra-filtros { padding: 12px; }
+  .barra-filtros .filtro, .barra-filtros .filtro-buscar, .barra-filtros .filtro-rango { flex-basis: 100%; }
+  .barra-filtros-campos > .exportar { margin-left: 0; }
 }
 
 /* ---- Panel de indicadores (FUJ-123) ---- */

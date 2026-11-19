@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { errorDeFiltros, hayFiltros } from '../../utils/filtros';
 
 // Barra de filtros combinados reutilizable (corrección de la evaluación). Todas las pantallas con listas la usan.
@@ -6,18 +7,24 @@ import { errorDeFiltros, hayFiltros } from '../../utils/filtros';
 //   estados: [{ valor, etiqueta }] para el selector de estado (opcional)
 //   fechas: etiqueta del rango de fechas (opcional), p. ej. "Inscritos entre"
 //   total / visibles: para mostrar "N de M resultados"
-//   children: filtros propios de la pantalla y acciones (p. ej. <BotonExportar/>)
+//   children: filtros propios de la pantalla (<label className="filtro">) y acciones (p. ej. <BotonExportar/>)
 export default function BarraFiltros({ valores, cambiar, limpiar, texto = 'Buscar…', estados, etiquetaEstado = 'Estado',
                                        fechas, total, visibles, children }) {
+  const id = useId();
   const error = errorDeFiltros(valores);
+  const filtrando = hayFiltros(valores);
+
   return (
     <div className="barra-filtros" role="search">
       <div className="barra-filtros-campos">
         {texto !== false && (
-          <label className="filtro">
+          <label className="filtro filtro-buscar">
             <span>Buscar</span>
-            <input type="search" value={valores.q ?? ''} placeholder={texto} maxLength={100}
-                   onChange={(e) => cambiar('q', e.target.value)} />
+            <span className="filtro-buscar-caja">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6" /><path d="m14 14 3.5 3.5" /></svg>
+              <input type="search" value={valores.q ?? ''} placeholder={texto} maxLength={100}
+                     onChange={(e) => cambiar('q', e.target.value)} />
+            </span>
           </label>
         )}
         {estados && (
@@ -30,32 +37,35 @@ export default function BarraFiltros({ valores, cambiar, limpiar, texto = 'Busca
           </label>
         )}
         {fechas && (
-          <>
-            <label className="filtro">
-              <span>{fechas} — desde</span>
-              <input type="date" value={valores.desde ?? ''} max={valores.hasta || undefined}
-                     onChange={(e) => cambiar('desde', e.target.value)} />
-            </label>
-            <label className="filtro">
-              <span>hasta</span>
-              <input type="date" value={valores.hasta ?? ''} min={valores.desde || undefined}
-                     onChange={(e) => cambiar('hasta', e.target.value)} />
-            </label>
-          </>
+          <div className="filtro filtro-rango" role="group" aria-labelledby={`${id}-fechas`}>
+            <span id={`${id}-fechas`}>{fechas}</span>
+            <span className="filtro-rango-campos">
+              <input type="date" aria-label={`${fechas}: desde`} title="Desde" value={valores.desde ?? ''}
+                     max={valores.hasta || undefined} onChange={(e) => cambiar('desde', e.target.value)} />
+              <span className="filtro-rango-guion" aria-hidden="true">–</span>
+              <input type="date" aria-label={`${fechas}: hasta`} title="Hasta" value={valores.hasta ?? ''}
+                     min={valores.desde || undefined} onChange={(e) => cambiar('hasta', e.target.value)} />
+            </span>
+          </div>
         )}
         {children}
       </div>
-      <div className="barra-filtros-pie">
-        {total != null && (
-          <span className="muted" aria-live="polite">
-            {hayFiltros(valores) ? `${visibles} de ${total} resultado(s)` : `${total} resultado(s)`}
-          </span>
-        )}
-        {hayFiltros(valores) && (
-          <button type="button" className="btn-link" onClick={limpiar}>Limpiar filtros</button>
-        )}
-      </div>
-      {error && <div className="error-msg" role="alert" style={{ marginTop: 8 }}>{error}</div>}
+
+      {(total != null || filtrando) && (
+        <div className="barra-filtros-pie">
+          {total != null && (
+            <span className="barra-filtros-total" aria-live="polite">
+              {filtrando ? <><strong>{visibles}</strong> de {total} resultado(s)</> : <><strong>{total}</strong> resultado(s)</>}
+            </span>
+          )}
+          {filtrando && (
+            <button type="button" className="barra-filtros-limpiar" onClick={limpiar}>
+              <span aria-hidden="true">×</span> Limpiar filtros
+            </button>
+          )}
+        </div>
+      )}
+      {error && <div className="error-msg barra-filtros-error" role="alert">{error}</div>}
     </div>
   );
 }
