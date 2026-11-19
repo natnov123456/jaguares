@@ -85,6 +85,15 @@ builder.Services.AddScoped<IProveedorReportes, ReportesGestion>();
 builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
 builder.Services.AddScoped<IProveedorReportes, ReportesFinanzas>();
 builder.Services.AddScoped<IProveedorReportes, ReportesAdministracion>();
+// FUJ-123: panel de indicadores con caché de 10 min. Con "Redis:Conexion" configurado se usa Redis;
+// sin él (desarrollo y pruebas) se usa una caché en memoria con la misma interfaz.
+var redis = cfg["Redis:Conexion"];
+if (!string.IsNullOrWhiteSpace(redis))
+    builder.Services.AddStackExchangeRedisCache(o => { o.Configuration = redis; o.InstanceName = "jaguares:"; });
+else
+    builder.Services.AddDistributedMemoryCache();
+builder.Services.AddScoped<IIndicadorService, IndicadorService>();
+builder.Services.AddScoped<IProveedorReportes, ReportesIndicadores>();
 // FUJ-119: recordatorios 24 h antes (tarea programada cada hora) y avisos de reprogramación/cancelación
 builder.Services.AddScoped<IRecordatorioService, RecordatorioService>();
 builder.Services.AddScoped<ICambiosActividadService, CambiosActividadService>();
