@@ -179,11 +179,24 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// JAG-28 / RNF-04: chequeos de salud para el monitoreo y manejo global de errores
+builder.Services.AgregarChequeosDeSalud();
+builder.Services.AddProblemDetails();
+
 // Enums como texto en JSON ("EFECTIVO", "DIRECTORA") en lugar de números
 builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 var app = builder.Build();
+
+// RNF-04: un error no controlado se registra y responde 500 genérico (sin detalles internos); la API sigue en pie
+app.UseExceptionHandler(manejo => manejo.Run(async ctx =>
+{
+    var error = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+    app.Logger.LogError(error, "[ERROR] {Metodo} {Ruta}", ctx.Request.Method, ctx.Request.Path);
+    ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    await ctx.Response.WriteAsJsonAsync(new { error = "Ocurrió un error inesperado. Ya quedó registrado; intenta de nuevo en unos minutos." });
+}));
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -205,5 +218,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
 app.MapControllers();
+app.MapearChequeosDeSalud();
 
 app.Run();
