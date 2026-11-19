@@ -31,34 +31,14 @@ export default function Login() {
       <h1>Iniciar sesión</h1>
       {error && <div className="error-msg">{error}</div>}
       <form onSubmit={handleSubmit}>
-        <label>Email</label>
-        <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
-        <label>Contraseña</label>
-        <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+        <label htmlFor="l-email">Email</label>
+        <input id="l-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required autoFocus />
+        <label htmlFor="l-pass">Contraseña</label>
+        <input id="l-pass" type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required />
         <button type="submit" className="btn-primary">Ingresar</button>
       </form>
-      <p>¿No tienes cuenta? <Link to="/registro">Regístrate</Link></p>
+      {/* RNF-03: quien llega desde "Inscribirme" sigue con su curso aunque primero cree la cuenta */}
+      <p>¿No tienes cuenta? <Link to="/registro" state={location.state}>Regístrate</Link></p>
     </div>
   );
 }
-
-
-
-
-// Notificacion de errores 
-/* try {
-      const user = await login(email, password);
-
-      navigate(
-        location.state?.desde ?? rutaInicio(user),
-        { replace: true }
-      );
-    } catch (err) {
-      setError(
-        err.response?.data?.error ||
-        'Correo electrónico o contraseña incorrectos'
-      );
-    } finally {
-      setCargando(false);
-    }
-      */
