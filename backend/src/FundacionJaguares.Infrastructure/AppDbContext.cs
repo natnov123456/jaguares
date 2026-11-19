@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<RolCatalogo> Roles => Set<RolCatalogo>();
     public DbSet<TokenContrasena> TokensContrasena => Set<TokenContrasena>();
     public DbSet<Exportacion> Exportaciones => Set<Exportacion>();
+    public DbSet<AuditoriaDonacion> AuditoriaDonaciones => Set<AuditoriaDonacion>();
     public DbSet<Curso> Cursos => Set<Curso>();
     public DbSet<Inscripcion> Inscripciones => Set<Inscripcion>();
     public DbSet<ListaEspera> ListaEspera => Set<ListaEspera>();
@@ -45,6 +46,14 @@ public class AppDbContext : DbContext
         {
             e.ToTable("roles");
             e.HasKey(x => x.Codigo);
+        });
+
+        mb.Entity<AuditoriaDonacion>(e =>
+        {
+            e.ToTable("auditoria_donaciones");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.ValorAnterior).HasColumnType("jsonb");
+            e.Property(x => x.ValorNuevo).HasColumnType("jsonb");
         });
 
         mb.Entity<Exportacion>(e =>
