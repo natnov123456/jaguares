@@ -1,0 +1,83 @@
+# JAG-77: CI/CD. En cada push a main: pruebas (backend y frontend) → imágenes Docker → despliegue en el servidor.
+# Si una prueba falla, no se publica ni se despliega nada.
+# Secretos del repositorio: SSH_HOST, SSH_USUARIO, SSH_CLAVE (clave privada con acceso al servidor).
+name: Despliegue a producción
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: despliegue-produccion
+  cancel-in-progress: false
+
+jobs:
+  pruebas-backend:
+    uses: ./.github/workflows/backend-tests.yml
+
+  pruebas-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+  imagenes:
+    needs: [pruebas-backend, pruebas-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/jaguares-api:latest
+            ghcr.io/${{ github.repository_owner }}/jaguares-api:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/jaguares-web:latest
+            ghcr.io/${{ github.repository_owner }}/jaguares-web:${{ github.sha }}
+
+  desplegar:
+    needs: imagenes
+    runs-on: ubuntu-latest
+    environment: produccion
+    steps:
+      - name: Actualizar el servidor
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USUARIO }}
+          key: ${{ secrets.SSH_CLAVE }}
+          script: |
+            set -e
+            cd /opt/jaguares
+            git pull --ff-only
+            cd deploy
+            docker compose -f docker-compose.prod.yml --env-file .env pull
+            docker compose -f docker-compose.prod.yml --env-file .env up -d --remove-orphans
+            sleep 20
+            curl -fs https://$(grep ^DOMINIO= .env | cut -d= -f2)/health/ready
+            docker image prune -f
