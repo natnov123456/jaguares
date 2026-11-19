@@ -4,37 +4,92 @@ import { puede } from '../../config/permisos';
 import { campanasApi, donacionesApi } from '../../services/api';
 import { bs, fechaHora, numeroComprobante } from '../../utils/formato';
 import BotonComprobante from '../../components/BotonComprobante';
+import BarraFiltros from '../../components/filtros/BarraFiltros';
+import BotonExportar from '../../components/BotonExportar';
+import useFiltros from '../../hooks/useFiltros';
+import { aplicarFiltros } from '../../utils/filtros';
+
+const ESTADOS = [{ valor: 'CONFIRMADA', etiqueta: 'Confirmadas' }, { valor: 'ANULADA', etiqueta: 'Anuladas' }];
+const MEDIOS = ['EFECTIVO', 'TRANSFERENCIA', 'QR', 'PASARELA'];
+const ultimoDia = (anio, mes) => new Date(anio, mes, 0).getDate();
+const dosDigitos = (n) => String(n).padStart(2, '0');
+
+// FUJ-125: corregir o anular una donación (Contador y Directora). Queda en la bitácora de auditoría.
+function EditorDonacion({ donacion, modo, onGuardado, onCerrar }) {
+  const anular = modo === 'anular';
+  const [form, setForm] = useState({ monto: donacion.monto, medio: donacion.medio, referencia: donacion.referencia ?? '', motivo: '' });
+  const [error, setError] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+
+  const guardar = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setEnviando(true);
+    try {
+      const { data } = anular
+        ? await donacionesApi.anular(donacion.id, form.motivo)
+        : await donacionesApi.editar(donacion.id, {
+            monto: parseFloat(form.monto), medio: form.medio, referencia: form.referencia.trim() || null,
+            campanaId: donacion.campanaId ?? null, motivo: form.motivo.trim() || null,
+          });
+      onGuardado(data, anular);
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudo guardar el cambio');
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <div className="modal-fondo" onClick={onCerrar}>
+      <div className="modal" role="dialog" aria-modal="true" aria-label={anular ? 'Anular donación' : 'Corregir donación'}
+           onClick={e => e.stopPropagation()}>
+        <button className="modal-cerrar" onClick={onCerrar} aria-label="Cerrar">×</button>
+        <h2>{anular ? 'Anular' : 'Corregir'} donación N° {numeroComprobante(donacion.numeroComprobante)}</h2>
+        <p className="muted" style={{ marginBottom: 12 }}>{bs(donacion.monto)} · {fechaHora(donacion.fecha)}</p>
+        <form onSubmit={guardar} className="form-stack">
+          {!anular && (
+            <>
+              <div><label htmlFor="ed-monto">Monto (Bs.)</label>
+                <input id="ed-monto" type="number" min="0.01" step="0.01" required value={form.monto}
+                       onChange={e => setForm({ ...form, monto: e.target.value })} /></div>
+              <div><label htmlFor="ed-medio">Medio</label>
+                <select id="ed-medio" value={form.medio} onChange={e => setForm({ ...form, medio: e.target.value })}>
+                  {MEDIOS.map(m => <option key={m} value={m}>{m}</option>)}
+                </select></div>
+              <div><label htmlFor="ed-ref">Referencia / recibo</label>
+                <input id="ed-ref" maxLength={100} value={form.referencia} onChange={e => setForm({ ...form, referencia: e.target.value })} /></div>
+            </>
+          )}
+          <div><label htmlFor="ed-motivo">{anular ? 'Motivo de la anulación' : 'Motivo de la corrección (opcional)'}</label>
+            <textarea id="ed-motivo" rows="2" maxLength={300} required={anular} minLength={anular ? 5 : undefined}
+                      value={form.motivo} onChange={e => setForm({ ...form, motivo: e.target.value })} /></div>
+          <div className={anular ? 'error-msg' : 'info-msg'} style={{ marginBottom: 0 }}>
+            {anular
+              ? 'La donación dejará de sumar en el reporte, las campañas y la transparencia. El cambio queda en la bitácora de auditoría.'
+              : 'El valor anterior y el nuevo quedan guardados en la bitácora de auditoría con tu nombre y la hora.'}
+          </div>
+          {error && <div className="error-msg" role="alert">{error}</div>}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="submit" className={anular ? 'btn-danger' : 'btn-primary'} disabled={enviando}>
+              {enviando ? 'Guardando...' : anular ? 'Anular donación' : 'Guardar corrección'}
+            </button>
+            <button type="button" className="btn-secondary" onClick={onCerrar} disabled={enviando}>Volver</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
                'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-// FUJ-106: el reporte mensual se descarga como CSV (separado por ";" y con BOM para que Excel lo abra bien)
-function descargarReporte(reporte, periodo) {
-  const celda = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const filas = [
-    ['Reporte financiero', `${MESES[periodo.mes - 1]} ${periodo.anio}`],
-    [],
-    ['N° comprobante', 'Fecha', 'Monto (Bs.)', 'Medio', 'Referencia', 'Estado'],
-    ...reporte.detalle.map(d => [numeroComprobante(d.numeroComprobante), fechaHora(d.fecha),
-                                 Number(d.monto).toFixed(2), d.medio, d.referencia, d.estado]),
-    [],
-    ['Total del período', '', Number(reporte.total).toFixed(2), `${reporte.cantidad} aportes`],
-  ];
-  const csv = '﻿' + filas.map(f => f.map(celda).join(';')).join('\r\n');
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `reporte-donaciones-${periodo.anio}-${String(periodo.mes).padStart(2, '0')}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function TablaDonaciones({ donaciones, vacio }) {
+function TablaDonaciones({ donaciones, vacio, onEditar }) {
   if (donaciones.length === 0) return <p className="muted" style={{ textAlign: 'center', padding: 24 }}>{vacio}</p>;
   return (
     <div className="table-wrap">
       <table className="table">
-        <thead><tr><th>N°</th><th>Fecha</th><th>Monto</th><th>Medio</th><th>Ref.</th><th /></tr></thead>
+        <thead><tr><th>N°</th><th>Fecha</th><th>Monto</th><th>Medio</th><th>Ref.</th><th>Estado</th><th /></tr></thead>
         <tbody>
           {donaciones.map(d => (
             <tr key={d.id}>
@@ -43,7 +98,18 @@ function TablaDonaciones({ donaciones, vacio }) {
               <td style={{ fontWeight: 'bold' }}>{bs(d.monto)}</td>
               <td>{d.medio}</td>
               <td className="muted">{d.referencia || '-'}</td>
-              <td>{d.estado === 'CONFIRMADA' && <BotonComprobante donacion={d} />}</td>
+              <td><span className={`badge ${d.estado === 'ANULADA' ? 'badge-off' : 'badge-ok'}`}>{d.estado === 'ANULADA' ? 'Anulada' : 'Confirmada'}</span></td>
+              <td>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {d.estado === 'CONFIRMADA' && <BotonComprobante donacion={d} />}
+                  {onEditar && d.estado === 'CONFIRMADA' && (
+                    <>
+                      <button type="button" className="btn-secondary" style={{ padding: '4px 10px' }} onClick={() => onEditar(d, 'editar')}>Corregir</button>
+                      <button type="button" className="btn-secondary" style={{ padding: '4px 10px', color: '#991b1b' }} onClick={() => onEditar(d, 'anular')}>Anular</button>
+                    </>
+                  )}
+                </div>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -56,6 +122,9 @@ export default function AdminDonaciones() {
   const { usuario } = useAuth();
   // La directora ve el reporte financiero completo; el encargado de eventos solo lo que él registró
   const verReporte = puede(usuario, 'verReporteFinanciero');
+  const puedeCorregir = puede(usuario, 'corregirDonaciones');
+  const { valores, cambiar, limpiar } = useFiltros(['q', 'estado', 'accion']);
+  const [editando, setEditando] = useState(null); // { donacion, modo }
 
   const hoy = new Date();
   const [periodo, setPeriodo] = useState({ anio: hoy.getFullYear(), mes: hoy.getMonth() + 1 });
@@ -124,6 +193,23 @@ export default function AdminDonaciones() {
 
   const anios = Array.from({ length: 4 }, (_, i) => hoy.getFullYear() - i);
 
+  // Mismos filtros en pantalla y en el archivo exportado (el mes elegido es el rango de fechas)
+  const lista = verReporte ? reporte.detalle : misRegistros;
+  const visibles = aplicarFiltros(lista, valores,
+    { texto: d => [numeroComprobante(d.numeroComprobante), d.referencia], estado: d => d.estado })
+    .filter(d => !valores.accion || d.medio === valores.accion);
+  const filtrosExportar = verReporte
+    ? { ...valores, desde: `${periodo.anio}-${dosDigitos(periodo.mes)}-01`, hasta: `${periodo.anio}-${dosDigitos(periodo.mes)}-${ultimoDia(periodo.anio, periodo.mes)}` }
+    : valores;
+
+  const alGuardar = (data, anulada) => {
+    setEditando(null);
+    setMensaje({ tipo: 'success', texto: anulada
+      ? `Donación N° ${numeroComprobante(data.numeroComprobante)} anulada. Quedó registrada en la bitácora.`
+      : `Donación N° ${numeroComprobante(data.numeroComprobante)} corregida. Quedó registrada en la bitácora.` });
+    cargar();
+  };
+
   return (
     <div className="container page">
       <div className="page-header">
@@ -149,10 +235,6 @@ export default function AdminDonaciones() {
               <p>Total recaudado ({reporte.cantidad} aportes)</p>
               <h2>{bs(reporte.total)}</h2>
             </div>
-            <button type="button" className="btn-secondary" disabled={loading}
-                    onClick={() => descargarReporte(reporte, periodo)}>
-              ⬇ Descargar reporte (CSV)
-            </button>
           </div>
         )}
       </div>
@@ -160,12 +242,24 @@ export default function AdminDonaciones() {
       <div className="split">
         <section className="panel">
           <h2>{verReporte ? 'Detalle del mes' : 'Mis últimos registros'}</h2>
+          <BarraFiltros valores={valores} cambiar={cambiar} limpiar={limpiar} texto="N° de comprobante o referencia"
+                        estados={ESTADOS} total={lista.length} visibles={visibles.length}>
+            <label className="filtro">
+              <span>Medio</span>
+              <select value={valores.accion} onChange={e => cambiar('accion', e.target.value)}>
+                <option value="">Todos</option>
+                {MEDIOS.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </label>
+            <BotonExportar reporte="donaciones" filtros={filtrosExportar} />
+          </BarraFiltros>
           {loading ? (
             <p>Cargando...</p>
-          ) : verReporte ? (
-            <TablaDonaciones donaciones={reporte.detalle} vacio="No hay donaciones registradas en este mes." />
           ) : (
-            <TablaDonaciones donaciones={misRegistros} vacio="Aún no registraste donaciones." />
+            <TablaDonaciones donaciones={visibles} onEditar={puedeCorregir ? (donacion, modo) => setEditando({ donacion, modo }) : null}
+                             vacio={lista.length === 0
+                               ? (verReporte ? 'No hay donaciones registradas en este mes.' : 'Aún no registraste donaciones.')
+                               : 'Ninguna donación coincide con los filtros.'} />
           )}
         </section>
 
@@ -206,6 +300,9 @@ export default function AdminDonaciones() {
           </form>
         </section>
       </div>
+      {editando && (
+        <EditorDonacion donacion={editando.donacion} modo={editando.modo} onGuardado={alGuardar} onCerrar={() => setEditando(null)} />
+      )}
     </div>
   );
 }

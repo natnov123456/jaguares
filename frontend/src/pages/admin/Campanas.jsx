@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { campanasApi } from '../../services/api';
 import ProgresoCampana from '../../components/ProgresoCampana';
+import BarraFiltros from '../../components/filtros/BarraFiltros';
+import BotonExportar from '../../components/BotonExportar';
+import useFiltros from '../../hooks/useFiltros';
+import { aplicarFiltros } from '../../utils/filtros';
+
+const ESTADOS = [{ valor: 'VIGENTE', etiqueta: 'Vigentes' }, { valor: 'CERRADA', etiqueta: 'Cerradas' }];
 
 // FUJ-117: la Directora crea campañas con meta y fecha límite; al crearlas quedan publicadas en el sitio
 
@@ -17,6 +23,7 @@ export default function AdminCampanas() {
   const [editando, setEditando] = useState(null);
   const [form, setForm] = useState(VACIA);
   const [msg, setMsg] = useState(null);
+  const { valores, cambiar, limpiar: limpiarFiltros } = useFiltros();
 
   const cargar = () =>
     campanasApi.todas()
@@ -51,6 +58,10 @@ export default function AdminCampanas() {
     }
   };
 
+  // Mismas reglas que el reporte exportado: vigente = activa y con fecha límite no vencida
+  const visibles = aplicarFiltros(campanas, valores,
+    { texto: c => [c.nombre, c.descripcion], estado: c => (c.vigente ? 'VIGENTE' : 'CERRADA'), fecha: c => c.fechaLimite });
+
   return (
     <div className="container page">
       <div className="page-header">
@@ -66,11 +77,15 @@ export default function AdminCampanas() {
       <div className="split">
         <section className="panel">
           <h2>Campañas</h2>
+          <BarraFiltros valores={valores} cambiar={cambiar} limpiar={limpiarFiltros} texto="Nombre o descripción" estados={ESTADOS}
+                        fechas="Fecha límite" total={campanas.length} visibles={visibles.length}>
+            <BotonExportar reporte="campanas" filtros={valores} />
+          </BarraFiltros>
           {loading ? <p>Cargando...</p> : campanas.length === 0 ? (
             <p className="muted">Todavía no hay campañas.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {campanas.map(c => {
+              {visibles.map(c => {
                 const estado = estadoDe(c);
                 return (
                   <article key={c.id}>
