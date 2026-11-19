@@ -23,9 +23,9 @@ Archivos: `deploy/docker-compose.prod.yml`, `deploy/Caddyfile`, `deploy/.env.exa
    git clone https://github.com/natnov123456/jaguares.git /opt/jaguares
    cd /opt/jaguares/deploy
    cp .env.example .env && chmod 600 .env
-   nano .env        # dominio, claves de BD, JWT_SECRET (openssl rand -base64 48), SMTP...
+   nano .env        # dominio, claves de BD, JWT_SECRET (openssl rand -base64 48)...
    ```
-   Los secretos viven **solo** en `deploy/.env`, nunca en el código: cadena de conexión, clave JWT, SMTP y pasarela de pago. Si `JWT_SECRET` es el valor de desarrollo o tiene menos de 32 caracteres, la API **no arranca** en producción.
+   Los secretos viven **solo** en `deploy/.env`, nunca en el código: cadena de conexión, clave JWT y pasarela de pago. Si `JWT_SECRET` es el valor de desarrollo o tiene menos de 32 caracteres, la API **no arranca** en producción.
 4. Primer arranque:
    ```bash
    docker compose -f docker-compose.prod.yml --env-file .env up -d
@@ -45,7 +45,7 @@ Archivos: `deploy/docker-compose.prod.yml`, `deploy/Caddyfile`, `deploy/.env.exa
 
 Si una prueba falla, no se publica ni se despliega nada. No hay pasos manuales.
 
-Configuración en GitHub (*Settings → Secrets and variables → Actions*): `SSH_HOST`, `SSH_USUARIO`, `SSH_CLAVE`. Además, crear el entorno `produccion` (*Settings → Environments*) si se quiere exigir una aprobación antes de desplegar.
+Configuración en GitHub (*Settings → Secrets and variables → Actions*): `SSH_HOST`, `SSH_USUARIO`, `SSH_CLAVE`. Además, crear el entorno `produccion` (*Settings → Environments*) si se quiere exigir una aprobación antes de desplegar. Mientras esos secretos no estén cargados, el workflow corre las pruebas y genera las imágenes, pero **omite** el paso de despliegue con un aviso (no falla).
 
 ## 3. Migraciones de base de datos
 
@@ -86,4 +86,4 @@ Los scripts de migración, respaldo y prueba de restauración se probaron contra
 
 - HTTPS obligatorio con HSTS y encabezados de seguridad (`nosniff`, `X-Frame-Options`, `Referrer-Policy`) desde Caddy.
 - La API corre sin privilegios (`USER app`) y solo se expone a través de Caddy. La base de datos y Redis no tienen puertos publicados.
-- La IP real del visitante llega a la API (`X-Forwarded-For`), así los límites por IP del formulario de contacto y de la donación en línea siguen funcionando detrás del proxy.
+- La IP real del visitante llega a la API (`X-Forwarded-For`), así los límites por IP de la donación en línea y de las encuestas siguen funcionando detrás del proxy.

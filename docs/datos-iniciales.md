@@ -9,7 +9,7 @@ Objetivo: que la plataforma arranque con la información real de la Fundación (
 
 | Archivo | Columnas | Qué crea |
 |---|---|---|
-| `cuentas_internas.csv` | nombre; correo; rol; telefono | Cuentas del personal. Rol: *Directora, Contador, Encargado de operaciones, Coordinador de voluntariado, Docente*. Cada persona recibe por correo el enlace para definir su contraseña (FUJ-122). |
+| `cuentas_internas.csv` | nombre; correo; rol; telefono | Cuentas del personal. Rol: *Directora, Contador, Encargado de operaciones, Coordinador de voluntariado, Docente*. Se crean sin contraseña: la Directora les asigna una desde *Usuarios y roles → Contraseña* (FUJ-122). |
 | `voluntarios.csv` | nombre; correo; telefono; estado; fecha_postulacion | Registro único de voluntarios (se enlaza a la cuenta si ya existe una con ese correo). |
 | `cursos.csv` | titulo; descripcion; fecha_inicio; fecha_fin; cupo; asistencia_minima; correo_docente | Cursos vigentes. El docente debe estar en `cuentas_internas.csv`. El estado se calcula según las fechas. |
 | `donaciones.csv` | fecha; monto; medio; referencia; donante; correo_donante | Historial de donantes frecuentes. Cada donación queda también en la bitácora de auditoría como "Importación de datos iniciales". |
@@ -32,14 +32,13 @@ Muestra por archivo cuántas filas hay, cuántas son válidas, cuántas están d
 ## 3. Importar
 
 ```bash
-SMTP_HOST=... SMTP_USUARIO=... SMTP_CLAVE=... FRONTEND_URL=https://jaguares.org.bo \
 JAGUARES_CONEXION="..." \
   dotnet run --project tools/FundacionJaguares.Importador -- ../datos-fundacion --aplicar
 ```
 
 - **Se puede ejecutar varias veces:** lo que ya se cargó no se duplica (cuentas y voluntarios por correo; cursos por título y fecha de inicio; donaciones por fecha, monto, referencia y donante; noticias por título).
 - Al final, la columna **Conteo** compara las filas válidas del archivo con los registros en la base: debe decir `OK` en todos. Ese es el control de **conteos origen = destino** que se valida con la Encargada de Operaciones.
-- Sin SMTP configurado las cuentas se crean igual, pero el enlace no se envía. En ese caso la Directora lo reenvía desde *Panel → Usuarios y roles → Reenviar enlace*.
+- Las cuentas internas importadas no pueden iniciar sesión hasta que la Directora les asigne una contraseña desde *Panel → Usuarios y roles → Contraseña*. No se envían correos.
 
 Ejemplo real (con las plantillas de ejemplo, contra una base recién migrada):
 
