@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { cursosApi } from '../../services/api';
 import Estado from '../../components/Estado';
 import CambioActividad from '../../components/CambioActividad';
+import BotonExportar from '../../components/BotonExportar';
+import { aplicarFiltros } from '../../utils/filtros';
 import { fecha } from '../../utils/formato';
 
 // Gestión de un curso por su docente (o la directora): asistencia de cada clase y datos del curso.
@@ -89,6 +91,7 @@ function Asistencia({ curso, abierto, onGuardado }) {
   const [cargando, setCargando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [buscar, setBuscar] = useState('');
 
   useEffect(() => {
     if (!dia) return;
@@ -147,6 +150,17 @@ function Asistencia({ curso, abierto, onGuardado }) {
         )}
       </div>
 
+      <div className="barra-filtros" role="search">
+        <div className="barra-filtros-campos">
+          <label className="filtro">
+            <span>Buscar participante</span>
+            <input type="search" value={buscar} maxLength={100} placeholder="Nombre o correo" onChange={e => setBuscar(e.target.value)} />
+          </label>
+          <BotonExportar reporte="inscritos-curso" etiqueta="Exportar inscritos y asistencia"
+                         filtros={{ actividadId: curso.id, q: buscar }} />
+        </div>
+      </div>
+
       {curso.diasConAsistencia.length > 0 && (
         <p className="muted" style={{ marginBottom: 12, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
           Clases registradas:
@@ -177,7 +191,7 @@ function Asistencia({ curso, abierto, onGuardado }) {
                 <tr><th>Participante</th><th>{fecha(dia)}</th><th>Asistencia acumulada</th></tr>
               </thead>
               <tbody>
-                {datos.participantes.map(p => {
+                {aplicarFiltros(datos.participantes, { q: buscar }, { texto: p => [p.nombre, p.email] }).map(p => {
                   const presente = marcas[p.participanteId];
                   return (
                     <tr key={p.participanteId}>

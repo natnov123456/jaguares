@@ -7,6 +7,10 @@ import EditorEncuesta from '../../components/EditorEncuesta';
 import SelectorPlantilla from '../../components/SelectorPlantilla';
 import CambioActividad from '../../components/CambioActividad';
 import { fecha, fechaHora } from '../../utils/formato';
+import BarraFiltros from '../../components/filtros/BarraFiltros';
+import BotonExportar from '../../components/BotonExportar';
+import useFiltros from '../../hooks/useFiltros';
+import { aplicarFiltros, ESTADOS_ACTIVIDAD } from '../../utils/filtros';
 
 export default function AdminCursos() {
   const { usuario } = useAuth();
@@ -21,6 +25,7 @@ export default function AdminCursos() {
   const [cambio, setCambio] = useState(null); // { modo: 'reprogramar' | 'cancelar', curso } (FUJ-119)
   const [docentes, setDocentes] = useState([]);
   const esDirectora = usuario?.rol === 'DIRECTORA';
+  const { valores, cambiar, limpiar } = useFiltros();
 
   const cargar = () =>
     Promise.all([cursosApi.gestion(), encuestasApi.listar()])
@@ -112,6 +117,8 @@ export default function AdminCursos() {
     cargar();
   };
 
+  const visibles = aplicarFiltros(cursos, valores,
+    { texto: c => [c.titulo, c.docenteNombre], estado: c => c.estado, fecha: c => c.fechaInicio });
   const activos = cursos.filter(c => c.estado !== 'FINALIZADO' && c.estado !== 'CANCELADO');
   const totalInscritos = activos.reduce((n, c) => n + c.inscritos, 0);
 
@@ -136,6 +143,10 @@ export default function AdminCursos() {
       {msg && <div className={`${msg.tipo}-msg`}>{msg.texto}</div>}
 
       <section className="panel">
+        <BarraFiltros valores={valores} cambiar={cambiar} limpiar={limpiar} texto="Curso o docente"
+                      estados={ESTADOS_ACTIVIDAD} fechas="Inicio" total={cursos.length} visibles={visibles.length}>
+          <BotonExportar reporte="cursos" filtros={valores} />
+        </BarraFiltros>
         {loading ? (
           <p>Cargando...</p>
         ) : cursos.length === 0 ? (
@@ -151,7 +162,7 @@ export default function AdminCursos() {
                 <tr><th>Curso</th>{esDirectora && <th>Docente</th>}<th>Fechas</th><th>Inscritos / Cupo</th><th>En espera</th><th>Estado</th><th>Plantilla de certificado</th><th>Acciones</th></tr>
               </thead>
               <tbody>
-                {cursos.map(c => (
+                {visibles.map(c => (
                   <tr key={c.id}>
                     <td style={{ fontWeight: 600 }}>
                       <Link to={`/admin/cursos/${c.id}`} style={{ color: 'inherit', textDecoration: 'underline' }}>{c.titulo}</Link>

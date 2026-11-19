@@ -5,6 +5,10 @@ import Estado from '../../components/Estado';
 import EditorEncuesta from '../../components/EditorEncuesta';
 import CambioActividad from '../../components/CambioActividad';
 import { fechaHora } from '../../utils/formato';
+import BarraFiltros from '../../components/filtros/BarraFiltros';
+import BotonExportar from '../../components/BotonExportar';
+import useFiltros from '../../hooks/useFiltros';
+import { aplicarFiltros, ESTADOS_ACTIVIDAD } from '../../utils/filtros';
 
 const VACIO = { titulo: '', descripcion: '', lugar: '', fechaInicio: '', fechaFin: '' };
 
@@ -16,6 +20,8 @@ export default function AdminEventos() {
   const [encuestas, setEncuestas] = useState(new Map()); // eventoId -> resumen de su encuesta (FUJ-120)
   const [cerrando, setCerrando] = useState(null);
   const [procesando, setProcesando] = useState(false);
+  const { valores, cambiar, limpiar } = useFiltros();
+  const [exportarEvento, setExportarEvento] = useState('');
   const [cambio, setCambio] = useState(null); // { modo: 'reprogramar' | 'cancelar', evento } (FUJ-119)
 
   // Gestión: incluye los eventos ya realizados y cerrados (el listado público solo muestra los abiertos)
@@ -89,6 +95,8 @@ export default function AdminEventos() {
   };
 
   const ahora = new Date();
+  const visibles = aplicarFiltros(eventos, valores,
+    { texto: e => [e.titulo, e.lugar, e.descripcion], estado: e => e.estado, fecha: e => e.fechaInicio });
   const proximos = eventos.filter(e => e.estado !== 'FINALIZADO' && new Date(e.fechaFin ?? e.fechaInicio) >= ahora);
 
   const accionAsistencia = (ev) => {
@@ -126,6 +134,10 @@ export default function AdminEventos() {
       <div className="split">
         <section className="panel">
           <h2>Eventos</h2>
+          <BarraFiltros valores={valores} cambiar={cambiar} limpiar={limpiar} texto="Evento o lugar"
+                        estados={ESTADOS_ACTIVIDAD} fechas="Fecha" total={eventos.length} visibles={visibles.length}>
+            <BotonExportar reporte="eventos" filtros={valores} />
+          </BarraFiltros>
           {loading ? (
             <p>Cargando...</p>
           ) : eventos.length === 0 ? (
@@ -135,7 +147,7 @@ export default function AdminEventos() {
               <table className="table">
                 <thead><tr><th>Evento</th><th>Fecha</th><th>Lugar</th><th>Estado</th><th>Asistencia</th><th>Cambios</th></tr></thead>
                 <tbody>
-                  {eventos.map(ev => {
+                  {visibles.map(ev => {
                     const pasado = new Date(ev.fechaFin ?? ev.fechaInicio) < ahora;
                     const cerrado = ev.estado === 'FINALIZADO';
                     return (
@@ -167,6 +179,21 @@ export default function AdminEventos() {
                   })}
                 </tbody>
               </table>
+            </div>
+          )}
+          {/* FUJ-124: inscritos y asistencia (QR o manual) de un evento en Excel o PDF */}
+          {eventos.length > 0 && (
+            <div className="barra-filtros" style={{ marginTop: 16 }}>
+              <div className="barra-filtros-campos">
+                <label className="filtro">
+                  <span>Inscritos y asistencia del evento</span>
+                  <select value={exportarEvento} onChange={e => setExportarEvento(e.target.value)}>
+                    <option value="">Elige un evento…</option>
+                    {eventos.map(ev => <option key={ev.id} value={ev.id}>{ev.titulo} · {fechaHora(ev.fechaInicio)}</option>)}
+                  </select>
+                </label>
+                <BotonExportar reporte="asistencia-evento" filtros={{ actividadId: exportarEvento }} deshabilitado={!exportarEvento} />
+              </div>
             </div>
           )}
         </section>

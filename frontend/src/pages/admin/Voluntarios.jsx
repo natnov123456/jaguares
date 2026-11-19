@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import { voluntariosApi } from '../../services/api';
 import Estado from '../../components/Estado';
 import { fecha, horas as formatoHoras } from '../../utils/formato';
+import BarraFiltros from '../../components/filtros/BarraFiltros';
+import BotonExportar from '../../components/BotonExportar';
+import useFiltros from '../../hooks/useFiltros';
+import { aplicarFiltros, ESTADOS_VOLUNTARIO } from '../../utils/filtros';
 
 export default function AdminVoluntarios() {
   const [voluntarios, setVoluntarios] = useState([]);
@@ -11,6 +15,8 @@ export default function AdminVoluntarios() {
   const [actividad, setActividad] = useState('');
   const [horasManual, setHorasManual] = useState('');
   const [mensaje, setMensaje] = useState('');
+  const { valores, cambiar, limpiar } = useFiltros();
+  const [periodoHoras, setPeriodoHoras] = useState({ desde: '', hasta: '' });
 
   const cargar = async () => {
     try {
@@ -43,6 +49,8 @@ export default function AdminVoluntarios() {
     }
   };
 
+  const visibles = aplicarFiltros(voluntarios, valores,
+    { texto: v => [v.nombreCompleto, v.email, v.telefono], estado: v => v.estado, fecha: v => v.postuladoEn });
   const activos = voluntarios.filter(v => v.estado === 'ACTIVO').length;
   const totalHoras = voluntarios.reduce((n, v) => n + (v.totalHoras ?? 0), 0);
 
@@ -66,6 +74,25 @@ export default function AdminVoluntarios() {
         </div>
       </div>
 
+      <BarraFiltros valores={valores} cambiar={cambiar} limpiar={limpiar} texto="Nombre, correo o teléfono"
+                    estados={ESTADOS_VOLUNTARIO} fechas="Postulación" total={voluntarios.length} visibles={visibles.length}>
+        <BotonExportar reporte="voluntarios" filtros={valores} />
+      </BarraFiltros>
+
+      {/* FUJ-124: horas de voluntariado por rango de fechas (voluntario, actividades y horas acumuladas) */}
+      <div className="barra-filtros" aria-label="Reporte de horas de voluntariado">
+        <div className="barra-filtros-campos">
+          <label className="filtro"><span>Horas de voluntariado — desde</span>
+            <input type="date" value={periodoHoras.desde} max={periodoHoras.hasta || undefined}
+                   onChange={e => setPeriodoHoras({ ...periodoHoras, desde: e.target.value })} /></label>
+          <label className="filtro"><span>hasta</span>
+            <input type="date" value={periodoHoras.hasta} min={periodoHoras.desde || undefined}
+                   onChange={e => setPeriodoHoras({ ...periodoHoras, hasta: e.target.value })} /></label>
+          <BotonExportar reporte="horas-voluntariado" etiqueta="Exportar horas"
+                         filtros={{ ...periodoHoras, q: valores.q, estado: valores.estado }} />
+        </div>
+      </div>
+
       <div className="card" style={{ padding: '24px' }}>
         {loading ? (
           <p>Cargando...</p>
@@ -84,7 +111,7 @@ export default function AdminVoluntarios() {
               </tr>
             </thead>
             <tbody>
-              {voluntarios.map(v => (
+              {visibles.map(v => (
                 <Fragment key={v.id}>
                   <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
                     <td style={{ padding: '12px 8px', fontWeight: 'bold' }}>{v.nombreCompleto}</td>

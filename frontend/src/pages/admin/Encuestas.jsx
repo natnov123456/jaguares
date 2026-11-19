@@ -3,6 +3,12 @@ import { Link, useParams } from 'react-router-dom';
 import { encuestasApi } from '../../services/api';
 import { fecha, fechaHora } from '../../utils/formato';
 import '../Encuesta.css';
+import BarraFiltros from '../../components/filtros/BarraFiltros';
+import BotonExportar from '../../components/BotonExportar';
+import useFiltros from '../../hooks/useFiltros';
+import { aplicarFiltros } from '../../utils/filtros';
+
+const TIPOS = [{ valor: 'CURSO', etiqueta: 'Cursos' }, { valor: 'EVENTO', etiqueta: 'Eventos' }];
 
 // FUJ-120: resultados de las encuestas de satisfacción. La directora ve todas, el docente las
 // de sus cursos y el encargado de eventos las de eventos (lo filtra el backend).
@@ -27,6 +33,9 @@ function Lista() {
       .finally(() => setLoading(false));
   }, []);
 
+  const { valores, cambiar, limpiar } = useFiltros();
+  const visibles = aplicarFiltros(encuestas, valores,
+    { texto: e => [e.actividad], estado: e => e.tipoActividad, fecha: e => e.fechaActividad });
   const respondidas = encuestas.reduce((n, e) => n + e.respuestas, 0);
   const conDatos = encuestas.filter(e => e.promedioSatisfaccion != null);
   const general = conDatos.length
@@ -48,6 +57,10 @@ function Lista() {
 
       {error && <div className="error-msg">{error}</div>}
       <section className="panel">
+        <BarraFiltros valores={valores} cambiar={cambiar} limpiar={limpiar} texto="Actividad" estados={TIPOS}
+                      etiquetaEstado="Tipo" fechas="Fecha de la actividad" total={encuestas.length} visibles={visibles.length}>
+          <BotonExportar reporte="encuestas" filtros={valores} />
+        </BarraFiltros>
         {loading ? <p>Cargando...</p> : encuestas.length === 0 ? (
           <p className="muted" style={{ textAlign: 'center', padding: 24 }}>
             Aún no hay encuestas. Se crean al cerrar la asistencia de un evento o al finalizar un curso.
@@ -57,7 +70,7 @@ function Lista() {
             <table className="table">
               <thead><tr><th>Actividad</th><th>Fecha</th><th>Satisfacción</th><th>Respuestas</th><th /></tr></thead>
               <tbody>
-                {encuestas.map(e => (
+                {visibles.map(e => (
                   <tr key={e.id}>
                     <td>
                       <span className={`badge ${e.tipoActividad === 'CURSO' ? 'badge-warn' : ''}`} style={{ marginRight: 8 }}>
@@ -107,6 +120,7 @@ function Detalle({ id }) {
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           <div className="stat-box"><p>Satisfacción promedio</p><h2>{promedio(r.promedioSatisfaccion)}</h2></div>
           <div className="stat-box"><p>Respondieron</p><h2>{r.respuestas} / {r.invitados} ({tasa}%)</h2></div>
+          <BotonExportar reporte="encuesta-resultados" filtros={{ actividadId: id }} />
           <Link to="/admin/encuestas" className="btn-secondary">← Todas las encuestas</Link>
         </div>
       </div>

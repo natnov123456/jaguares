@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import { voluntariosApi } from '../../services/api';
 import Estado from '../../components/Estado';
 import { fechaActividad, horas as formatoHoras } from '../../utils/formato';
+import BarraFiltros from '../../components/filtros/BarraFiltros';
+import BotonExportar from '../../components/BotonExportar';
+import useFiltros from '../../hooks/useFiltros';
+import { aplicarFiltros, ESTADOS_ASIGNACION } from '../../utils/filtros';
 
 // FUJ-118: el coordinador asigna voluntarios a eventos o cursos publicados y, cuando la actividad
 // termina, registra las horas de cada uno (se suman a su historial).
@@ -28,6 +32,7 @@ export default function AsignacionesVoluntarios() {
   const [enviando, setEnviando] = useState(false);
 
   const [vista, setVista] = useState('pendientes');
+  const { valores, cambiar, limpiar } = useFiltros();
   const [horasEditadas, setHorasEditadas] = useState({});
   const [guardando, setGuardando] = useState(null);
 
@@ -122,13 +127,15 @@ export default function AsignacionesVoluntarios() {
   const filtro = VISTAS.find(v => v.id === vista).filtro;
   const grupos = useMemo(() => {
     const mapa = new Map();
-    for (const a of asignaciones.filter(filtro)) {
+    const filtradas = aplicarFiltros(asignaciones.filter(filtro), valores,
+      { texto: a => [a.voluntario, a.email, a.actividad, a.tarea, a.lugar], estado: a => a.estado, fecha: a => a.inicio });
+    for (const a of filtradas) {
       const k = `${a.tipo}:${a.actividadId}`;
       if (!mapa.has(k)) mapa.set(k, { ...a, filas: [] });
       mapa.get(k).filas.push(a);
     }
     return [...mapa.values()];
-  }, [asignaciones, filtro]);
+  }, [asignaciones, filtro, valores]);
 
   const pendientes = asignaciones.filter(VISTAS[0].filtro).length;
 
@@ -161,6 +168,12 @@ export default function AsignacionesVoluntarios() {
                 </button>
               ))}
             </div>
+
+            <BarraFiltros valores={valores} cambiar={cambiar} limpiar={limpiar} texto="Voluntario, actividad o tarea"
+                          estados={ESTADOS_ASIGNACION} fechas="Actividad" total={asignaciones.filter(filtro).length}
+                          visibles={grupos.reduce((n, g) => n + g.filas.length, 0)}>
+              <BotonExportar reporte="asignaciones-voluntariado" filtros={valores} />
+            </BarraFiltros>
 
             {grupos.length === 0 ? (
               <p className="muted" style={{ padding: 16, textAlign: 'center' }}>
