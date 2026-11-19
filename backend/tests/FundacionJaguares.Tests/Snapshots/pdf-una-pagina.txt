@@ -1,0 +1,30 @@
+pagina 595x842 · 1 pagina(s)
+p1 rect (0,0) 595x6 #B45309
+p1 texto (36,34) 10 #6B7280 "Fundación Unión de los Jaguares"
+p1 texto (36,58) 16b #B45309 "Inscritos y asistencia: Taller de reciclaje"
+p1 texto (36,76) 10 #1F2937 "Curso del 01/11/2026 al 30/11/2026 · Docente: Carlos Docente"
+p1 texto (36,94) 8.5 #6B7280 "Generado el 19/11/2026 12:30 (hora de Bolivia) · 3 registro(s)"
+p1 texto (36,108) 8.5 #6B7280 "Filtros: Búsqueda: "ana" · Estado: Confirmada"
+p1 rect (36,128) 523x20 #FEF3C7
+p1 texto (40,141.5) 8.5b #1F2937 "Participante"
+p1 texto (249.2,141.5) 8.5b #1F2937 "Columna 1"
+p1 texto (353.8,141.5) 8.5b #1F2937 "Columna 2"
+p1 texto (555,141.5) 8.5b #1F2937 der "Columna 3"
+p1 texto (40,159.5) 8.5 #1F2937 "Participante número 01 con un nombre bastant…"
+p1 texto (249.2,159.5) 8.5 #1F2937 "1"
+p1 texto (353.8,159.5) 8.5 #1F2937 "2"
+p1 texto (555,159.5) 8.5 #1F2937 der "3"
+p1 rect (36,165) 523x17 #F9FAFB
+p1 texto (40,176.5) 8.5 #1F2937 "Participante número 02 con un nombre bastant…"
+p1 texto (249.2,176.5) 8.5 #1F2937 "2"
+p1 texto (353.8,176.5) 8.5 #1F2937 "4"
+p1 texto (555,176.5) 8.5 #1F2937 der "6"
+p1 texto (40,193.5) 8.5 #1F2937 "Participante número 03 con un nombre bastant…"
+p1 texto (249.2,193.5) 8.5 #1F2937 "3"
+p1 texto (353.8,193.5) 8.5 #1F2937 "6"
+p1 texto (555,193.5) 8.5 #1F2937 der "9"
+p1 rect (36,203) 523x1 #E5E7EB
+p1 texto (40,220) 9.5b #1F2937 "Inscritos confirmados: 3"
+p1 rect (36,794) 523x0.75 #E5E7EB
+p1 texto (36,806) 7.5 #6B7280 "Fundación Unión de los Jaguares · Documento generado por la plataforma · Uso interno"
+p1 texto (559,806) 7.5 #6B7280 der "Página 1 de 1"
