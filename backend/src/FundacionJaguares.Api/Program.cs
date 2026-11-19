@@ -74,6 +74,8 @@ builder.Services.AddScoped<IInstitucionalService, InstitucionalService>();
 builder.Services.AddScoped<IContactoService, ContactoService>();
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 builder.Services.AddScoped<IEncuestaService, EncuestaService>();
+// FUJ-122: cuentas del personal y roles
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 // FUJ-119: recordatorios 24 h antes (tarea programada cada hora) y avisos de reprogramación/cancelación
 builder.Services.AddScoped<IRecordatorioService, RecordatorioService>();
 builder.Services.AddScoped<ICambiosActividadService, CambiosActividadService>();
@@ -94,6 +96,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = cfg["Jwt:Issuer"],
             ValidAudience = cfg["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+        };
+        // FUJ-122: un token sigue siendo válido hasta 60 min. Si en ese tiempo la Directora desactiva la cuenta
+        // o le cambia el rol, el token se rechaza en la siguiente solicitud y la persona debe volver a entrar.
+        opt.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async ctx =>
+            {
+                var sub = ctx.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                          ?? ctx.Principal?.FindFirst("sub")?.Value;
+                var rol = ctx.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+                if (!Guid.TryParse(sub, out var id)) { ctx.Fail("Token sin usuario"); return; }
+                var db = ctx.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                var u = await db.Usuarios.Where(x => x.Id == id).Select(x => new { x.Activo, x.Rol }).FirstOrDefaultAsync();
+                if (u is null || !u.Activo || u.Rol.ToString() != rol) ctx.Fail("La cuenta fue desactivada o cambió de rol");
+            }
         };
     });
 builder.Services.AddAuthorization();

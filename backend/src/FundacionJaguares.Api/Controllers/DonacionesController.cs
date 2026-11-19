@@ -16,7 +16,7 @@ public class DonacionesController : ControllerBase
 
     // RF-05: registro manual (efectivo en oficina, transferencias recibidas)
     [HttpPost]
-    [Authorize(Roles = "DIRECTORA,ENCARGADO_EVENTOS")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR,ENCARGADO_EVENTOS")]
     public async Task<IActionResult> Registrar(CrearDonacionDto dto)
     {
         var claimId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
@@ -51,7 +51,7 @@ public class DonacionesController : ControllerBase
     {
         try
         {
-            var c = await _donaciones.ObtenerComprobanteAsync(id, UsuarioId(), User.IsInRole("DIRECTORA"));
+            var c = await _donaciones.ObtenerComprobanteAsync(id, UsuarioId(), User.IsInRole("DIRECTORA") || User.IsInRole("CONTADOR"));
             return File(c.Pdf, "application/pdf", c.NombreArchivo);
         }
         catch (UnauthorizedAccessException) { return Forbid(); }
@@ -64,7 +64,7 @@ public class DonacionesController : ControllerBase
 
     // Donaciones que registró el usuario actual (el encargado no ve el reporte financiero completo)
     [HttpGet("mis-registros")]
-    [Authorize(Roles = "DIRECTORA,ENCARGADO_EVENTOS")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR,ENCARGADO_EVENTOS")]
     public async Task<IActionResult> MisRegistros()
     {
         var id = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -74,7 +74,7 @@ public class DonacionesController : ControllerBase
 
     // RF-06: reporte financiero mensual (solo dirección)
     [HttpGet("reporte/{anio:int}/{mes:int}")]
-    [Authorize(Roles = "DIRECTORA")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR")]
     public async Task<IActionResult> Reporte(int anio, int mes)
     {
         if (mes is < 1 or > 12) return BadRequest(new { error = "Mes inválido" });

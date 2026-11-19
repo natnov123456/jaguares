@@ -34,7 +34,7 @@ public class TransparenciaController : ControllerBase
 
     // Totales actuales del reporte financiero + lo ya publicado, para preparar la publicación
     [HttpGet("vista-previa/{anio:int}/{mes:int}")]
-    [Authorize(Roles = "DIRECTORA")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR")]
     public async Task<IActionResult> VistaPrevia(int anio, int mes)
     {
         try { return Ok(await _transparencia.VistaPreviaAsync(anio, mes)); }
@@ -43,7 +43,7 @@ public class TransparenciaController : ControllerBase
 
     // Publica (o vuelve a publicar con datos actualizados) el resumen del mes
     [HttpPut("{anio:int}/{mes:int}")]
-    [Authorize(Roles = "DIRECTORA")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR")]
     public async Task<IActionResult> Publicar(int anio, int mes, PublicarTransparenciaDto dto)
     {
         var id = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub")!);
@@ -52,7 +52,7 @@ public class TransparenciaController : ControllerBase
     }
 
     [HttpDelete("{anio:int}/{mes:int}")]
-    [Authorize(Roles = "DIRECTORA")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR")]
     public async Task<IActionResult> Despublicar(int anio, int mes)
     {
         try { return await _transparencia.DespublicarAsync(anio, mes) ? NoContent() : NotFound(); }

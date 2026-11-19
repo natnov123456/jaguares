@@ -20,11 +20,11 @@ public class CampanasController : ControllerBase
     public async Task<IActionResult> Vigentes() => Ok(await _donaciones.ListarCampanasAsync(soloVigentes: true));
 
     [HttpGet("admin")]
-    [Authorize(Roles = "DIRECTORA")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR")]
     public async Task<IActionResult> Todas() => Ok(await _donaciones.ListarCampanasAsync(soloVigentes: false));
 
     [HttpPost]
-    [Authorize(Roles = "DIRECTORA")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR")]
     public async Task<IActionResult> Crear(GuardarCampanaDto dto)
     {
         var id = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub")!);
@@ -33,7 +33,7 @@ public class CampanasController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "DIRECTORA")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR")]
     public async Task<IActionResult> Actualizar(Guid id, GuardarCampanaDto dto)
     {
         try { return Ok(await _donaciones.ActualizarCampanaAsync(id, dto)); }

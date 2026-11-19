@@ -10,7 +10,7 @@ namespace FundacionJaguares.Api.Controllers;
 public class VoluntariosController : ControllerBase
 {
     // Coordinación de voluntariado: mismos roles que la sección "Voluntarios" del panel
-    private const string Coordinacion = "DIRECTORA,ENCARGADO_EVENTOS";
+    private const string Coordinacion = "DIRECTORA,ENCARGADO_EVENTOS,COORDINADOR_VOLUNTARIADO";
 
     private readonly IVoluntarioService _voluntarios;
     private readonly IVoluntariadoService _voluntariado;

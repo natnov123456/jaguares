@@ -1,6 +1,7 @@
 using FundacionJaguares.Application.DTOs;
 using FundacionJaguares.Application.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FundacionJaguares.Api.Controllers;
 
@@ -9,7 +10,18 @@ namespace FundacionJaguares.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _auth;
-    public AuthController(IAuthService auth) => _auth = auth;
+    private readonly IUsuarioService _usuarios;
+    public AuthController(IAuthService auth, IUsuarioService usuarios) { _auth = auth; _usuarios = usuarios; }
+
+    // FUJ-122: el personal define su contraseña con el enlace de un solo uso que recibió por correo
+    [HttpPost("definir-contrasena")]
+    [EnableRateLimiting("encuesta-publica")]
+    public async Task<IActionResult> DefinirContrasena(DefinirContrasenaDto dto)
+    {
+        try { await _usuarios.DefinirContrasenaAsync(dto); return NoContent(); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
 
     [HttpPost("registro")]
     public async Task<ActionResult<TokenDto>> Registro(RegistroDto dto)

@@ -5,6 +5,14 @@ public record RegistroDto(string NombreCompleto, string Email, string Password, 
 public record LoginDto(string Email, string Password);
 public record TokenDto(string Token, string NombreCompleto, string Rol, DateTime Expira);
 
+// USUARIOS Y ROLES (FUJ-122)
+public record UsuarioDto(Guid Id, string NombreCompleto, string Email, string? Telefono, string Rol, bool Activo, DateTime CreadoEn);
+public record RolDto(string Codigo, string Nombre, string Descripcion, bool Interno);
+public record CrearUsuarioDto(string NombreCompleto, string Email, FundacionJaguares.Domain.Entities.Rol Rol, string? Telefono = null);
+public record CambiarRolDto(FundacionJaguares.Domain.Entities.Rol Rol);
+public record CambiarActivoDto(bool Activo);
+public record DefinirContrasenaDto(string Token, string Password);
+
 // CURSOS
 // Solo la directora crea cursos y elige el docente a cargo
 public record CrearCursoDto(string Titulo, string? Descripcion, DateOnly FechaInicio, DateOnly FechaFin,
