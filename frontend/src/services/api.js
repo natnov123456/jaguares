@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const SERVIDOR = 'http://localhost:5055';
+// En producción la API está en el mismo dominio (VITE_SERVIDOR vacío); en desarrollo, en localhost:5055
+const SERVIDOR = import.meta.env.VITE_SERVIDOR ?? 'http://localhost:5055';
 const API_URL = `${SERVIDOR}/api`;
 
 // Las imágenes subidas se sirven desde la API ("/uploads/..."); las URLs externas se dejan igual

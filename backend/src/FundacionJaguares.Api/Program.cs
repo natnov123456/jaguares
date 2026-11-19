@@ -103,6 +103,9 @@ builder.Services.AddHostedService<RecordatoriosWorker>();
 
 // 5) JWT Auth
 var jwtSecret = cfg["Jwt:Secret"]!;
+// JAG-77: en producción no se acepta el secreto de desarrollo que está en appsettings.json ni uno corto
+if (builder.Environment.IsProduction() && (jwtSecret == "abcdefghijklmnopqrstuvwxyz123456" || jwtSecret.Length < 32))
+    throw new InvalidOperationException("Configura Jwt__Secret (al menos 32 caracteres aleatorios) para producción.");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
@@ -187,7 +190,20 @@ builder.Services.AddProblemDetails();
 builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
+// JAG-77: detrás de Caddy, la IP real del visitante llega en X-Forwarded-For (la usan los límites por IP)
+builder.Services.Configure<Microsoft.AspNetCore.Builder.ForwardedHeadersOptions>(o =>
+{
+    o.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+    if (cfg.GetValue<bool>("Proxy:Confiable"))
+    {
+        // Solo el proxy de la red interna de Docker puede indicar la IP original
+        o.KnownIPNetworks.Clear();
+        o.KnownProxies.Clear();
+    }
+});
+
 var app = builder.Build();
+app.UseForwardedHeaders();
 
 // RNF-04: un error no controlado se registra y responde 500 genérico (sin detalles internos); la API sigue en pie
 app.UseExceptionHandler(manejo => manejo.Run(async ctx =>

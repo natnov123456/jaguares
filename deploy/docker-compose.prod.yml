@@ -1,0 +1,124 @@
+# JAG-77: despliegue de producción.
+#   cd /opt/jaguares/deploy && docker compose -f docker-compose.prod.yml --env-file .env up -d
+# Servicios: caddy (HTTPS) · web (React) · api (ASP.NET) · migraciones (una vez por despliegue) ·
+#            db (PostgreSQL) · redis (caché) · respaldos (diarios, 30 días) · monitor (opcional: Uptime Kuma)
+name: jaguares
+
+services:
+  caddy:
+    image: caddy:2.8
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      DOMINIO: ${DOMINIO}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-datos:/data
+      - caddy-config:/config
+    depends_on: [web, api]
+
+  web:
+    image: ${IMAGEN_WEB}
+    restart: unless-stopped
+
+  api:
+    image: ${IMAGEN_API}
+    restart: unless-stopped
+    environment:
+      ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET}
+      App__FrontendUrl: https://${DOMINIO}
+      Redis__Conexion: redis:6379
+      Proxy__Confiable: "true"
+      Smtp__Host: ${SMTP_HOST}
+      Smtp__Puerto: ${SMTP_PUERTO}
+      Smtp__Usuario: ${SMTP_USUARIO}
+      Smtp__Password: ${SMTP_CLAVE}
+      Smtp__Remitente: ${SMTP_REMITENTE}
+      Contacto__EmailDestino: ${CONTACTO_DESTINO}
+    volumes:
+      - uploads:/datos/uploads
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+      migraciones: { condition: service_completed_successfully }
+
+  # Aplica los scripts de db/ que falten (sin datos de demostración) antes de iniciar la API
+  migraciones:
+    image: postgres:16
+    restart: "no"
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      INCLUIR_DATOS_DEMO: "false"
+      CARPETA_DB: /db
+    volumes:
+      - ../db:/db:ro
+      - ./scripts:/scripts:ro
+    entrypoint: ["bash", "/scripts/aplicar-scripts.sh"]
+    depends_on:
+      db: { condition: service_healthy }
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-datos:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+
+  # Respaldo diario a las 03:00 (hora del servidor) con retención de DIAS_RETENCION días
+  respaldos:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      CARPETA_RESPALDOS: /respaldos
+      DIAS_RETENCION: ${DIAS_RETENCION:-30}
+    volumes:
+      - ./respaldos:/respaldos
+      - ./scripts:/scripts:ro
+    entrypoint:
+      - bash
+      - -c
+      - |
+        while true; do
+          ahora=$$(date +%s); proxima=$$(date -d 'tomorrow 03:00' +%s)
+          sleep $$((proxima - ahora))
+          bash /scripts/respaldo.sh || echo "ERROR: falló el respaldo $$(date)"
+        done
+    depends_on:
+      db: { condition: service_healthy }
+
+  # Monitor externo opcional (RNF-04):  docker compose --profile monitoreo up -d   → http://servidor:3001
+  monitor:
+    image: louislam/uptime-kuma:1
+    restart: unless-stopped
+    profiles: ["monitoreo"]
+    ports: ["3001:3001"]
+    volumes:
+      - monitor-datos:/app/data
+
+volumes:
+  caddy-datos:
+  caddy-config:
+  db-datos:
+  uploads:
+  monitor-datos:

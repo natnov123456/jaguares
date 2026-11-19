@@ -1,0 +1,31 @@
+# JAG-77: proxy con HTTPS automático (Let's Encrypt). Caddy obtiene y renueva el certificado TLS
+# del dominio y redirige todo HTTP a HTTPS por defecto.
+{$DOMINIO} {
+	encode gzip
+
+	# API, imágenes subidas y chequeos de salud → contenedor de la API
+	@api path /api/* /uploads/* /health/* /swagger*
+	reverse_proxy @api api:8080
+
+	# Todo lo demás → sitio React
+	reverse_proxy web:80
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		-Server
+	}
+	log {
+		output file /data/acceso.log {
+			roll_size 20mb
+			roll_keep 10
+		}
+	}
+}
+
+# Redirección del dominio con www
+www.{$DOMINIO} {
+	redir https://{$DOMINIO}{uri} permanent
+}
