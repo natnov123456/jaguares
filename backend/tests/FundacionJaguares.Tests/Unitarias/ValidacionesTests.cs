@@ -15,11 +15,11 @@ public class ValidacionesTests
     [InlineData("ana@correo.", false)]
     [InlineData("Ana <ana@correo.com>", false)]
     public void EmailValido(string email, bool esperado) =>
-        Assert.Equal(esperado, ContactoService.EmailValido(email));
+        Assert.Equal(esperado, ValidacionCorreo.EmailValido(email));
 
     [Fact]
     public void EmailValido_rechaza_mas_de_150_caracteres() =>
-        Assert.False(ContactoService.EmailValido(new string('a', 145) + "@x.com"));
+        Assert.False(ValidacionCorreo.EmailValido(new string('a', 145) + "@x.com"));
 
     [Theory]
     [InlineData("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")]

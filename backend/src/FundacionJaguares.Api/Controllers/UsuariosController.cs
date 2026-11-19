@@ -50,10 +50,12 @@ public class UsuariosController : ControllerBase
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
     }
 
-    [HttpPost("{id:guid}/reenviar-enlace")]
-    public async Task<IActionResult> ReenviarEnlace(Guid id)
+    // Sin correos: la Directora asigna (o restablece) la contraseña y se la entrega a la persona
+    [HttpPut("{id:guid}/contrasena")]
+    public async Task<IActionResult> CambiarContrasena(Guid id, CambiarContrasenaDto dto)
     {
-        try { await _usuarios.ReenviarEnlaceAsync(id); return NoContent(); }
+        try { await _usuarios.CambiarContrasenaAsync(id, dto.Password); return NoContent(); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
     }

@@ -5,7 +5,8 @@ namespace FundacionJaguares.Api;
 // Configuración "Recordatorios" (appsettings / user-secrets)
 public class RecordatoriosOpciones
 {
-    public bool Habilitado { get; set; } = true;
+    // Apagada por defecto: la plataforma no envía correos
+    public bool Habilitado { get; set; } = false;
     public int IntervaloMinutos { get; set; } = 60;
 }
 

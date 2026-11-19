@@ -78,7 +78,7 @@ public class ImportadorTests(ApiFixture api)
         var docente = await db.Usuarios.SingleAsync(u => u.Email == $"docente.{marca}@fundacion.org");
         Assert.Equal("Ana María Pérez", docente.NombreCompleto);
         Assert.Equal("+591 71234567", docente.Telefono);
-        Assert.Single(api.Correos.Para(docente.Email), c => c.Texto.Contains("definir-contrasena?token="));
+        Assert.Empty(api.Correos.Para(docente.Email)); // no se envían correos: la Directora le asigna la contraseña
         Assert.Equal("+591 70000001", (await db.Usuarios.SingleAsync(u => u.Email == $"contador.{marca}@fundacion.org")).Telefono);
 
         Assert.Equal(2, porArchivo["voluntarios.csv"].Importadas);

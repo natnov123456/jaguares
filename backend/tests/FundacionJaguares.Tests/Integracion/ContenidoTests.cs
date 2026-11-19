@@ -10,7 +10,7 @@ using SkiaSharp;
 
 namespace FundacionJaguares.Tests.Integracion;
 
-// Sitio público: noticias (FUJ-108), galería (FUJ-126), "Quiénes somos" y contacto (FUJ-127)
+// Sitio público: noticias (FUJ-108), galería (FUJ-126), "Quiénes somos" (FUJ-127)
 // y plantillas de certificado (FUJ-115)
 [Collection(ColeccionApi.Nombre)]
 public class ContenidoTests(ApiFixture api)
@@ -121,37 +121,12 @@ public class ContenidoTests(ApiFixture api)
     }
 
     [Fact]
-    public async Task Contacto_valida_campos_y_descarta_bots()
+    public async Task El_formulario_de_contacto_ya_no_existe()
     {
-        var anon = api.Anonimo();
-        var errores = await (await anon.PostJsonAsync("/api/Contacto",
-            new { nombre = "", email = "malo", asunto = (string?)null, mensaje = "corto", sitioWeb = "" })).JsonAsync(HttpStatusCode.BadRequest);
-        foreach (var campo in new[] { "nombre", "email", "mensaje" })
-            Assert.True(errores.GetProperty("errores").TryGetProperty(campo, out _), campo);
-
-        await (await anon.PostJsonAsync("/api/Contacto",
-            new { nombre = "Ana", email = "ana@correo.com", asunto = (string?)null, mensaje = "http://a http://b http://c http://d texto", sitioWeb = "" }))
-            .EsperarAsync(HttpStatusCode.BadRequest);
-        // Campo trampa lleno: responde OK pero no guarda nada
-        await (await anon.PostJsonAsync("/api/Contacto",
-            new { nombre = "Bot", email = "bot@spam.com", asunto = "x", mensaje = "Compre ahora barato", sitioWeb = "http://spam" }))
-            .EsperarAsync(HttpStatusCode.OK);
-        await (await anon.PostJsonAsync("/api/Contacto",
-            new { nombre = "Ana", email = "ana@correo.com", asunto = "Voluntariado\r\nBcc: x@y.com", mensaje = "Quiero ser voluntaria.", sitioWeb = "" }))
-            .EsperarAsync(HttpStatusCode.OK);
-    }
-
-    [Fact]
-    public async Task Contacto_limita_a_5_consultas_por_IP_por_hora()
-    {
-        using var scope = api.Factory.Services.CreateScope();
-        var contacto = scope.ServiceProvider.GetRequiredService<IContactoService>();
-        var ip = $"10.9.{Random.Shared.Next(1, 250)}.{Random.Shared.Next(1, 250)}";
-        var consulta = new ConsultaContactoDto("Ana", "ana@correo.com", null, "Mensaje de prueba válido", null);
-
-        for (var i = 0; i < ContactoService.MaxPorIpHora; i++) await contacto.EnviarAsync(consulta, ip);
-        await Assert.ThrowsAsync<LimiteExcedidoException>(() => contacto.EnviarAsync(consulta, ip));
-        await contacto.EnviarAsync(consulta, "10.250.250.250"); // otra IP no se ve afectada
+        // Los mensajes de visitantes ya no se reciben por el sitio: la página muestra solo los datos de contacto
+        var r = await api.Anonimo().PostJsonAsync("/api/Contacto",
+            new { nombre = "Ana", email = "ana@correo.com", asunto = "Hola", mensaje = "Quiero ser voluntaria.", sitioWeb = "" });
+        Assert.Equal(HttpStatusCode.NotFound, r.StatusCode);
     }
 
     [Fact]

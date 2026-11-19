@@ -11,7 +11,7 @@ namespace FundacionJaguares.Application.Importacion;
 
 // JAG-76: carga de los datos iniciales de la Fundación desde planillas CSV (exportadas del Excel actual).
 // Archivos (todos opcionales) en una carpeta; plantillas en docs/datos-iniciales/plantillas:
-//   cuentas_internas.csv  nombre;correo;rol;telefono                         → cuentas del personal (reciben el enlace para su contraseña)
+//   cuentas_internas.csv  nombre;correo;rol;telefono                         → cuentas del personal (la Directora les asigna la contraseña)
 //   voluntarios.csv       nombre;correo;telefono;estado;fecha_postulacion
 //   cursos.csv            titulo;descripcion;fecha_inicio;fecha_fin;cupo;asistencia_minima;correo_docente
 //   donaciones.csv        fecha;monto;medio;referencia;donante;correo_donante  → historial de donantes frecuentes
@@ -42,7 +42,7 @@ public static class Normalizador
     public static string? Correo(string? s)
     {
         var c = (s ?? "").Trim().ToLowerInvariant();
-        return c.Length == 0 ? null : ContactoService.EmailValido(c) ? c : throw new FormatException($"correo no válido: '{s}'");
+        return c.Length == 0 ? null : ValidacionCorreo.EmailValido(c) ? c : throw new FormatException($"correo no válido: '{s}'");
     }
 
     // Bolivia: celulares de 8 dígitos → "+591 7xxxxxxx". Acepta espacios, guiones y el prefijo 591.

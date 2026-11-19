@@ -2,17 +2,14 @@ using FundacionJaguares.Application.Importacion;
 using FundacionJaguares.Application.Services;
 using FundacionJaguares.Domain.Entities;
 using FundacionJaguares.Infrastructure;
-using FundacionJaguares.Infrastructure.Adapters;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql.NameTranslation;
 
 // JAG-76: carga de datos iniciales desde planillas CSV.
 //   dotnet run --project tools/FundacionJaguares.Importador -- <carpeta> [--aplicar]
 // Sin --aplicar solo VERIFICA (no escribe nada): úsalo primero y revisa los errores.
 // Conexión: variable JAGUARES_CONEXION (por defecto la base local de desarrollo).
-// Correo para las cuentas internas: variables SMTP_HOST, SMTP_PUERTO, SMTP_USUARIO, SMTP_CLAVE, SMTP_REMITENTE y FRONTEND_URL.
-// Sin SMTP las cuentas se crean igual, pero el enlace no se envía: la Directora lo reenvía desde "Usuarios y roles".
+// Las cuentas internas se crean sin contraseña utilizable: la Directora les asigna una desde "Usuarios y roles".
 if (args.Length == 0 || args[0] is "-h" or "--help")
 {
     Console.WriteLine("Uso: FundacionJaguares.Importador <carpeta-con-csv> [--aplicar]");
@@ -31,20 +28,11 @@ var opciones = new DbContextOptionsBuilder<AppDbContext>()
     .Options;
 await using var db = new AppDbContext(opciones);
 
-var smtp = new SmtpOpciones
-{
-    Host = Environment.GetEnvironmentVariable("SMTP_HOST"),
-    Puerto = int.TryParse(Environment.GetEnvironmentVariable("SMTP_PUERTO"), out var p) ? p : 587,
-    Usuario = Environment.GetEnvironmentVariable("SMTP_USUARIO"),
-    Password = Environment.GetEnvironmentVariable("SMTP_CLAVE"),
-    Remitente = Environment.GetEnvironmentVariable("SMTP_REMITENTE") ?? "no-responder@jaguares.org"
-};
-var app = new AppOpciones { FrontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173" };
-var usuarios = new UsuarioService(db, new EmailAdapter(NullLogger<EmailAdapter>.Instance, smtp), app);
+var usuarios = new UsuarioService(db);
 
 Console.WriteLine($"{(aplicar ? "IMPORTANDO" : "VERIFICANDO (sin escribir)")} datos de {Path.GetFullPath(carpeta)}");
-if (aplicar && !smtp.Configurado)
-    Console.WriteLine("Aviso: SMTP no configurado. Las cuentas internas se crean, pero el enlace para la contraseña no se envía.");
+if (aplicar)
+    Console.WriteLine("Aviso: las cuentas internas se crean sin contraseña. La Directora les asigna una desde \"Usuarios y roles\".");
 
 var resultado = await new ImportadorDatos(db, usuarios).ImportarAsync(carpeta, aplicar);
 Console.WriteLine();

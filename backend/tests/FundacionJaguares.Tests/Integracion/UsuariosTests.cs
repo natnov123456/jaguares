@@ -2,23 +2,18 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using FundacionJaguares.Tests.Infraestructura;
 
 namespace FundacionJaguares.Tests.Integracion;
 
-// JAG-82 / FUJ-122: cuentas del personal, roles, enlace para definir la contraseña y desactivación
+// JAG-82 / FUJ-122: cuentas del personal, roles, contraseña asignada por la Directora (sin correos) y desactivación
 [Collection(ColeccionApi.Nombre)]
 public class UsuariosTests(ApiFixture api)
 {
     private static string NuevoEmail() => $"staff{Guid.NewGuid().ToString("N")[..10]}@jaguares.org";
 
-    private async Task<JsonElement> CrearAsync(string email, string rol, string nombre = "Persona del Personal") =>
-        await (await (await api.DirectoraAsync()).PostJsonAsync("/api/Usuarios", new { nombreCompleto = nombre, email, rol })).JsonAsync();
-
-    // El token llega solo en el correo
-    private string TokenDelCorreo(string email) =>
-        Regex.Match(api.Correos.Para(email).Last().Texto, @"token=([A-Za-z0-9_-]+)").Groups[1].Value;
+    private async Task<JsonElement> CrearAsync(string email, string rol, string nombre = "Persona del Personal", string? password = "Clave2026x") =>
+        await (await (await api.DirectoraAsync()).PostJsonAsync("/api/Usuarios", new { nombreCompleto = nombre, email, rol, password })).JsonAsync();
 
     private async Task<HttpResponseMessage> LoginAsync(string email, string password) =>
         await api.Anonimo().PostAsJsonAsync("/api/Auth/login", new { email, password });
@@ -30,10 +25,8 @@ public class UsuariosTests(ApiFixture api)
         return c;
     }
 
-    private async Task<HttpClient> ActivarYEntrarAsync(string email, string password = "Clave2026x")
+    private async Task<HttpClient> EntrarAsync(string email, string password = "Clave2026x")
     {
-        await (await api.Anonimo().PostJsonAsync("/api/Auth/definir-contrasena", new { token = TokenDelCorreo(email), password }))
-            .EsperarAsync(HttpStatusCode.NoContent);
         var login = await (await LoginAsync(email, password)).JsonAsync();
         return ConToken(login.Str("token"));
     }
@@ -44,14 +37,9 @@ public class UsuariosTests(ApiFixture api)
         var email = NuevoEmail();
         var u = await CrearAsync(email, "CONTADOR", "Carla Contadora");
         Assert.Equal("CONTADOR", u.Str("rol"));
-        var correo = Assert.Single(api.Correos.Para(email));
-        Assert.Contains("definir-contrasena?token=", correo.Texto);
-        Assert.Contains("Contador/a", correo.Texto);
+        Assert.Empty(api.Correos.Para(email)); // no se envían correos
 
-        // Antes de definir la contraseña no puede entrar con ninguna clave
-        await (await LoginAsync(email, "Clave2026x")).EsperarAsync(HttpStatusCode.Unauthorized);
-
-        var contador = await ActivarYEntrarAsync(email);
+        var contador = await EntrarAsync(email);
         await (await contador.GetAsync("/api/Cursos/gestion")).EsperarAsync(HttpStatusCode.Forbidden);
         await (await contador.GetAsync("/api/Usuarios")).EsperarAsync(HttpStatusCode.Forbidden);
         await (await contador.GetAsync($"/api/Donaciones/reporte/{DateTime.UtcNow.Year}/{DateTime.UtcNow.Month}")).EsperarAsync(HttpStatusCode.OK);
@@ -63,7 +51,7 @@ public class UsuariosTests(ApiFixture api)
     {
         var email = NuevoEmail();
         await CrearAsync(email, "COORDINADOR_VOLUNTARIADO");
-        var coord = await ActivarYEntrarAsync(email);
+        var coord = await EntrarAsync(email);
         await (await coord.GetAsync("/api/Voluntarios")).EsperarAsync(HttpStatusCode.OK);
         await (await coord.GetAsync("/api/Voluntarios/asignaciones")).EsperarAsync(HttpStatusCode.OK);
         await (await coord.GetAsync($"/api/Donaciones/reporte/{DateTime.UtcNow.Year}/{DateTime.UtcNow.Month}")).EsperarAsync(HttpStatusCode.Forbidden);
@@ -71,34 +59,32 @@ public class UsuariosTests(ApiFixture api)
     }
 
     [Fact]
-    public async Task Enlace_es_de_un_solo_uso_vence_y_valida_la_contrasena()
+    public async Task Directora_asigna_y_restablece_la_contrasena()
     {
         var email = NuevoEmail();
-        await CrearAsync(email, "DOCENTE");
-        var token = TokenDelCorreo(email);
-        var url = "/api/Auth/definir-contrasena";
+        var dir = await api.DirectoraAsync();
 
-        await (await api.Anonimo().PostJsonAsync(url, new { token, password = "corta1" })).EsperarAsync(HttpStatusCode.BadRequest);
-        await (await api.Anonimo().PostJsonAsync(url, new { token, password = "solamenteletras" })).EsperarAsync(HttpStatusCode.BadRequest);
-        await (await api.Anonimo().PostJsonAsync(url, new { token = "inventado", password = "Clave2026x" })).EsperarAsync(HttpStatusCode.BadRequest);
-        await (await api.Anonimo().PostJsonAsync(url, new { token, password = "Clave2026x" })).EsperarAsync(HttpStatusCode.NoContent);
-        await (await api.Anonimo().PostJsonAsync(url, new { token, password = "OtraClave99" })).EsperarAsync(HttpStatusCode.BadRequest); // ya usado
+        // Contraseña inicial débil: se rechaza
+        await (await dir.PostJsonAsync("/api/Usuarios", new { nombreCompleto = "Docente Nueva", email, rol = "DOCENTE", password = "corta1" }))
+            .EsperarAsync(HttpStatusCode.BadRequest);
+
+        // Sin contraseña (como en la importación) la cuenta existe pero no puede entrar hasta que se le asigne una
+        var u = await CrearAsync(email, "DOCENTE", password: null);
+        await (await LoginAsync(email, "Clave2026x")).EsperarAsync(HttpStatusCode.Unauthorized);
+
+        var url = $"/api/Usuarios/{u.Id()}/contrasena";
+        await (await dir.PutJsonAsync(url, new { password = "solamenteletras" })).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await dir.PutJsonAsync(url, new { password = "Clave2026x" })).EsperarAsync(HttpStatusCode.NoContent);
         await (await LoginAsync(email, "Clave2026x")).EsperarAsync(HttpStatusCode.OK);
 
-        // Reenviar invalida el enlace anterior; un enlace vencido no sirve
-        var id = await api.IdDeAsync(email);
-        var dir = await api.DirectoraAsync();
-        await (await dir.PostAsync($"/api/Usuarios/{id}/reenviar-enlace", null)).EsperarAsync(HttpStatusCode.NoContent);
-        var primero = TokenDelCorreo(email);
-        await (await dir.PostAsync($"/api/Usuarios/{id}/reenviar-enlace", null)).EsperarAsync(HttpStatusCode.NoContent);
-        var segundo = TokenDelCorreo(email);
-        await (await api.Anonimo().PostJsonAsync(url, new { token = primero, password = "Clave2027x" })).EsperarAsync(HttpStatusCode.BadRequest);
-        await api.EnBdAsync(async db =>
-        {
-            foreach (var t in db.TokensContrasena.Where(t => t.UsuarioId == id)) t.ExpiraEn = DateTime.UtcNow.AddMinutes(-1);
-            await Task.CompletedTask;
-        });
-        await (await api.Anonimo().PostJsonAsync(url, new { token = segundo, password = "Clave2027x" })).EsperarAsync(HttpStatusCode.BadRequest);
+        // Restablecer: la clave anterior deja de servir
+        await (await dir.PutJsonAsync(url, new { password = "OtraClave99" })).EsperarAsync(HttpStatusCode.NoContent);
+        await (await LoginAsync(email, "Clave2026x")).EsperarAsync(HttpStatusCode.Unauthorized);
+        await (await LoginAsync(email, "OtraClave99")).EsperarAsync(HttpStatusCode.OK);
+
+        await (await dir.PutJsonAsync($"/api/Usuarios/{Guid.NewGuid()}/contrasena", new { password = "Clave2026x" })).EsperarAsync(HttpStatusCode.NotFound);
+        await (await (await api.DocenteAsync()).PutJsonAsync(url, new { password = "Clave2026x" })).EsperarAsync(HttpStatusCode.Forbidden);
+        Assert.Empty(api.Correos.Para(email));
     }
 
     [Fact]
@@ -106,7 +92,7 @@ public class UsuariosTests(ApiFixture api)
     {
         var email = NuevoEmail();
         var u = await CrearAsync(email, "ENCARGADO_EVENTOS");
-        var encargado = await ActivarYEntrarAsync(email);
+        var encargado = await EntrarAsync(email);
         await (await encargado.GetAsync("/api/Eventos/gestion")).EsperarAsync(HttpStatusCode.OK);
 
         var dir = await api.DirectoraAsync();
@@ -120,7 +106,7 @@ public class UsuariosTests(ApiFixture api)
         Assert.False(desactivado.GetProperty("activo").GetBoolean());
         await (await coord.GetAsync("/api/Voluntarios")).EsperarAsync(HttpStatusCode.Unauthorized);
         await (await LoginAsync(email, "Clave2026x")).EsperarAsync(HttpStatusCode.Unauthorized);
-        await (await dir.PostAsync($"/api/Usuarios/{u.Id()}/reenviar-enlace", null)).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await dir.PutJsonAsync($"/api/Usuarios/{u.Id()}/contrasena", new { password = "Clave2026x" })).EsperarAsync(HttpStatusCode.BadRequest);
 
         await (await dir.PutJsonAsync($"/api/Usuarios/{u.Id()}/activo", new { activo = true })).EsperarAsync(HttpStatusCode.OK);
         await (await LoginAsync(email, "Clave2026x")).EsperarAsync(HttpStatusCode.OK);
