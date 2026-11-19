@@ -190,3 +190,11 @@ export const contenidoApi = {
 };
 
 export default api;
+
+// JAG-87 / FUJ-124: exportación de reportes (PDF institucional o Excel) con los filtros de la pantalla
+export const reportesApi = {
+  disponibles: () => api.get('/Reportes'),
+  exportar: (clave, formato, filtros) => api.get(`/Reportes/${clave}`, { params: { ...filtros, formato }, responseType: 'blob' }),
+  // Vista en pantalla de un reporte (mismos datos que el archivo)
+  tabla: (clave, filtros) => api.get(`/Reportes/${clave}`, { params: { ...filtros, formato: 'json' } }),
+};

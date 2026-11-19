@@ -489,3 +489,18 @@ button:disabled { opacity: .75; }
   .page, .modal { animation: none; }
   .revelar { opacity: 1; transform: none; transition: none; }
 }
+
+/* ---- Filtros combinados y exportación (corrección de la evaluación) ---- */
+.barra-filtros { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+.barra-filtros-campos { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.barra-filtros .filtro { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: #6b7280; min-width: 150px; flex: 1 1 150px; }
+.barra-filtros .filtro input, .barra-filtros .filtro select { padding: 7px 9px; font-size: 0.9rem; }
+.barra-filtros-pie { display: flex; gap: 12px; align-items: center; margin-top: 8px; font-size: 0.85rem; min-height: 1.2em; }
+.btn-link { background: none; border: none; color: #b45309; text-decoration: underline; cursor: pointer; padding: 0; font-size: 0.85rem; }
+.exportar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.exportar .btn-secondary { padding: 6px 10px; font-size: 0.85rem; }
+.exportar-etiqueta { font-size: 0.85rem; color: #6b7280; }
+.exportar-aviso { font-size: 0.85rem; color: #991b1b; flex-basis: 100%; }
+@media (max-width: 600px) {
+  .barra-filtros .filtro { flex-basis: 100%; }
+}
