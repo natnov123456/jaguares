@@ -60,7 +60,7 @@ export default function VoluntarioDashboard() {
             {loading ? (
               <p>Cargando...</p>
             ) : proximas.length === 0 ? (
-              <p className="muted">No tienes asignaciones próximas. El coordinador te avisará por email cuando te asigne a una actividad.</p>
+              <p className="muted">No tienes asignaciones próximas. Cuando el coordinador te asigne a una actividad aparecerá aquí.</p>
             ) : (
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {proximas.map(a => (

@@ -53,7 +53,7 @@ export default function AdminCursos() {
       await cursosApi.asignarDocente(c.id, docenteId);
       const nombre = docentes.find(d => d.id === docenteId)?.nombre;
       setCursos(lista => lista.map(x => x.id === c.id ? { ...x, docenteId, docenteNombre: nombre } : x));
-      setMsg({ tipo: 'success', texto: `${nombre} quedó a cargo de "${c.titulo}" y se le avisó por email.` });
+      setMsg({ tipo: 'success', texto: `${nombre} quedó a cargo de "${c.titulo}". Ya lo ve en su panel.` });
     } catch (err) {
       setMsg({ tipo: 'error', texto: err.response?.data?.error || 'No se pudo asignar el docente' });
     }
@@ -102,17 +102,17 @@ export default function AdminCursos() {
     }
   };
 
-  // FUJ-119: el backend avisa a inscritos y lista de espera; si falla, el diálogo muestra el error
+  // FUJ-119: reprogramar o cancelar; si falla, el diálogo muestra el error
   const aplicarCambio = async (datos) => {
     const { modo, curso } = cambio;
-    const { data } = modo === 'reprogramar'
-      ? await cursosApi.reprogramar(curso.id, datos)
-      : await cursosApi.cancelar(curso.id, datos);
+    await (modo === 'reprogramar'
+      ? cursosApi.reprogramar(curso.id, datos)
+      : cursosApi.cancelar(curso.id, datos));
     setCambio(null);
     setMsg({
       tipo: 'success',
       texto: `${modo === 'reprogramar' ? 'Curso reprogramado' : 'Curso cancelado'}: "${curso.titulo}". ` +
-             `Se avisó por correo a ${data.notificados} persona(s).`,
+             'Los inscritos ven el cambio en su panel.',
     });
     cargar();
   };
@@ -153,7 +153,7 @@ export default function AdminCursos() {
           <p className="muted" style={{ textAlign: 'center', padding: 24 }}>
             {esDirectora
               ? <>Aún no hay cursos. <Link to="/admin/crear-curso" style={{ color: '#b45309' }}>Crea el primero →</Link></>
-              : 'Todavía no tienes cursos asignados. La dirección te avisará por email cuando te asigne uno.'}
+              : 'Todavía no tienes cursos asignados. Cuando la dirección te asigne uno aparecerá aquí.'}
           </p>
         ) : (
           <div className="table-wrap">
@@ -235,7 +235,7 @@ export default function AdminCursos() {
             <button className="modal-cerrar" onClick={() => setCola(null)} aria-label="Cerrar">×</button>
             <h2>Lista de espera</h2>
             <p className="muted" style={{ marginBottom: 12 }}>
-              {cola.curso.titulo}. Cuando alguien cancela, la primera persona queda inscrita automáticamente y se le avisa por email.
+              {cola.curso.titulo}. Cuando alguien cancela, la primera persona queda inscrita automáticamente.
             </p>
             {cola.personas.length === 0 ? (
               <p className="muted">La lista de espera está vacía.</p>
@@ -260,7 +260,7 @@ export default function AdminCursos() {
       {confirmando && (
         <EditorEncuesta
           titulo={`Finalizar: ${confirmando.titulo}`}
-          aviso={`Se emitirá un certificado a los inscritos que alcancen la asistencia mínima del curso (si no se registró asistencia, a los ${confirmando.inscritos} inscritos) y se les notificará por email junto con el enlace a esta encuesta de satisfacción. Esta acción no se puede deshacer.`}
+          aviso={`Se emitirá un certificado a los inscritos que alcancen la asistencia mínima del curso (si no se registró asistencia, a los ${confirmando.inscritos} inscritos) y la encuesta de satisfacción quedará disponible en su panel. Esta acción no se puede deshacer.`}
           textoConfirmar="Finalizar, certificar y enviar encuesta"
           procesando={finalizando === confirmando.id}
           onConfirmar={finalizar}

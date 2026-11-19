@@ -33,8 +33,6 @@ api.interceptors.response.use(
 export const authApi = {
   login: (email, password) => api.post('/Auth/login', { email, password }),
   registro: (data) => api.post('/Auth/registro', data),
-  // FUJ-122: el personal define su contraseña con el enlace del correo
-  definirContrasena: (token, password) => api.post('/Auth/definir-contrasena', { token, password }),
 };
 
 export const cursosApi = {
@@ -47,7 +45,7 @@ export const cursosApi = {
   // FUJ-120: data = { preguntas } opcional (sin preguntas se envía la encuesta por defecto)
   finalizar: (id, data) => api.post(`/Cursos/${id}/finalizar`, data ?? {}),
   asignarPlantilla: (id, plantillaId) => api.put(`/Cursos/${id}/plantilla`, { plantillaId }),
-  // FUJ-119: avisan por correo a inscritos y lista de espera
+  // FUJ-119: reprogramar o cancelar (los inscritos ven el cambio en su panel)
   reprogramar: (id, data) => api.put(`/Cursos/${id}/reprogramar`, data),
   cancelar: (id, data) => api.post(`/Cursos/${id}/cancelar`, data ?? {}),
   // FUJ-111: lista de espera
@@ -71,7 +69,7 @@ export const eventosApi = {
   gestion: () => api.get('/Eventos/gestion'),
   crear: (data) => api.post('/Eventos', data),
   cerrarAsistencia: (id, data) => api.post(`/Eventos/${id}/cerrar-asistencia`, data ?? {}),
-  // FUJ-119: avisan por correo a todos los inscritos
+  // FUJ-119: reprogramar o cancelar (los inscritos ven el cambio en su panel)
   reprogramar: (id, data) => api.put(`/Eventos/${id}/reprogramar`, data),
   cancelar: (id, data) => api.post(`/Eventos/${id}/cancelar`, data ?? {}),
   inscribir: (id) => api.post(`/Eventos/${id}/inscribir`),
@@ -171,10 +169,6 @@ export const institucionalApi = {
   actualizar: (data) => api.put('/Institucional', data),
 };
 
-export const contactoApi = {
-  enviar: (data) => api.post('/Contacto', data),
-};
-
 export const voluntariosApi = {
   postular: (data) => api.post('/Voluntarios/postular', data),
   listar: () => api.get('/Voluntarios'),
@@ -213,7 +207,8 @@ export const usuariosApi = {
   crear: (data) => api.post('/Usuarios', data),
   cambiarRol: (id, rol) => api.put(`/Usuarios/${id}/rol`, { rol }),
   cambiarActivo: (id, activo) => api.put(`/Usuarios/${id}/activo`, { activo }),
-  reenviarEnlace: (id) => api.post(`/Usuarios/${id}/reenviar-enlace`),
+  // Sin correos: la Directora asigna o restablece la contraseña y se la entrega a la persona
+  cambiarContrasena: (id, password) => api.put(`/Usuarios/${id}/contrasena`, { password }),
 };
 
 // JAG-89 / FUJ-125: bitácora de auditoría de donaciones (solo lectura)

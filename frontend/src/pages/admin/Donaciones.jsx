@@ -167,7 +167,7 @@ export default function AdminDonaciones() {
     e.preventDefault();
     setMensaje(null);
     try {
-      const { data } = await donacionesApi.registrar({
+      await donacionesApi.registrar({
         monto: parseFloat(monto),
         medio: 'EFECTIVO',
         referencia: referencia || 'RECIBO-OFICINA',
@@ -176,10 +176,7 @@ export default function AdminDonaciones() {
         donanteEmail: donanteEmail.trim() || null,
         campanaId: campanaId || null,
       });
-      const aviso = !donanteEmail.trim() ? '' : data.comprobanteEnviadoEn
-        ? ' y comprobante enviado por correo'
-        : ', pero no se pudo enviar el comprobante por correo';
-      setMensaje({ tipo: 'success', texto: `✅ Donación registrada${aviso}` });
+      setMensaje({ tipo: 'success', texto: '✅ Listo: donación registrada. Puedes descargar el comprobante desde la lista.' });
       setMonto('');
       setReferencia('');
       setDonanteNombre('');
@@ -284,7 +281,7 @@ export default function AdminDonaciones() {
                      required={!!donanteEmail.trim()} />
             </div>
             <div>
-              <label htmlFor="d-email">Correo para enviarle el comprobante (opcional)</label>
+              <label htmlFor="d-email">Correo del donante (opcional)</label>
               <input id="d-email" type="email" maxLength={150} value={donanteEmail} onChange={e => setDonanteEmail(e.target.value)} />
             </div>
             {campanas.length > 0 && (

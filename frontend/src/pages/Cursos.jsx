@@ -60,7 +60,7 @@ export default function Cursos() {
   };
 
   const unirse = (id) => ejecutar(id, cursosApi.unirseListaEspera,
-    (d) => `Te anotaste en la lista de espera ⏳ Tu posición es la ${d.posicion}. Si se libera un cupo quedarás inscrito/a automáticamente y te avisaremos por email.`);
+    (d) => `Te anotaste en la lista de espera ⏳ Tu posición es la ${d.posicion}. Si se libera un cupo quedarás inscrito/a automáticamente; lo verás en Mi panel.`);
 
   const salir = (c) => {
     if (!window.confirm(`¿Salir de la lista de espera de "${c.titulo}"? Perderás tu posición.`)) return;

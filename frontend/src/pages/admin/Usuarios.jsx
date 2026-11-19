@@ -8,8 +8,12 @@ import { aplicarFiltros } from '../../utils/filtros';
 import { fecha } from '../../utils/formato';
 
 // JAG-83 / FUJ-122: la Directora crea cuentas del personal, les asigna un rol y las activa o desactiva.
-// La persona recibe un correo con un enlace (24 h, un solo uso) para definir su contraseña.
-const VACIO = { nombreCompleto: '', email: '', telefono: '', rol: 'CONTADOR' };
+// No se envían correos: la Directora define la contraseña inicial y se la entrega a la persona.
+const VACIO = { nombreCompleto: '', email: '', telefono: '', rol: 'CONTADOR', password: '' };
+
+// Mismas reglas que el backend: al menos 8 caracteres combinando letras y números
+const errorContrasena = (p) =>
+  p.length < 8 ? 'Usa al menos 8 caracteres.' : !/\p{L}/u.test(p) || !/\d/.test(p) ? 'Combina letras y números.' : null;
 const ESTADOS = [{ valor: 'ACTIVO', etiqueta: 'Activas' }, { valor: 'INACTIVO', etiqueta: 'Desactivadas' }];
 
 export default function AdminUsuarios() {
@@ -21,6 +25,7 @@ export default function AdminUsuarios() {
   const [form, setForm] = useState(VACIO);
   const [guardando, setGuardando] = useState(false);
   const [ocupado, setOcupado] = useState(null); // id del usuario que se está modificando
+  const [cambiandoClave, setCambiandoClave] = useState(null); // { usuario, password }
   const { valores, cambiar, limpiar } = useFiltros(['q', 'estado', 'desde', 'hasta', 'rol']);
 
   const cargar = () =>
@@ -45,13 +50,15 @@ export default function AdminUsuarios() {
 
   const crear = async (e) => {
     e.preventDefault();
-    setGuardando(true);
     setMsg(null);
+    const invalida = errorContrasena(form.password);
+    if (invalida) { setMsg({ tipo: 'error', texto: `Contraseña inicial: ${invalida}` }); return; }
+    setGuardando(true);
     try {
       const { data } = await usuariosApi.crear({ ...form, telefono: form.telefono.trim() || null });
       setUsuarios(lista => [...lista, data].sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto)));
       setForm(VACIO);
-      setMsg({ tipo: 'success', texto: `Cuenta creada para ${data.nombreCompleto}. Le enviamos un correo para que defina su contraseña (válido 24 h).` });
+      setMsg({ tipo: 'success', texto: `Listo: cuenta de ${data.nombreCompleto} registrada. Ya puede iniciar sesión con su correo y la contraseña que definiste.` });
     } catch (err) {
       error(err, 'No se pudo crear la cuenta');
     } finally {
@@ -89,14 +96,19 @@ export default function AdminUsuarios() {
     }
   };
 
-  const reenviar = async (u) => {
+  const guardarContrasena = async (e) => {
+    e.preventDefault();
+    const { usuario: u, password } = cambiandoClave;
+    const invalida = errorContrasena(password);
+    if (invalida) { setCambiandoClave({ ...cambiandoClave, error: invalida }); return; }
     setOcupado(u.id);
     setMsg(null);
     try {
-      await usuariosApi.reenviarEnlace(u.id);
-      setMsg({ tipo: 'success', texto: `Enviamos a ${u.email} un nuevo enlace para definir la contraseña.` });
+      await usuariosApi.cambiarContrasena(u.id, password);
+      setCambiandoClave(null);
+      setMsg({ tipo: 'success', texto: `Listo: contraseña de ${u.nombreCompleto} actualizada.` });
     } catch (err) {
-      error(err, 'No se pudo reenviar el enlace');
+      setCambiandoClave({ ...cambiandoClave, error: err.response?.data?.error || 'No se pudo cambiar la contraseña' });
     } finally {
       setOcupado(null);
     }
@@ -163,9 +175,9 @@ export default function AdminUsuarios() {
                                 {u.activo ? 'Desactivar' : 'Activar'}
                               </button>
                               {u.activo && (
-                                <button type="button" className="btn-secondary" style={{ padding: '4px 10px' }}
-                                        disabled={ocupado === u.id} onClick={() => reenviar(u)}>
-                                  Reenviar enlace
+                                <button type="button" className="btn-secondary" style={{ padding: '4px 10px' }} title="Asignar una contraseña nueva"
+                                        disabled={ocupado === u.id} onClick={() => setCambiandoClave({ usuario: u, password: '' })}>
+                                  Contraseña
                                 </button>
                               )}
                             </div>
@@ -199,10 +211,40 @@ export default function AdminUsuarios() {
                 {roles.find(r => r.codigo === form.rol)?.descripcion}
               </p>
             </div>
-            <button type="submit" className="btn-primary" disabled={guardando}>{guardando ? 'Creando...' : 'Crear y enviar enlace'}</button>
+            <div><label htmlFor="u-clave">Contraseña inicial</label>
+              <input id="u-clave" type="text" required minLength={8} maxLength={100} autoComplete="new-password" value={form.password}
+                     onChange={e => setForm({ ...form, password: e.target.value })} />
+              <p className="muted" style={{ fontSize: '0.85rem', marginTop: 4 }}>
+                Al menos 8 caracteres con letras y números. Entrégasela a la persona; no se envía ningún correo.
+              </p>
+            </div>
+            <button type="submit" className="btn-primary" disabled={guardando}>{guardando ? 'Creando...' : 'Crear cuenta'}</button>
           </form>
         </section>
       </div>
+
+      {cambiandoClave && (
+        <div className="modal-fondo" role="presentation" onClick={() => setCambiandoClave(null)}>
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="clave-titulo" onClick={e => e.stopPropagation()}>
+            <button type="button" className="modal-cerrar" aria-label="Cerrar" onClick={() => setCambiandoClave(null)}>×</button>
+            <h2 id="clave-titulo" style={{ marginBottom: 8 }}>Asignar contraseña</h2>
+            <p className="muted" style={{ marginBottom: 16 }}>
+              Nueva contraseña para <strong>{cambiandoClave.usuario.nombreCompleto}</strong>. La anterior deja de servir.
+            </p>
+            <form onSubmit={guardarContrasena} className="form-stack">
+              {cambiandoClave.error && <div className="error-msg" role="alert">{cambiandoClave.error}</div>}
+              <div><label htmlFor="u-nueva-clave">Nueva contraseña</label>
+                <input id="u-nueva-clave" type="text" autoFocus required minLength={8} maxLength={100} autoComplete="new-password"
+                       value={cambiandoClave.password}
+                       onChange={e => setCambiandoClave({ ...cambiandoClave, password: e.target.value, error: null })} /></div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button type="button" className="btn-secondary" onClick={() => setCambiandoClave(null)}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={ocupado === cambiandoClave.usuario.id}>Guardar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

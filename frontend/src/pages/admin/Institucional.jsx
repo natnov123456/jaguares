@@ -4,7 +4,7 @@ import { institucionalApi } from '../../services/api';
 import { fechaHora } from '../../utils/formato';
 import '../QuienesSomos.css';
 
-// FUJ-127: la Directora edita el contenido de "Quiénes somos" y el correo que recibe las consultas
+// FUJ-127: la Directora edita el contenido de "Quiénes somos" y los datos de contacto que se muestran
 
 const MIEMBRO_VACIO = { nombre: '', cargo: '', descripcion: '' };
 const CAMPOS_TEXTO = ['mision', 'vision', 'historia', 'direccion', 'telefono', 'emailContacto', 'horario'];
@@ -131,7 +131,7 @@ export default function AdminInstitucional() {
           <section className="panel">
             <h2>Contacto</h2>
             <div className="form-stack">
-              {texto('emailContacto', 'Correo institucional', 0, 150, 'Aquí llegan las consultas del formulario de contacto.')}
+              {texto('emailContacto', 'Correo institucional', 0, 150, 'Se muestra en la página Quiénes somos.')}
               {texto('telefono', 'Teléfono / WhatsApp', 0, 50)}
               {texto('direccion', 'Dirección', 0, 300)}
               {texto('horario', 'Horario de atención', 0, 200)}

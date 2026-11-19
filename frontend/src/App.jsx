@@ -21,7 +21,6 @@ import Transparencia from './pages/Transparencia';
 import Galeria from './pages/Galeria';
 import QuienesSomos from './pages/QuienesSomos';
 import Encuesta from './pages/Encuesta';
-import DefinirContrasena from './pages/DefinirContrasena';
 
 // Participante / Voluntario
 import MiCuenta from './pages/MiCuenta';
@@ -80,7 +79,6 @@ export default function App() {
           <Route path="/quienes-somos" element={<QuienesSomos />} />
           {/* FUJ-120: enlace personal de la encuesta (no requiere sesión: lo identifica el token) */}
           <Route path="/encuesta/:token" element={<Encuesta />} />
-          <Route path="/definir-contrasena" element={<DefinirContrasena />} />
 
           {/* Participante y Voluntario */}
           <Route path="/mi-cuenta" element={protegida('verMiCuenta', <MiCuenta />)} />

@@ -8,7 +8,7 @@ import { aplicarFiltros } from '../../utils/filtros';
 import { fecha } from '../../utils/formato';
 
 // Gestión de un curso por su docente (o la directora): asistencia de cada clase y datos del curso.
-// Al guardar la asistencia, cada participante recibe un aviso con el día y su porcentaje.
+// Al guardar la asistencia, cada participante ve el día y su porcentaje en su panel.
 
 // Fecha local en formato "AAAA-MM-DD" (toISOString daría el día UTC, que en Bolivia puede ser mañana)
 function hoyLocal() {
@@ -117,7 +117,7 @@ function Asistencia({ curso, abierto, onGuardado }) {
       setMsg({
         tipo: 'success',
         texto: `Asistencia del ${fecha(dia)} guardada: ${presentes} presente(s) y ${registros.length - presentes} ausente(s). ` +
-               'Cada participante recibió un aviso con el día y su porcentaje de asistencia.',
+               'Listo: asistencia registrada. Cada participante ya ve su porcentaje en su panel.',
       });
       onGuardado();
     } catch (err) {
@@ -250,11 +250,11 @@ function DatosCurso({ curso, abierto, onGuardado, onReprogramado }) {
   const [msg, setMsg] = useState(null);
   const [reprogramando, setReprogramando] = useState(false);
 
-  // FUJ-119: cambiar las fechas avisa a inscritos y lista de espera, y vuelve a programar el recordatorio
+  // FUJ-119: cambiar las fechas; inscritos y lista de espera ven las nuevas en su panel
   const reprogramar = async (datos) => {
-    const { data } = await cursosApi.reprogramar(curso.id, datos);
+    await cursosApi.reprogramar(curso.id, datos);
     setReprogramando(false);
-    setMsg({ tipo: 'success', texto: `Curso reprogramado. Se avisó por correo a ${data.notificados} persona(s).` });
+    setMsg({ tipo: 'success', texto: 'Listo: curso reprogramado. Los inscritos ven las fechas nuevas en su panel.' });
     onReprogramado();
   };
 
@@ -295,7 +295,7 @@ function DatosCurso({ curso, abierto, onGuardado, onReprogramado }) {
             )}
           </div>
           <p className="muted" style={{ fontSize: '0.85rem' }}>
-            Al reprogramar se avisa por correo a los inscritos y a la lista de espera. Las clases con asistencia ya registrada deben quedar dentro del nuevo rango.
+            Los inscritos y la lista de espera verán las fechas nuevas en su panel. Las clases con asistencia ya registrada deben quedar dentro del nuevo rango.
           </p>
         </div>
         <div>
