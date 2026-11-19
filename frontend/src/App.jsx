@@ -45,6 +45,7 @@ import PlantillasCertificado from './pages/admin/PlantillasCertificado';
 import AdminCampanas from './pages/admin/Campanas';
 import AdminEncuestas from './pages/admin/Encuestas';
 import AdminUsuarios from './pages/admin/Usuarios';
+import Bitacora from './pages/admin/Bitacora';
 
 // Páginas Voluntario
 import VoluntarioDashboard from './pages/voluntario/Dashboard';
@@ -101,6 +102,7 @@ export default function App() {
           <Route path="/admin/galeria" element={protegida('gestionarGaleria', <AdminGaleria />)} />
           <Route path="/admin/institucional" element={protegida('editarInstitucional', <AdminInstitucional />)} />
           <Route path="/admin/usuarios" element={protegida('gestionarUsuarios', <AdminUsuarios />)} />
+          <Route path="/admin/bitacora" element={protegida('verBitacora', <Bitacora />)} />
 
           {/* Voluntario */}
           <Route path="/voluntario" element={protegida('verPortalVoluntario', <VoluntarioDashboard />)} />

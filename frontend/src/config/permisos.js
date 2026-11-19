@@ -44,6 +44,9 @@ export const PERMISOS = {
   gestionarVoluntarios: [ENCARGADO_EVENTOS, COORDINADOR_VOLUNTARIADO, DIRECTORA],
   registrarDonaciones: [ENCARGADO_EVENTOS, CONTADOR, DIRECTORA],
   verReporteFinanciero: [CONTADOR, DIRECTORA],
+  // FUJ-125: corregir/anular donaciones y consultar la bitácora de auditoría
+  corregirDonaciones: [CONTADOR, DIRECTORA],
+  verBitacora: [CONTADOR, DIRECTORA],
   publicarNoticias: [DIRECTORA],
   publicarTransparencia: [CONTADOR, DIRECTORA],
   gestionarGaleria: [DIRECTORA],
@@ -91,6 +94,8 @@ export const SECCIONES_PANEL = [
     descripcion: 'Asignar voluntarios a eventos y cursos, y registrar sus horas al terminar.' },
   { permiso: 'registrarDonaciones', ruta: '/admin/donaciones', titulo: 'Donaciones', icono: '💵',
     descripcion: 'Registrar aportes en efectivo recibidos en oficina o eventos.' },
+  { permiso: 'verBitacora', ruta: '/admin/bitacora', titulo: 'Bitácora de auditoría', icono: '🧾',
+    descripcion: 'Cada alta, corrección o anulación de donaciones con su usuario, hora y valores anterior y nuevo.' },
   { permiso: 'gestionarCampanas', ruta: '/admin/campanas', titulo: 'Campañas', icono: '🎯',
     descripcion: 'Crear campañas de donación con meta, fecha límite y barra de avance.' },
   { permiso: 'publicarNoticias', ruta: '/admin/publicar-noticia', titulo: 'Noticias', icono: '📝',

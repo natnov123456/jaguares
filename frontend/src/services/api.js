@@ -127,6 +127,9 @@ export const donacionesApi = {
   misRegistros: () => api.get('/Donaciones/mis-registros'),
   mias: () => api.get('/Donaciones/mias'),
   comprobante: (id) => api.get(`/Donaciones/${id}/comprobante`, { responseType: 'blob' }),
+  // FUJ-125: quedan en la bitácora de auditoría
+  editar: (id, data) => api.put(`/Donaciones/${id}`, data),
+  anular: (id, motivo) => api.post(`/Donaciones/${id}/anular`, { motivo }),
 };
 
 export const campanasApi = {
@@ -209,4 +212,10 @@ export const usuariosApi = {
   cambiarRol: (id, rol) => api.put(`/Usuarios/${id}/rol`, { rol }),
   cambiarActivo: (id, activo) => api.put(`/Usuarios/${id}/activo`, { activo }),
   reenviarEnlace: (id) => api.post(`/Usuarios/${id}/reenviar-enlace`),
+};
+
+// JAG-89 / FUJ-125: bitácora de auditoría de donaciones (solo lectura)
+export const auditoriaApi = {
+  donaciones: (params) => api.get('/Auditoria/donaciones', { params }),
+  usuarios: () => api.get('/Auditoria/donaciones/usuarios'),
 };
