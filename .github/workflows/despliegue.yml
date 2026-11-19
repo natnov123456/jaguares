@@ -65,7 +65,24 @@ jobs:
     runs-on: ubuntu-latest
     environment: produccion
     steps:
+      # Sin los secretos del servidor (SSH_HOST, SSH_USUARIO, SSH_CLAVE en el environment "produccion")
+      # no hay a dónde desplegar: se avisa y se omite en lugar de fallar. Al cargarlos, despliega solo.
+      - name: Verificar configuración del servidor
+        id: servidor
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USUARIO: ${{ secrets.SSH_USUARIO }}
+          SSH_CLAVE: ${{ secrets.SSH_CLAVE }}
+        run: |
+          if [ -n "$SSH_HOST" ] && [ -n "$SSH_USUARIO" ] && [ -n "$SSH_CLAVE" ]; then
+            echo "listo=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "listo=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Despliegue omitido::Faltan los secretos SSH_HOST, SSH_USUARIO o SSH_CLAVE en el environment 'produccion'. Las pruebas y las imágenes se generaron; el servidor no se actualizó."
+          fi
+
       - name: Actualizar el servidor
+        if: steps.servidor.outputs.listo == 'true'
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
