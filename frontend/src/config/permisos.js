@@ -8,19 +8,24 @@ export const ROLES = {
   DOCENTE: 'DOCENTE',
   ENCARGADO_EVENTOS: 'ENCARGADO_EVENTOS',
   DIRECTORA: 'DIRECTORA',
+  // FUJ-122: roles del personal que asigna la Directora
+  CONTADOR: 'CONTADOR',
+  COORDINADOR_VOLUNTARIADO: 'COORDINADOR_VOLUNTARIADO',
 };
 
 export const ETIQUETA_ROL = {
   PARTICIPANTE: 'Participante',
   VOLUNTARIO: 'Voluntario/a',
   DOCENTE: 'Docente',
-  ENCARGADO_EVENTOS: 'Encargado/a de eventos',
+  ENCARGADO_EVENTOS: 'Encargado/a de operaciones',
   DIRECTORA: 'Dirección',
+  CONTADOR: 'Contador/a',
+  COORDINADOR_VOLUNTARIADO: 'Coordinador/a de voluntariado',
 };
 
-export const ROLES_STAFF = [ROLES.DIRECTORA, ROLES.DOCENTE, ROLES.ENCARGADO_EVENTOS];
+export const ROLES_STAFF = [ROLES.DIRECTORA, ROLES.DOCENTE, ROLES.ENCARGADO_EVENTOS, ROLES.CONTADOR, ROLES.COORDINADOR_VOLUNTARIADO];
 
-const { PARTICIPANTE, VOLUNTARIO, DOCENTE, ENCARGADO_EVENTOS, DIRECTORA } = ROLES;
+const { PARTICIPANTE, VOLUNTARIO, DOCENTE, ENCARGADO_EVENTOS, DIRECTORA, CONTADOR, COORDINADOR_VOLUNTARIADO } = ROLES;
 
 export const PERMISOS = {
   // Comunidad
@@ -36,17 +41,19 @@ export const PERMISOS = {
   crearCursos: [DIRECTORA],
   gestionarEventos: [ENCARGADO_EVENTOS, DIRECTORA],
   registrarCheckin: [ENCARGADO_EVENTOS, DIRECTORA],
-  gestionarVoluntarios: [ENCARGADO_EVENTOS, DIRECTORA],
-  registrarDonaciones: [ENCARGADO_EVENTOS, DIRECTORA],
-  verReporteFinanciero: [DIRECTORA],
+  gestionarVoluntarios: [ENCARGADO_EVENTOS, COORDINADOR_VOLUNTARIADO, DIRECTORA],
+  registrarDonaciones: [ENCARGADO_EVENTOS, CONTADOR, DIRECTORA],
+  verReporteFinanciero: [CONTADOR, DIRECTORA],
   publicarNoticias: [DIRECTORA],
-  publicarTransparencia: [DIRECTORA],
+  publicarTransparencia: [CONTADOR, DIRECTORA],
   gestionarGaleria: [DIRECTORA],
   gestionarPlantillas: [DIRECTORA],
-  gestionarCampanas: [DIRECTORA],
+  gestionarCampanas: [CONTADOR, DIRECTORA],
   // FUJ-120: el backend filtra: docente (sus cursos), encargado (eventos), directora (todas)
   verEncuestas: [DOCENTE, ENCARGADO_EVENTOS, DIRECTORA],
   editarInstitucional: [DIRECTORA],
+  // FUJ-122: solo la Directora administra cuentas y roles
+  gestionarUsuarios: [DIRECTORA],
 };
 
 export function puede(usuario, permiso) {
@@ -66,6 +73,8 @@ export function rutaInicio(usuario) {
 
 // Secciones del panel de administración. El navbar y el dashboard se arman desde aquí.
 export const SECCIONES_PANEL = [
+  { permiso: 'gestionarUsuarios', ruta: '/admin/usuarios', titulo: 'Usuarios y roles', icono: '👥',
+    descripcion: 'Crear cuentas del personal, asignar su rol y activarlas o desactivarlas.' },
   { permiso: 'gestionarCursos', ruta: '/admin/cursos', titulo: 'Mis cursos', icono: '📚',
     descripcion: 'Ver inscritos, registrar la asistencia de cada clase y emitir certificados al finalizar.' },
   { permiso: 'gestionarPlantillas', ruta: '/admin/plantillas-certificado', titulo: 'Plantillas de certificado', icono: '🎓',

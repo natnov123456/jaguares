@@ -21,6 +21,7 @@ import Transparencia from './pages/Transparencia';
 import Galeria from './pages/Galeria';
 import QuienesSomos from './pages/QuienesSomos';
 import Encuesta from './pages/Encuesta';
+import DefinirContrasena from './pages/DefinirContrasena';
 
 // Participante / Voluntario
 import MiCuenta from './pages/MiCuenta';
@@ -43,6 +44,7 @@ import AdminInstitucional from './pages/admin/Institucional';
 import PlantillasCertificado from './pages/admin/PlantillasCertificado';
 import AdminCampanas from './pages/admin/Campanas';
 import AdminEncuestas from './pages/admin/Encuestas';
+import AdminUsuarios from './pages/admin/Usuarios';
 
 // Páginas Voluntario
 import VoluntarioDashboard from './pages/voluntario/Dashboard';
@@ -75,6 +77,7 @@ export default function App() {
           <Route path="/quienes-somos" element={<QuienesSomos />} />
           {/* FUJ-120: enlace personal de la encuesta (no requiere sesión: lo identifica el token) */}
           <Route path="/encuesta/:token" element={<Encuesta />} />
+          <Route path="/definir-contrasena" element={<DefinirContrasena />} />
 
           {/* Participante y Voluntario */}
           <Route path="/mi-cuenta" element={protegida('verMiCuenta', <MiCuenta />)} />
@@ -97,6 +100,7 @@ export default function App() {
           <Route path="/admin/transparencia" element={protegida('publicarTransparencia', <AdminTransparencia />)} />
           <Route path="/admin/galeria" element={protegida('gestionarGaleria', <AdminGaleria />)} />
           <Route path="/admin/institucional" element={protegida('editarInstitucional', <AdminInstitucional />)} />
+          <Route path="/admin/usuarios" element={protegida('gestionarUsuarios', <AdminUsuarios />)} />
 
           {/* Voluntario */}
           <Route path="/voluntario" element={protegida('verPortalVoluntario', <VoluntarioDashboard />)} />

@@ -5,7 +5,9 @@ import { ETIQUETA_ROL, SECCIONES_PANEL, puede } from '../../config/permisos';
 const RESUMEN_ROL = {
   DIRECTORA: 'Tienes acceso completo: cursos, eventos, voluntarios, finanzas y contenido público.',
   DOCENTE: 'Gestionas los cursos que la dirección te asigna: ves a los inscritos, registras la asistencia, editas los datos del curso y emites los certificados al finalizar.',
-  ENCARGADO_EVENTOS: 'Coordinas eventos y voluntarios, y registras las donaciones en efectivo que recibes.',
+  ENCARGADO_EVENTOS: 'Coordinas eventos, el check-in y los voluntarios, y registras las donaciones en efectivo que recibes.',
+  CONTADOR: 'Gestionas las donaciones: registro, correcciones y anulaciones, reporte financiero, campañas, transparencia y la bitácora de auditoría.',
+  COORDINADOR_VOLUNTARIADO: 'Gestionas el registro de voluntarios, sus asignaciones a cursos y eventos, y las horas que aportan.',
 };
 
 export default function Dashboard() {

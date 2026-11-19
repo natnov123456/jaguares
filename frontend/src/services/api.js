@@ -32,6 +32,8 @@ api.interceptors.response.use(
 export const authApi = {
   login: (email, password) => api.post('/Auth/login', { email, password }),
   registro: (data) => api.post('/Auth/registro', data),
+  // FUJ-122: el personal define su contraseña con el enlace del correo
+  definirContrasena: (token, password) => api.post('/Auth/definir-contrasena', { token, password }),
 };
 
 export const cursosApi = {
@@ -197,4 +199,14 @@ export const reportesApi = {
   exportar: (clave, formato, filtros) => api.get(`/Reportes/${clave}`, { params: { ...filtros, formato }, responseType: 'blob' }),
   // Vista en pantalla de un reporte (mismos datos que el archivo)
   tabla: (clave, filtros) => api.get(`/Reportes/${clave}`, { params: { ...filtros, formato: 'json' } }),
+};
+
+// JAG-83 / FUJ-122: cuentas y roles (solo Directora)
+export const usuariosApi = {
+  listar: () => api.get('/Usuarios'),
+  roles: () => api.get('/Usuarios/roles'),
+  crear: (data) => api.post('/Usuarios', data),
+  cambiarRol: (id, rol) => api.put(`/Usuarios/${id}/rol`, { rol }),
+  cambiarActivo: (id, activo) => api.put(`/Usuarios/${id}/activo`, { activo }),
+  reenviarEnlace: (id) => api.post(`/Usuarios/${id}/reenviar-enlace`),
 };
