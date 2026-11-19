@@ -57,6 +57,9 @@ export const PERMISOS = {
   editarInstitucional: [DIRECTORA],
   // FUJ-122: solo la Directora administra cuentas y roles
   gestionarUsuarios: [DIRECTORA],
+  // FUJ-123: panel de indicadores; evaluación: registro de exportaciones
+  verIndicadores: [DIRECTORA],
+  verExportaciones: [DIRECTORA],
 };
 
 export function puede(usuario, permiso) {
@@ -76,6 +79,8 @@ export function rutaInicio(usuario) {
 
 // Secciones del panel de administración. El navbar y el dashboard se arman desde aquí.
 export const SECCIONES_PANEL = [
+  { permiso: 'verIndicadores', ruta: '/admin/indicadores', titulo: 'Panel de indicadores', icono: '📈',
+    descripcion: 'Inscritos, asistencia, certificados, donaciones, voluntarios y satisfacción del mes.' },
   { permiso: 'gestionarUsuarios', ruta: '/admin/usuarios', titulo: 'Usuarios y roles', icono: '👥',
     descripcion: 'Crear cuentas del personal, asignar su rol y activarlas o desactivarlas.' },
   { permiso: 'gestionarCursos', ruta: '/admin/cursos', titulo: 'Mis cursos', icono: '📚',
@@ -104,6 +109,8 @@ export const SECCIONES_PANEL = [
     descripcion: 'Crear álbumes con fotos y videos de las actividades.' },
   { permiso: 'editarInstitucional', ruta: '/admin/institucional', titulo: 'Quiénes somos', icono: '🏛️',
     descripcion: 'Editar misión, visión, historia, equipo y datos de contacto.' },
+  { permiso: 'verExportaciones', ruta: '/admin/exportaciones', titulo: 'Registro de exportaciones', icono: '🗂️',
+    descripcion: 'Quién generó cada reporte PDF o Excel, cuándo, con qué filtros y si hubo errores.' },
   { permiso: 'publicarTransparencia', ruta: '/admin/transparencia', titulo: 'Transparencia', icono: '📊',
     descripcion: 'Publicar en el sitio en qué se usaron las donaciones de cada mes.' },
 ];

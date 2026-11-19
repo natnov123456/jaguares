@@ -219,3 +219,8 @@ export const auditoriaApi = {
   donaciones: (params) => api.get('/Auditoria/donaciones', { params }),
   usuarios: () => api.get('/Auditoria/donaciones/usuarios'),
 };
+
+// JAG-85 / FUJ-123: panel de indicadores (mes = "AAAA-MM")
+export const indicadoresApi = {
+  obtener: (mes) => api.get('/Indicadores', { params: { mes } }),
+};

@@ -504,3 +504,24 @@ button:disabled { opacity: .75; }
 @media (max-width: 600px) {
   .barra-filtros .filtro { flex-basis: 100%; }
 }
+
+/* ---- Panel de indicadores (FUJ-123) ---- */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.kpi { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 18px; }
+.kpi-titulo { color: #6b7280; font-size: 0.85rem; margin: 0; }
+.kpi-valor { font-size: 1.9rem; font-weight: 700; color: #1f2937; margin: 4px 0; line-height: 1.1; }
+.kpi-detalle { color: #6b7280; font-size: 0.8rem; margin: 2px 0 0; }
+.kpi-tendencia { font-size: 0.85rem; font-weight: 600; margin: 0; }
+.kpi-tendencia.sube { color: #166534; }
+.kpi-tendencia.baja { color: #991b1b; }
+.grafico { position: relative; }
+.grafico svg { width: 100%; height: auto; display: block; }
+.grafico svg g:focus { outline: none; }
+.grafico-tooltip { position: absolute; top: 0; right: 0; background: #1f2937; color: #fff; font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; }
+.barras-h { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 10px; }
+.barras-h li { display: grid; grid-template-columns: minmax(90px, 40%) 1fr; gap: 10px; align-items: center; font-size: 0.85rem; }
+.barras-h-etiqueta { color: #1f2937; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barras-h-pista { display: flex; align-items: center; gap: 6px; }
+.barras-h-barra { height: 14px; border-radius: 0 4px 4px 0; min-width: 2px; }
+.barras-h-valor { color: #1f2937; font-weight: 600; }
+.error-text { color: #991b1b; }
