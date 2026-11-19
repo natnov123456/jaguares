@@ -80,6 +80,7 @@ builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 // FUJ-124: reportes exportables (PDF institucional / Excel). Cada módulo aporta sus reportes con un IProveedorReportes.
 builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<IProveedorReportes, ReportesActividades>();
+builder.Services.AddScoped<IProveedorReportes, ReportesGestion>();
 // FUJ-119: recordatorios 24 h antes (tarea programada cada hora) y avisos de reprogramación/cancelación
 builder.Services.AddScoped<IRecordatorioService, RecordatorioService>();
 builder.Services.AddScoped<ICambiosActividadService, CambiosActividadService>();
