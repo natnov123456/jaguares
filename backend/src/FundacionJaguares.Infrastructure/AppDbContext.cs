@@ -8,6 +8,8 @@ public class AppDbContext : DbContext
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<User> Usuarios => Set<User>();
+    public DbSet<RolCatalogo> Roles => Set<RolCatalogo>();
+    public DbSet<TokenContrasena> TokensContrasena => Set<TokenContrasena>();
     public DbSet<Curso> Cursos => Set<Curso>();
     public DbSet<Inscripcion> Inscripciones => Set<Inscripcion>();
     public DbSet<ListaEspera> ListaEspera => Set<ListaEspera>();
@@ -38,6 +40,19 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
+        mb.Entity<RolCatalogo>(e =>
+        {
+            e.ToTable("roles");
+            e.HasKey(x => x.Codigo);
+        });
+
+        mb.Entity<TokenContrasena>(e =>
+        {
+            e.ToTable("tokens_contrasena");
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => x.TokenHash).IsUnique();
+        });
+
         mb.Entity<User>(e =>
         {
             e.ToTable("usuarios");
