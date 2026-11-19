@@ -146,6 +146,20 @@ public sealed class ApiFixture : IAsyncLifetime
         return (cliente, await IdDeAsync(email), email);
     }
 
+    // FUJ-122: cuenta del personal creada por la Directora con el rol indicado (CONTADOR, COORDINADOR_VOLUNTARIADO, ...)
+    // y ya activada con el enlace del correo. Devuelve el cliente con sesión iniciada.
+    public async Task<(HttpClient Cliente, Guid Id, string Email)> PersonalAsync(string rol, string? nombre = null)
+    {
+        var email = $"{rol.ToLowerInvariant()}{Guid.NewGuid().ToString("N")[..8]}@jaguares.org";
+        var dir = await DirectoraAsync();
+        var r = await dir.PostAsJsonAsync("/api/Usuarios", new { nombreCompleto = nombre ?? $"Persona {rol}", email, rol }, Json);
+        r.EnsureSuccessStatusCode();
+        var texto = Correos.Para(email).Last().Texto;
+        var token = System.Text.RegularExpressions.Regex.Match(texto, @"token=([A-Za-z0-9_-]+)").Groups[1].Value;
+        (await Anonimo().PostAsJsonAsync("/api/Auth/definir-contrasena", new { token, password = "Clave2026x" })).EnsureSuccessStatusCode();
+        return (await ComoAsync(email, "Clave2026x"), await IdDeAsync(email), email);
+    }
+
     public async Task<Guid> IdDeAsync(string email)
     {
         using var scope = Factory.Services.CreateScope();
