@@ -70,6 +70,16 @@ Tiene acceso a todos los módulos.
 ### 1.5 Registro de exportaciones
 *Panel → Registro de exportaciones*: cada PDF o Excel generado en la plataforma, con quién lo hizo, cuándo, con qué filtros y si hubo un error. Sirve para auditoría.
 
+### 1.6 Registro de actividad
+*Panel → Gestión → Registro de actividad*: todo lo que pasa en la plataforma, guardado en la base de datos. Cada fila muestra **fecha y hora**, **persona** (nombre, correo y rol), **acción** (por ejemplo "Inicio de sesión", "Inicio de sesión fallido", "Inscripción a un curso", "Corrección de donación", "Cierre de sesión"), **detalle** (qué curso, evento o donación), **resultado** (correcto, denegado o error) y **origen** (IP y navegador).
+
+- Filtra por persona, correo, acción o IP, por resultado (por ejemplo, solo los intentos fallidos) y por rango de fechas. **Exportar** genera el PDF o Excel (sin rango, los últimos 30 días).
+- No se guardan contraseñas ni el contenido de los formularios, y los enlaces con token aparecen como `***`.
+- Nadie puede modificar ni borrar el registro, ni siquiera desde la base de datos.
+
+### 1.7 Documentos legales
+El pie de página del sitio enlaza los **Términos y condiciones**, la **Política de privacidad**, la **Política de cookies** y la **Política de reembolsos**. Los formularios de registro, voluntariado, donación en línea y contacto tienen **dos casillas obligatorias y separadas** (Términos y Privacidad). Cada aceptación queda guardada con fecha, hora, formulario, versión, IP y navegador. Si la Fundación cambia los textos, hay que actualizar la fecha de versión (ver el manual técnico).
+
 ---
 
 ## 2. Contador/a

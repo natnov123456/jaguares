@@ -90,6 +90,7 @@ psql -U postgres -d fundacion_jaguares -f db/15_fuj122_usuarios_roles.sql
 psql -U postgres -d fundacion_jaguares -f db/16_fuj124_exportaciones.sql
 psql -U postgres -d fundacion_jaguares -f db/17_fuj125_auditoria_donaciones.sql
 psql -U postgres -d fundacion_jaguares -f db/18_horas_por_horario.sql
+psql -U postgres -d fundacion_jaguares -f db/19_registro_actividad_y_consentimientos.sql
 ```
 
 > Si ya tenías la base creada, basta con ejecutar los scripts `03_...` en adelante que te falten.
@@ -289,6 +290,7 @@ Todos en PDF en la carpeta [`docs/`](docs/):
 - **Doc 2:** Especificación de Requisitos de Software (SRS - ISO/IEC/IEEE 29148).
 - **Doc 3:** Arquitectura de Software (Modelo C4).
 - **Manuales** (`docs/manuales/`): manual del personal por rol, guía rápida para participantes, manual técnico y plan de capacitación.
+- **Cumplimiento legal y registro de actividad** (`docs/cumplimiento-legal.pdf`): leyes aplicables, términos, privacidad, cookies, reembolsos y consentimientos.
 - **Despliegue, datos iniciales, datos de prueba y disponibilidad** (`docs/`, `docs/operacion/`).
 - **Pruebas y UAT** (`docs/pruebas/`, `docs/uat/`) y **cierre** (`docs/cierre/`): informe final, retrospectiva y acta.
 

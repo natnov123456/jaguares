@@ -67,6 +67,8 @@ Todo el procedimiento está en **`docs/despliegue.md`**. En resumen:
 - `GET /health/live` y `GET /health/ready`. Verificación cada minuto con `deploy/monitoreo/verificar-salud.sh`.
 - Reporte mensual: `deploy/monitoreo/reporte-disponibilidad.sh AAAA-MM` (meta ≥ 99,5 %). Ver `docs/operacion/disponibilidad-rnf04.md`.
 - Logs: `docker compose logs api`. Las exportaciones quedan en la tabla `exportaciones`, y los errores de render con `[EXPORTACION]`.
+- **Registro de actividad** (tabla `registro_actividad`): un middleware (`Api/RegistroActividad.cs`) registra cada solicitud a `/api` con usuario, correo, rol, acción legible, ruta (plantilla, sin tokens), identificadores, código HTTP, IP, navegador y duración. Las filas se encolan y un `BackgroundService` las guarda en lotes, así no se demora la respuesta. Incluye los inicios de sesión fallidos y los cierres de sesión (`POST /api/Auth/salir`). La tabla es de solo lectura (trigger). Retención indicada en la Política de privacidad: 2 años.
+- **Consentimientos** (tabla `consentimientos`): una fila por documento aceptado (Términos y Privacidad) con formulario, versión, IP y navegador. Para publicar una versión nueva de los textos: actualizar `DocumentosLegales.Version` (backend) y `VERSION_LEGAL` y la fecha en `frontend/src/pages/Legal.jsx`.
 
 ## 6. Tareas frecuentes
 | Tarea | Cómo |
