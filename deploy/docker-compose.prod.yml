@@ -30,6 +30,13 @@ services:
       App__FrontendUrl: https://${DOMINIO}
       Redis__Conexion: redis:6379
       Proxy__Confiable: "true"
+      Smtp__Host: ${SMTP_HOST}
+      Smtp__Puerto: ${SMTP_PUERTO}
+      Smtp__Usuario: ${SMTP_USUARIO}
+      Smtp__Password: ${SMTP_CLAVE}
+      Smtp__Remitente: ${SMTP_REMITENTE}
+      Smtp__UsarSsl: ${SMTP_SSL:-true}
+      Contacto__EmailDestino: ${CONTACTO_DESTINO}
     volumes:
       - uploads:/datos/uploads
     depends_on:
