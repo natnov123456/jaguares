@@ -38,8 +38,10 @@ builder.Services.AddScoped<VoluntarioRepository>();
 builder.Services.AddScoped<ContenidoRepository>();
 
 // 3) Adapters
-// La plataforma no envía correos ni WhatsApp: EmailAdapter y WhatsAppAdapter no hacen nada (ver Adapters.cs)
-// Dirección pública del frontend (enlaces de las encuestas FUJ-120)
+// Correo: sección "Smtp" (guárdala con user-secrets, nunca en appsettings.json). Sin Host, solo se registra en el log.
+builder.Services.AddSingleton(builder.Configuration.GetSection("Smtp").Get<SmtpOpciones>() ?? new SmtpOpciones());
+builder.Services.AddSingleton(builder.Configuration.GetSection("Contacto").Get<ContactoOpciones>() ?? new ContactoOpciones());
+// Dirección pública del frontend, para los enlaces de los correos (encuestas FUJ-120)
 builder.Services.AddSingleton(builder.Configuration.GetSection("App").Get<AppOpciones>() ?? new AppOpciones());
 builder.Services.AddScoped<IEmailAdapter, EmailAdapter>();
 builder.Services.AddScoped<IWhatsAppAdapter, WhatsAppAdapter>();
@@ -70,6 +72,7 @@ builder.Services.AddScoped<IAsistenciaService, AsistenciaService>();
 builder.Services.AddScoped<ITransparenciaService, TransparenciaService>();
 builder.Services.AddScoped<IGaleriaService, GaleriaService>();
 builder.Services.AddScoped<IInstitucionalService, InstitucionalService>();
+builder.Services.AddScoped<IContactoService, ContactoService>();
 builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 builder.Services.AddScoped<IEncuestaService, EncuestaService>();
 // FUJ-122: cuentas del personal y roles
@@ -92,8 +95,7 @@ else
 builder.Services.AddScoped<IIndicadorService, IndicadorService>();
 builder.Services.AddScoped<IProveedorReportes, ReportesIndicadores>();
 builder.Services.AddScoped<IProveedorReportes, ReportesContenido>();
-// FUJ-119: avisos de reprogramación/cancelación. La tarea de recordatorios por correo queda apagada por defecto
-// (Recordatorios:Habilitado = false) porque la plataforma ya no envía correos.
+// FUJ-119: recordatorios 24 h antes (tarea programada cada hora) y avisos de reprogramación/cancelación
 builder.Services.AddScoped<IRecordatorioService, RecordatorioService>();
 builder.Services.AddScoped<ICambiosActividadService, CambiosActividadService>();
 builder.Services.AddSingleton(builder.Configuration.GetSection("Recordatorios").Get<RecordatoriosOpciones>() ?? new RecordatoriosOpciones());
@@ -139,7 +141,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors(o => o.AddPolicy("front", p =>
     p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
-// Donación en línea: endpoint público, limitado por IP
+// Donación en línea: endpoint público que envía correos, limitado por IP
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -150,6 +152,10 @@ builder.Services.AddRateLimiter(o =>
     o.AddPolicy("encuesta-publica", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(10) }));
+    // "¿Olvidaste tu contraseña?": envía correos, así que se limita por IP para evitar abusos
+    o.AddPolicy("recuperar-contrasena", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(15) }));
 });
 
 // 7) Swagger (compatible con Swashbuckle 10 / Microsoft.OpenApi 2.x)

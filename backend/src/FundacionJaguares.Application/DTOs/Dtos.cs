@@ -8,12 +8,12 @@ public record TokenDto(string Token, string NombreCompleto, string Rol, DateTime
 // USUARIOS Y ROLES (FUJ-122)
 public record UsuarioDto(Guid Id, string NombreCompleto, string Email, string? Telefono, string Rol, bool Activo, DateTime CreadoEn);
 public record RolDto(string Codigo, string Nombre, string Descripcion, bool Interno);
-// Password: contraseña inicial que define la Directora (sin ella la cuenta no puede iniciar sesión hasta que se le asigne una)
-public record CrearUsuarioDto(string NombreCompleto, string Email, FundacionJaguares.Domain.Entities.Rol Rol, string? Telefono = null,
-                              string? Password = null);
+public record CrearUsuarioDto(string NombreCompleto, string Email, FundacionJaguares.Domain.Entities.Rol Rol, string? Telefono = null);
 public record CambiarRolDto(FundacionJaguares.Domain.Entities.Rol Rol);
 public record CambiarActivoDto(bool Activo);
-public record CambiarContrasenaDto(string Password);
+public record DefinirContrasenaDto(string Token, string Password);
+public record OlvideContrasenaDto(string? Email);
+public record CambiarMiContrasenaDto(string? Actual, string? Nueva);
 
 // CURSOS
 // Solo la directora crea cursos y elige el docente a cargo
@@ -188,6 +188,7 @@ public record PaginaInstitucionalDto(string? Mision, string? Vision, string? His
                                      string? Direccion, string? Telefono, string? EmailContacto, string? Horario,
                                      DateTime? ActualizadoEn);
 // SitioWeb es un campo trampa (honeypot): oculto para personas, los bots lo llenan
+public record ConsultaContactoDto(string? Nombre, string? Email, string? Asunto, string? Mensaje, string? SitioWeb);
 
 // GALERÍA (FUJ-126)
 public record GuardarAlbumDto(string Titulo, string? Descripcion, bool Publicado);

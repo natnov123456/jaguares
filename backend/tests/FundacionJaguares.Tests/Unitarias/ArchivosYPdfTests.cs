@@ -134,11 +134,13 @@ public class ArchivosYPdfTests
     }
 
     [Fact]
-    public async Task Adaptadores_de_notificacion_no_envian_nada()
+    public async Task Adaptadores_sin_configurar_solo_registran_en_el_log()
     {
-        var email = new EmailAdapter(NullLogger<EmailAdapter>.Instance);
+        var email = new EmailAdapter(NullLogger<EmailAdapter>.Instance, new SmtpOpciones());
         await email.EnviarAsync("ana@correo.com", "Asunto", "Cuerpo", responderA: "otro@correo.com");
         await new WhatsAppAdapter(NullLogger<WhatsAppAdapter>.Instance).EnviarAsync("70000000", "Hola");
         Assert.True(await new PaymentAdapter(NullLogger<PaymentAdapter>.Instance).ProcesarPagoAsync(10, "REF"));
+        Assert.False(new SmtpOpciones().Configurado);
+        Assert.True(new SmtpOpciones { Host = "smtp.x.com" }.Configurado);
     }
 }

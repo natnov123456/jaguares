@@ -50,7 +50,7 @@ public class InstitucionalService : IInstitucionalService
         var telefono = Texto(dto.Telefono, "telefono", 50);
         var email = Texto(dto.EmailContacto, "emailContacto", 150);
         var horario = Texto(dto.Horario, "horario", 200);
-        if (email is not null && !ValidacionCorreo.EmailValido(email)) errores["emailContacto"] = "Correo inválido";
+        if (email is not null && !ContactoService.EmailValido(email)) errores["emailContacto"] = "Correo inválido";
 
         var equipo = new List<MiembroEquipoDto>();
         var miembros = dto.Equipo ?? [];

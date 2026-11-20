@@ -7,6 +7,7 @@ using FundacionJaguares.Infrastructure.Adapters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Npgsql;
@@ -147,14 +148,16 @@ public sealed class ApiFixture : IAsyncLifetime
     }
 
     // FUJ-122: cuenta del personal creada por la Directora con el rol indicado (CONTADOR, COORDINADOR_VOLUNTARIADO, ...)
-    // con su contraseña inicial. Devuelve el cliente con sesión iniciada.
+    // y ya activada con el enlace del correo. Devuelve el cliente con sesión iniciada.
     public async Task<(HttpClient Cliente, Guid Id, string Email)> PersonalAsync(string rol, string? nombre = null)
     {
         var email = $"{rol.ToLowerInvariant()}{Guid.NewGuid().ToString("N")[..8]}@jaguares.org";
         var dir = await DirectoraAsync();
-        var r = await dir.PostAsJsonAsync("/api/Usuarios",
-            new { nombreCompleto = nombre ?? $"Persona {rol}", email, rol, password = "Clave2026x" }, Json);
+        var r = await dir.PostAsJsonAsync("/api/Usuarios", new { nombreCompleto = nombre ?? $"Persona {rol}", email, rol }, Json);
         r.EnsureSuccessStatusCode();
+        var texto = Correos.Para(email).Last().Texto;
+        var token = System.Text.RegularExpressions.Regex.Match(texto, @"token=([A-Za-z0-9_-]+)").Groups[1].Value;
+        (await Anonimo().PostAsJsonAsync("/api/Auth/definir-contrasena", new { token, password = "Clave2026x" })).EnsureSuccessStatusCode();
         return (await ComoAsync(email, "Clave2026x"), await IdDeAsync(email), email);
     }
 
@@ -167,6 +170,16 @@ public sealed class ApiFixture : IAsyncLifetime
 
     // Solo la directora crea cursos y asigna el docente a cargo: por defecto, el docente del seed
     public Task<Guid> DocenteIdAsync() => IdDeAsync(Usuarios.Docente);
+
+    // Solo se inscribe a cursos que todavía no empezaron. Para probar un curso "en marcha", las pruebas
+    // inscriben antes y luego mueven el inicio al pasado (como si la clase ya hubiera empezado).
+    public async Task MoverInicioDelCursoAsync(Guid cursoId, DateOnly inicio)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var filas = await db.Cursos.Where(c => c.Id == cursoId).ExecuteUpdateAsync(s => s.SetProperty(c => c.FechaInicio, inicio));
+        if (filas != 1) throw new InvalidOperationException($"Curso {cursoId} no encontrado");
+    }
 
     // Un segundo docente para comprobar que nadie gestiona cursos que no le asignaron
     private Guid? _otroDocente;
@@ -204,6 +217,7 @@ public sealed class ApiFixture : IAsyncLifetime
             builder.UseEnvironment("Testing");
             builder.UseSetting("ConnectionStrings:Default", cadena);
             builder.UseSetting("Almacenamiento:RutaLocal", uploads);
+            builder.UseSetting("Smtp:Host", "");
             // La tarea programada de recordatorios no corre sola: las pruebas la invocan con la hora que necesitan
             builder.UseSetting("Recordatorios:Habilitado", "false");
             builder.ConfigureLogging(l => l.ClearProviders());

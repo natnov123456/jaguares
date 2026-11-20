@@ -209,8 +209,9 @@ public class DonacionService : IDonacionService
         var email = string.IsNullOrWhiteSpace(dto.DonanteEmail) ? null : dto.DonanteEmail.Trim();
 
         if (obligatorio && nombre is null) throw new ArgumentException("Ingresa tu nombre para emitir el comprobante");
+        if (obligatorio && email is null) throw new ArgumentException("Ingresa tu correo para enviarte el comprobante");
         if (nombre?.Length > MaxNombre) throw new ArgumentException($"El nombre no puede superar {MaxNombre} caracteres");
-        if (email is not null && !ValidacionCorreo.EmailValido(email)) throw new ArgumentException("Correo inválido");
+        if (email is not null && !ContactoService.EmailValido(email)) throw new ArgumentException("Correo inválido");
         if (email is not null && nombre is null) throw new ArgumentException("Indica el nombre del donante");
         if (nombre is null) return null;
 

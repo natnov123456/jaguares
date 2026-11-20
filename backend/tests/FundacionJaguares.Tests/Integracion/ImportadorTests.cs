@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using FundacionJaguares.Application.Importacion;
 using FundacionJaguares.Application.Services;
 using FundacionJaguares.Infrastructure;
@@ -79,7 +78,7 @@ public class ImportadorTests(ApiFixture api)
         var docente = await db.Usuarios.SingleAsync(u => u.Email == $"docente.{marca}@fundacion.org");
         Assert.Equal("Ana María Pérez", docente.NombreCompleto);
         Assert.Equal("+591 71234567", docente.Telefono);
-        Assert.Empty(api.Correos.Para(docente.Email)); // no se envían correos: la Directora le asigna la contraseña
+        Assert.Single(api.Correos.Para(docente.Email), c => c.Texto.Contains("definir-contrasena?token="));
         Assert.Equal("+591 70000001", (await db.Usuarios.SingleAsync(u => u.Email == $"contador.{marca}@fundacion.org")).Telefono);
 
         Assert.Equal(2, porArchivo["voluntarios.csv"].Importadas);
@@ -112,37 +111,6 @@ public class ImportadorTests(ApiFixture api)
         var publico = await (await api.Anonimo().GetAsync("/api/Transparencia")).Content.ReadAsStringAsync();
         Assert.DoesNotContain($"donante.{marca}", publico);
         Directory.Delete(dir, true);
-    }
-
-    // Primera puesta en marcha sin correos: la cuenta de Dirección importada recibe su contraseña desde el servidor
-    [Fact]
-    public async Task Contrasena_de_la_primera_directora_se_asigna_desde_el_servidor()
-    {
-        var marca = Guid.NewGuid().ToString("N")[..6];
-        var dir = Path.Combine(Path.GetTempPath(), "jaguares-importacion", "dir-" + marca);
-        Directory.CreateDirectory(dir);
-        File.WriteAllLines(Path.Combine(dir, "cuentas_internas.csv"),
-            ["nombre;correo;rol;telefono", $"Directora Nueva;dir.{marca}@fundacion.org;Directora;"]);
-        using var scope = api.Factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var usuarios = new UsuarioService(db);
-        await new ImportadorDatos(db, usuarios).ImportarAsync(dir, aplicar: true);
-        Directory.Delete(dir, true);
-
-        var correo = $"dir.{marca}@fundacion.org";
-        var login = (string p) => api.Anonimo().PostAsJsonAsync("/api/Auth/login", new { email = correo, password = p });
-        Assert.False((await login("Jaguares2026")).IsSuccessStatusCode); // importada: aún sin contraseña utilizable
-
-        await Assert.ThrowsAsync<ArgumentException>(() => usuarios.AsignarContrasenaPorCorreoAsync(correo, "corta1"));
-        await Assert.ThrowsAsync<KeyNotFoundException>(() => usuarios.AsignarContrasenaPorCorreoAsync($"nadie.{marca}@x.org", "Jaguares2026"));
-        var cuenta = await usuarios.AsignarContrasenaPorCorreoAsync($"  DIR.{marca}@Fundacion.org ", "Jaguares2026");
-        Assert.Equal("DIRECTORA", cuenta.Rol);
-        Assert.True((await login("Jaguares2026")).IsSuccessStatusCode);
-
-        // Las cuentas de participantes no se gestionan desde el servidor
-        var participante = await usuarios.CrearAsync(new(
-            "Participante Prueba", $"part.{marca}@correo.com", FundacionJaguares.Domain.Entities.Rol.PARTICIPANTE), Guid.Empty);
-        await Assert.ThrowsAsync<InvalidOperationException>(() => usuarios.AsignarContrasenaPorCorreoAsync(participante.Email, "Jaguares2026"));
     }
 
     [Theory]

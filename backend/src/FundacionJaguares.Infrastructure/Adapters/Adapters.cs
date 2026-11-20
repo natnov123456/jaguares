@@ -7,7 +7,7 @@ public record AdjuntoCorreo(string Nombre, byte[] Contenido, string TipoContenid
 
 public interface IEmailAdapter
 {
-    // responderA: dirección a la que se respondería el aviso (opcional)
+    // responderA: dirección a la que se responde (p. ej. el correo de quien escribió el formulario de contacto)
     // html: versión con formato (JAG-66); cuerpo queda como texto plano para clientes que no muestran HTML
     Task EnviarAsync(string para, string asunto, string cuerpo, string? responderA = null, AdjuntoCorreo? adjunto = null,
                      string? html = null);
@@ -15,19 +15,69 @@ public interface IEmailAdapter
 public interface IWhatsAppAdapter { Task EnviarAsync(string telefono, string mensaje); }
 public interface IPaymentAdapter  { Task<bool> ProcesarPagoAsync(decimal monto, string referencia); }
 
-// La plataforma NO envía correos ni mensajes de WhatsApp: cada acción queda registrada y se confirma en pantalla
-// ("Listo", "Registrado"). Los servicios siguen avisando a través de estas interfaces para que, si algún día se
-// quisiera notificar, baste con cambiar el adaptador; hoy solo dejan una línea de depuración en el log.
+// Configuración "Smtp" de appsettings / user-secrets. Si Host está vacío no se envía nada:
+// el correo solo queda en el log (modo desarrollo).
+public class SmtpOpciones
+{
+    public string? Host { get; set; }
+    public int Puerto { get; set; } = 587;
+    public string? Usuario { get; set; }
+    public string? Password { get; set; }
+    public bool UsarSsl { get; set; } = true;
+    public string Remitente { get; set; } = "no-responder@jaguares.org";
+    public string NombreRemitente { get; set; } = "Fundación Unión de los Jaguares";
+    public bool Configurado => !string.IsNullOrWhiteSpace(Host);
+}
+
 public class EmailAdapter : IEmailAdapter
 {
     private readonly ILogger<EmailAdapter> _log;
-    public EmailAdapter(ILogger<EmailAdapter> log) => _log = log;
+    private readonly SmtpOpciones _smtp;
 
-    public Task EnviarAsync(string para, string asunto, string cuerpo, string? responderA = null, AdjuntoCorreo? adjunto = null,
-                            string? html = null)
+    public EmailAdapter(ILogger<EmailAdapter> log, SmtpOpciones smtp) { _log = log; _smtp = smtp; }
+
+    public async Task EnviarAsync(string para, string asunto, string cuerpo, string? responderA = null, AdjuntoCorreo? adjunto = null,
+                                  string? html = null)
     {
-        _log.LogDebug("[EMAIL desactivado] {a}", asunto);
-        return Task.CompletedTask;
+        if (!_smtp.Configurado)
+        {
+            _log.LogInformation("[EMAIL sin SMTP] Para: {p} | {a} | {c} | Adjunto: {n}", para, asunto, cuerpo, adjunto?.Nombre ?? "ninguno");
+            return;
+        }
+
+        // Los saltos de línea en el asunto permitirían inyectar cabeceras
+        var asuntoLimpio = asunto.Replace('\r', ' ').Replace('\n', ' ');
+        using var mensaje = new System.Net.Mail.MailMessage
+        {
+            From = new System.Net.Mail.MailAddress(_smtp.Remitente, _smtp.NombreRemitente),
+            Subject = asuntoLimpio,
+            Body = cuerpo,
+            IsBodyHtml = false,
+            BodyEncoding = System.Text.Encoding.UTF8,
+            SubjectEncoding = System.Text.Encoding.UTF8
+        };
+        mensaje.To.Add(para);
+        if (!string.IsNullOrWhiteSpace(responderA)) mensaje.ReplyToList.Add(responderA);
+        if (html is not null)
+        {
+            // multipart/alternative: Body (texto plano) + vista HTML; la imagen con ContentId va incrustada en el HTML
+            var vistaHtml = System.Net.Mail.AlternateView.CreateAlternateViewFromString(html, System.Text.Encoding.UTF8, "text/html");
+            if (adjunto?.ContentId is { } cid)
+                vistaHtml.LinkedResources.Add(new System.Net.Mail.LinkedResource(new MemoryStream(adjunto.Contenido), adjunto.TipoContenido)
+                {
+                    ContentId = cid,
+                    ContentType = { Name = adjunto.Nombre }
+                });
+            mensaje.AlternateViews.Add(vistaHtml);
+        }
+        if (adjunto is not null && (html is null || adjunto.ContentId is null))
+            mensaje.Attachments.Add(new System.Net.Mail.Attachment(new MemoryStream(adjunto.Contenido), adjunto.Nombre, adjunto.TipoContenido));
+
+        using var cliente = new System.Net.Mail.SmtpClient(_smtp.Host, _smtp.Puerto) { EnableSsl = _smtp.UsarSsl };
+        if (!string.IsNullOrEmpty(_smtp.Usuario))
+            cliente.Credentials = new System.Net.NetworkCredential(_smtp.Usuario, _smtp.Password);
+        await cliente.SendMailAsync(mensaje);
+        _log.LogInformation("[EMAIL] Enviado a {p} | {a}", para, asuntoLimpio);
     }
 }
 
@@ -37,7 +87,7 @@ public class WhatsAppAdapter : IWhatsAppAdapter
     public WhatsAppAdapter(ILogger<WhatsAppAdapter> log) => _log = log;
     public Task EnviarAsync(string telefono, string mensaje)
     {
-        _log.LogDebug("[WHATSAPP desactivado]");
+        _log.LogInformation("[WHATSAPP] Para: {t} | {m}", telefono, mensaje);
         return Task.CompletedTask;
     }
 }

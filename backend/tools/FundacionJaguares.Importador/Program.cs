@@ -2,23 +2,24 @@ using FundacionJaguares.Application.Importacion;
 using FundacionJaguares.Application.Services;
 using FundacionJaguares.Domain.Entities;
 using FundacionJaguares.Infrastructure;
+using FundacionJaguares.Infrastructure.Adapters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql.NameTranslation;
 
 // JAG-76: carga de datos iniciales desde planillas CSV.
 //   dotnet run --project tools/FundacionJaguares.Importador -- <carpeta> [--aplicar]
 // Sin --aplicar solo VERIFICA (no escribe nada): úsalo primero y revisa los errores.
 // Conexión: variable JAGUARES_CONEXION (por defecto la base local de desarrollo).
-// Las cuentas internas se crean sin contraseña utilizable: la Directora les asigna una desde "Usuarios y roles".
-// La contraseña de la PRIMERA Directora se asigna desde el servidor (la plataforma no envía correos):
-//   dotnet run --project tools/FundacionJaguares.Importador -- contrasena <correo>
-// La contraseña se lee de la variable JAGUARES_CONTRASENA o se pide por consola sin mostrarla.
+// Correo para las cuentas internas: variables SMTP_HOST, SMTP_PUERTO, SMTP_USUARIO, SMTP_CLAVE, SMTP_REMITENTE y FRONTEND_URL.
+// Sin SMTP las cuentas se crean igual, pero el enlace no se envía: la Directora lo reenvía desde "Usuarios y roles".
 if (args.Length == 0 || args[0] is "-h" or "--help")
 {
     Console.WriteLine("Uso: FundacionJaguares.Importador <carpeta-con-csv> [--aplicar]");
-    Console.WriteLine("     FundacionJaguares.Importador contrasena <correo>   (asigna la contraseña de una cuenta del personal)");
     return 1;
 }
+var carpeta = args[0];
+var aplicar = args.Contains("--aplicar");
 var conexion = Environment.GetEnvironmentVariable("JAGUARES_CONEXION")
                ?? "Host=localhost;Port=5432;Database=fundacion_jaguares;Username=postgres;Password=postgres";
 
@@ -30,36 +31,20 @@ var opciones = new DbContextOptionsBuilder<AppDbContext>()
     .Options;
 await using var db = new AppDbContext(opciones);
 
-var usuarios = new UsuarioService(db);
-
-if (args[0] == "contrasena")
+var smtp = new SmtpOpciones
 {
-    if (args.Length < 2) { Console.WriteLine("Indica el correo de la cuenta: contrasena <correo>"); return 1; }
-    var password = Environment.GetEnvironmentVariable("JAGUARES_CONTRASENA");
-    if (string.IsNullOrEmpty(password))
-    {
-        password = LeerOculto("Contraseña nueva (8+ caracteres, letras y números): ");
-        if (LeerOculto("Repite la contraseña: ") != password) { Console.WriteLine("Las contraseñas no coinciden."); return 1; }
-    }
-    try
-    {
-        var cuenta = await usuarios.AsignarContrasenaPorCorreoAsync(args[1], password);
-        Console.WriteLine($"Listo: {cuenta.NombreCompleto} ({cuenta.Rol}) ya puede iniciar sesión con {cuenta.Email}.");
-        return 0;
-    }
-    catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or KeyNotFoundException)
-    {
-        Console.WriteLine($"Error: {ex.Message}");
-        return 2;
-    }
-}
-
-var carpeta = args[0];
-var aplicar = args.Contains("--aplicar");
+    Host = Environment.GetEnvironmentVariable("SMTP_HOST"),
+    Puerto = int.TryParse(Environment.GetEnvironmentVariable("SMTP_PUERTO"), out var p) ? p : 587,
+    Usuario = Environment.GetEnvironmentVariable("SMTP_USUARIO"),
+    Password = Environment.GetEnvironmentVariable("SMTP_CLAVE"),
+    Remitente = Environment.GetEnvironmentVariable("SMTP_REMITENTE") ?? "no-responder@jaguares.org"
+};
+var app = new AppOpciones { FrontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173" };
+var usuarios = new UsuarioService(db, new EmailAdapter(NullLogger<EmailAdapter>.Instance, smtp), app);
 
 Console.WriteLine($"{(aplicar ? "IMPORTANDO" : "VERIFICANDO (sin escribir)")} datos de {Path.GetFullPath(carpeta)}");
-if (aplicar)
-    Console.WriteLine("Aviso: las cuentas internas se crean sin contraseña. La Directora les asigna una desde \"Usuarios y roles\".");
+if (aplicar && !smtp.Configurado)
+    Console.WriteLine("Aviso: SMTP no configurado. Las cuentas internas se crean, pero el enlace para la contraseña no se envía.");
 
 var resultado = await new ImportadorDatos(db, usuarios).ImportarAsync(carpeta, aplicar);
 Console.WriteLine();
@@ -73,20 +58,3 @@ foreach (var a in resultado.Archivos)
 Console.WriteLine();
 Console.WriteLine(resultado.Exito ? "Resultado: sin errores." : "Resultado: hay filas con errores. Corrige la planilla y vuelve a ejecutar (lo ya cargado no se duplica).");
 return resultado.Exito ? 0 : 2;
-
-// Lee una línea de la consola sin mostrar lo que se escribe
-static string LeerOculto(string mensaje)
-{
-    Console.Write(mensaje);
-    if (Console.IsInputRedirected) { var linea = Console.ReadLine() ?? ""; Console.WriteLine(); return linea; }
-    var texto = new System.Text.StringBuilder();
-    while (true)
-    {
-        var tecla = Console.ReadKey(intercept: true);
-        if (tecla.Key == ConsoleKey.Enter) break;
-        if (tecla.Key == ConsoleKey.Backspace) { if (texto.Length > 0) texto.Length--; continue; }
-        if (!char.IsControl(tecla.KeyChar)) texto.Append(tecla.KeyChar);
-    }
-    Console.WriteLine();
-    return texto.ToString();
-}
