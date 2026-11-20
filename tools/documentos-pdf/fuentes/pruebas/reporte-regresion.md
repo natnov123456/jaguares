@@ -6,9 +6,9 @@
 
 | Suite | Pruebas | Aprobadas | Fallidas |
 |---|---|---|---|
-| Backend (`dotnet test backend/tests/FundacionJaguares.Tests`) | 172 | **172** | 0 |
-| Frontend (`npm test`: filtros combinados) | 6 | **6** | 0 |
-| Cobertura de líneas del backend (RNF-05, meta ≥ 70 %) | — | **95,6 %** (ramas 77,9 %) | — |
+| Backend (`dotnet test backend/tests/FundacionJaguares.Tests`) | 186 | **186** | 0 |
+| Frontend (`npm test`: filtros combinados y formato de horas) | 9 | **9** | 0 |
+| Cobertura de líneas del backend (RNF-05, meta ≥ 70 %) | — | **95,7 %** (ramas 78,0 %) | — |
 
 Se ejecutan automáticamente en cada push y pull request (`.github/workflows/backend-tests.yml`) y antes de cada despliegue (`despliegue.yml`). Si una falla, no se despliega.
 
@@ -38,7 +38,7 @@ Se ejecutan automáticamente en cada push y pull request (`.github/workflows/bac
 | CP-12 | RNF-02 Seguridad | Must | `AuthTests.Endpoint_protegido_sin_token_devuelve_401_y_con_otro_rol_403`, `UsuariosTests.Desactivar_o_cambiar_rol_invalida_la_sesion_abierta` | ✅ |
 | CP-13 | RNF-03 Usabilidad | Must | Prueba con usuarios reales en la UAT (`docs/uat/rnf03-prueba-usabilidad-inscripcion.md`) | ⏳ Pendiente de la sesión con la Fundación |
 | CP-14 | RNF-04 Disponibilidad | Must | `SaludTests` + `deploy/monitoreo/reporte-disponibilidad.sh` al cierre del primer mes en producción | ⏳ Se mide en producción |
-| CP-15 | RNF-05 Cobertura ≥ 70 % | Must | CI con umbral: **95,6 %** | ✅ |
+| CP-15 | RNF-05 Cobertura ≥ 70 % | Must | CI con umbral: **95,7 %** | ✅ |
 | CP-16 | FUJ-122 Usuarios y roles | Must | `UsuariosTests.CP16_contador_no_entra_a_cursos_pero_si_a_donaciones`, `UsuariosTests.Olvide_mi_contrasena_envia_un_enlace_de_una_hora_al_correo`, `UsuariosTests.Solo_la_propia_persona_cambia_su_contrasena` y demás reglas | ✅ |
 | CP-17 | FUJ-123 Panel de indicadores | Should | `IndicadoresTests.CP17_…` (cifras = consultas SQL directas, ≤ 2 s, caché) | ✅ |
 | CP-18 | FUJ-124 Exportación | Should | `ReportesTests.CP18_asistencia_de_un_evento_con_20_participantes_en_excel` | ✅ |

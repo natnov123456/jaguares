@@ -63,7 +63,7 @@ Tiene acceso a todos los módulos.
 
 ### 1.4 Contenidos del sitio
 - **Noticias:** lista de publicadas y borradores (con filtros y exportación) y formulario *Nueva noticia*. Desmarca *Publicar ahora* para guardar un borrador.
-- **Galería:** crea álbumes, sube fotos (JPG/PNG de hasta 5 MB) o enlaces de YouTube/Vimeo y decide si el álbum es público.
+- **Galería:** crea álbumes, sube fotos (JPG/PNG de hasta 5 MB) o enlaces de YouTube/Vimeo. Arriba del álbum, un solo botón lo **Publica** (se ve en el sitio) o lo **Oculta**. En el sitio, al tocar una foto se abre sola, a pantalla completa; con las flechas se pasa a la siguiente y con Esc se cierra.
 - **Quiénes somos:** misión, visión, historia, equipo y datos de contacto.
 - **Plantillas de certificado:** logo, firmas y texto por tipo de actividad, con vista previa. Abajo se exportan los **certificados emitidos**.
 
@@ -132,7 +132,7 @@ Al terminar el evento, en *Eventos* → **Cerrar asistencia**: se envía la encu
 ## 5. Coordinador/a de voluntariado
 
 - **Voluntarios:** registro único con contacto, estado, horas aportadas e historial. Filtros por nombre, estado y fecha de postulación. Hay dos exportaciones: **Exportar** (listado) y **Exportar horas**, con un rango de fechas: voluntario, actividades y horas acumuladas.
-- **Asignaciones:** elige una actividad, marca a los voluntarios y la tarea → *Asignar* (cada voluntario recibe un aviso y lo ve en su portal). Cuando la actividad termina, en *Horas por registrar* anota las horas de cada uno: se suman a su historial.
+- **Asignaciones:** elige una actividad, marca a los voluntarios y la tarea → *Asignar* (cada voluntario recibe un aviso y lo ve en su portal). Cuando la actividad termina, en *Horas por registrar* anota el **horario** de cada uno: hora de inicio y de fin (ej. de 15:30 a 18:15) y, en los cursos, cuántos días colaboró con ese horario. El sistema calcula el total al momento ("= 2 h 45 min") y lo suma a su historial. Las horas se muestran siempre en horas y minutos, nunca con decimales.
 
 ---
 

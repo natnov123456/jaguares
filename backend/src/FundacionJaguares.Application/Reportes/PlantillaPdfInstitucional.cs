@@ -5,7 +5,7 @@ using SkiaSharp;
 namespace FundacionJaguares.Application.Reportes;
 
 // JAG-86 / corrección de la evaluación (exportaciones): plantilla PDF institucional única para todos los reportes.
-// Documentada en docs/plantilla-pdf-institucional.md.
+// Documentada en docs/plantilla-pdf-institucional.pdf (fuente: tools/documentos-pdf/fuentes).
 //
 // Se genera en dos pasos:
 //   1) Maquetar(): calcula QUÉ va en cada página y dónde (lista de elementos). Es determinista y no depende

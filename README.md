@@ -44,7 +44,10 @@ FundacionJaguares/
 │       ├── context                      # Autenticación (AuthContext)
 │       └── services                     # Conexión API (Axios)
 ├── db/                                  # Scripts SQL (schema + seed)
-└── docs/                                # Documentos del proyecto (Minuta, SRS, C4)
+├── docs/                                # Documentos del proyecto en PDF (manuales, despliegue, pruebas, cierre)
+└── tools/
+    ├── datos-demo/                      # Cargador de datos de prueba para demostraciones
+    └── documentos-pdf/                  # Fuentes de los documentos y generador de los PDF
 ```
 
 ---
@@ -86,6 +89,7 @@ psql -U postgres -d fundacion_jaguares -f db/14_asistencia_cursos.sql
 psql -U postgres -d fundacion_jaguares -f db/15_fuj122_usuarios_roles.sql
 psql -U postgres -d fundacion_jaguares -f db/16_fuj124_exportaciones.sql
 psql -U postgres -d fundacion_jaguares -f db/17_fuj125_auditoria_donaciones.sql
+psql -U postgres -d fundacion_jaguares -f db/18_horas_por_horario.sql
 ```
 
 > Si ya tenías la base creada, basta con ejecutar los scripts `03_...` en adelante que te falten.
@@ -164,6 +168,14 @@ El sistema cuenta con 3 portales diferentes según el rol del usuario. Estos usu
 | **ENCARGADO_EVENTOS** | Elena Encargada | `eventos@jaguares.org` | `Eventos123!` | `/admin` |
 | **VOLUNTARIO** | Valeria Voluntaria | `voluntario@example.com` | `Vol123!` | `/voluntario` |
 | **PARTICIPANTE** | Juan Pérez | `juan@example.com` | `Juan123!` | `/mi-cuenta` |
+
+El cargador de **datos de prueba** (`tools/datos-demo`) agrega además las cuentas `contador@jaguares.org` / `Contador123!`, `coordinacion@jaguares.org` / `Coord123!` y 18 participantes, y llena todos los módulos con datos de seis meses para demostraciones (ver `docs/datos-de-prueba.pdf`):
+
+```powershell
+cd tools/datos-demo
+npm install
+node cargar-datos-demo.mjs --api http://localhost:5055 --db "postgresql://postgres:postgres@localhost:5432/fundacion_jaguares"
+```
 
 ### Matriz de permisos
 
@@ -272,7 +284,12 @@ Septiembre 2026
 ---
 
 ## 📚 Documentos del Proyecto
-Disponibles en la carpeta [`docs/`](docs/):
+Todos en PDF en la carpeta [`docs/`](docs/):
 - **Doc 1:** Minuta de Entrevista y Relevamiento de Requerimientos.
 - **Doc 2:** Especificación de Requisitos de Software (SRS - ISO/IEC/IEEE 29148).
 - **Doc 3:** Arquitectura de Software (Modelo C4).
+- **Manuales** (`docs/manuales/`): manual del personal por rol, guía rápida para participantes, manual técnico y plan de capacitación.
+- **Despliegue, datos iniciales, datos de prueba y disponibilidad** (`docs/`, `docs/operacion/`).
+- **Pruebas y UAT** (`docs/pruebas/`, `docs/uat/`) y **cierre** (`docs/cierre/`): informe final, retrospectiva y acta.
+
+Las fuentes editables están en `tools/documentos-pdf/fuentes/` (Markdown y los Word originales). Para regenerar los PDF después de editar una fuente: `cd tools/documentos-pdf && npm install && node generar-pdf.mjs`.

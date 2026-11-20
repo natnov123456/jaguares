@@ -5,7 +5,7 @@
 > Se completa en la reunión de retrospectiva. Los puntos de partida de abajo salen de lo que muestran el repositorio, Jira y el informe de evaluación. El equipo los confirma, corrige o agrega.
 
 ## Qué funcionó
-- **Pruebas automáticas desde el Sprint 2:** cada cambio se valida con la suite completa en CI (172 pruebas, 95,6 % de cobertura). Así se detectaron conflictos al integrar trabajo de distintas personas (por ejemplo, los cursos creados por el docente frente a los asignados por la Dirección).
+- **Pruebas automáticas desde el Sprint 2:** cada cambio se valida con la suite completa en CI (186 pruebas, 95,7 % de cobertura). Así se detectaron conflictos al integrar trabajo de distintas personas (por ejemplo, los cursos creados por el docente frente a los asignados por la Dirección).
 - **Convenciones comunes:** commits con la clave de Jira (`feat(JAG-xx): … - backend/frontend`), scripts SQL numerados e idempotentes y una sola fuente de permisos por rol (`permisos.js` + `[Authorize]`).
 - **Historias con criterios Given-When-Then y casos de prueba CP-xx:** facilitaron convertir cada criterio en una prueba automática.
 - Nota del Sprint 2 (75) por encima de la del Sprint 1 (60).

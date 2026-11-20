@@ -22,7 +22,7 @@
 | D4 | Exportar el panel de indicadores a PDF | Se descarga un PDF con encabezado de la Fundación y el mes elegido | | |
 | D5 | Crear un curso y asignarle un docente | El curso aparece en el catálogo; el docente recibe un aviso | | |
 | D6 | Publicar una noticia con imagen y guardar otra como borrador | La publicada se ve en el sitio; el borrador no | | |
-| D7 | Crear un álbum y subir 3 fotos | El álbum aparece en *Galería* con miniaturas | | |
+| D7 | Crear un álbum, subir 3 fotos y tocar **Publicar** | El álbum aparece en *Galería* con miniaturas; al abrir una foto se ve sola y en grande | | |
 | D8 | Revisar el *Registro de exportaciones* | Se ven los PDF/Excel generados en la sesión, con usuario y filtros | | |
 
 ## 2. Contador — donaciones, reportes y bitácora
@@ -47,7 +47,7 @@
 | O3 | Registrar con el código escrito a mano a alguien que no trajo el celular | Queda registrado | | |
 | O4 | Exportar la asistencia del evento a Excel | Archivo con nombre, correo, inscripción, asistencia y hora — CP-18 | | |
 | O5 | Cerrar la asistencia del evento | Se envía la encuesta a los asistentes | | |
-| O6 | Asignar 2 voluntarios a una actividad y registrar sus horas | Los voluntarios lo ven en su portal; las horas suman en su historial | | |
+| O6 | Asignar 2 voluntarios a una actividad y registrar su horario (ej. de 15:30 a 18:15) | Se calcula el total (2 h 45 min); los voluntarios lo ven en su portal y las horas suman en su historial | | |
 | O7 | Exportar las horas de voluntariado del mes | Archivo con voluntario, actividades y horas acumuladas | | |
 
 ## 4. Docente — su curso

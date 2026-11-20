@@ -27,10 +27,10 @@
 | RNF-02 Seguridad | JWT ≤ 60 min, bcrypt ≥ 10, OWASP Top 10 | JWT de 60 min, bcrypt con factor 11, roles verificados en cada endpoint y además en cada solicitud (cuenta activa y rol vigente), bitácora inmutable, HTTPS con HSTS, secretos fuera del código | ✅ |
 | RNF-03 Usabilidad | Inscripción ≤ 3 min, éxito ≥ 90 % | Flujo de inscripción con un clic tras registrarse (JAG-27). Se mide con usuarios reales en la UAT. | ⏳ Pendiente de la sesión UAT |
 | RNF-04 Disponibilidad | ≥ 99,5 % mensual | `/health/live` y `/health/ready`, reinicio automático, monitoreo cada minuto y reporte mensual (JAG-28) | ⏳ Se mide al cierre del primer mes en producción |
-| RNF-05 Mantenibilidad | Cobertura ≥ 70 % | **95,6 %** de líneas (172 pruebas del backend, 6 del frontend), umbral exigido en CI | ✅ |
+| RNF-05 Mantenibilidad | Cobertura ≥ 70 % | **95,7 %** de líneas (186 pruebas del backend, 9 del frontend), umbral exigido en CI | ✅ |
 
 ## 3. Calidad
-- 172 pruebas automatizadas del backend (unitarias, de integración por módulo, de punta a punta y snapshot del PDF) y 6 del frontend. Todas pasan (`docs/pruebas/reporte-regresion.md`).
+- 186 pruebas automatizadas del backend (unitarias, de integración por módulo, de punta a punta y snapshot del PDF) y 9 del frontend. Todas pasan (`docs/pruebas/reporte-regresion.md`).
 - Casos CP-01 a CP-21: todos aprobados, salvo CP-13 (UAT) y CP-14 (primer mes en producción), que dependen de la Fundación y del tiempo.
 - Ningún bug crítico ni alto abierto.
 
