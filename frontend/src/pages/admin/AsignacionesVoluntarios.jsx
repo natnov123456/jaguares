@@ -77,7 +77,7 @@ export default function AsignacionesVoluntarios() {
         tarea: tarea || null,
       });
       const partes = [];
-      if (data.asignadas.length) partes.push(`✅ ${data.asignadas.length} voluntario(s) asignado(s). Ya lo ven en su portal.`);
+      if (data.asignadas.length) partes.push(`✅ ${data.asignadas.length} voluntario(s) asignado(s) y notificado(s).`);
       if (data.omitidas.length) partes.push(`No se asignó a: ${data.omitidas.map(o => o.motivo).join('; ')}.`);
       setMsg({ tipo: data.asignadas.length ? 'success' : 'error', texto: partes.join(' ') });
       setSeleccion(new Set());
@@ -112,7 +112,7 @@ export default function AsignacionesVoluntarios() {
   };
 
   const quitar = async (a) => {
-    if (!window.confirm(`¿Quitar a ${a.voluntario} de "${a.actividad}"? Dejará de verla en su portal.`)) return;
+    if (!window.confirm(`¿Quitar a ${a.voluntario} de "${a.actividad}"? Se le avisará por email.`)) return;
     setMsg(null);
     try {
       await voluntariosApi.cancelarAsignacion(a.id);

@@ -79,17 +79,17 @@ export default function AdminEventos() {
     }
   };
 
-  // FUJ-119: reprogramar o cancelar; si falla, el diálogo muestra el error
+  // FUJ-119: el backend avisa por correo a los inscritos; si falla, el diálogo muestra el error
   const aplicarCambio = async (datos) => {
     const { modo, evento } = cambio;
-    await (modo === 'reprogramar'
-      ? eventosApi.reprogramar(evento.id, datos)
-      : eventosApi.cancelar(evento.id, datos));
+    const { data } = modo === 'reprogramar'
+      ? await eventosApi.reprogramar(evento.id, datos)
+      : await eventosApi.cancelar(evento.id, datos);
     setCambio(null);
     setMsg({
       tipo: 'success',
       texto: `${modo === 'reprogramar' ? 'Evento reprogramado' : 'Evento cancelado'}: "${evento.titulo}". ` +
-             'Los inscritos ven el cambio en su panel.',
+             `Se avisó por correo a ${data.notificados} inscrito(s).`,
     });
     cargar();
   };
@@ -234,7 +234,7 @@ export default function AdminEventos() {
       {cerrando && (
         <EditorEncuesta
           titulo={`Cerrar asistencia: ${cerrando.titulo}`}
-          aviso="El evento quedará finalizado y no se aceptarán más check-ins. Quienes asistieron (por QR o registro manual) tendrán la encuesta disponible en su panel."
+          aviso="El evento quedará finalizado y no se aceptarán más check-ins. Quienes asistieron (por QR o registro manual) recibirán por email el enlace a esta encuesta."
           textoConfirmar="Cerrar y enviar encuesta"
           procesando={procesando}
           onConfirmar={cerrarAsistencia}

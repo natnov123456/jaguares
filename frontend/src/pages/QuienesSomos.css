@@ -45,6 +45,17 @@
 .qs-datos { list-style: none; display: flex; flex-direction: column; gap: 10px; }
 .qs-datos a { color: #b45309; }
 
+.qs-error { color: #991b1b; font-size: 0.85rem; }
+.form-stack [aria-invalid='true'] { border-color: #dc2626; }
+
+/* Fuera de la pantalla en lugar de display:none: algunos bots ignoran los campos ocultos */
+.qs-trampa {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
 
 /* Editor de la Directora */
 .qs-miembro-edit {

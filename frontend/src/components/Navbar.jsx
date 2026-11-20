@@ -141,6 +141,7 @@ export default function Navbar() {
               {puede(usuario, 'verMiCuenta') && <NavLink to="/mi-cuenta" className="nav-menu-item">Mi panel</NavLink>}
               {puede(usuario, 'verPortalVoluntario') && <NavLink to="/voluntario" className="nav-menu-item">Mi portal de voluntariado</NavLink>}
               {staff && <NavLink to="/" end className="nav-menu-item">Ver sitio público</NavLink>}
+              <NavLink to="/mi-contrasena" className="nav-menu-item">Cambiar mi contraseña</NavLink>
               <button type="button" className="nav-menu-item nav-menu-salir" onClick={salir}>Cerrar sesión</button>
             </Desplegable>
           ) : (

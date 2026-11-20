@@ -67,15 +67,14 @@ export default function Donaciones() {
             <ProgresoCampana campana={campanaDonada} />
           </div>
         )}
-        <div className="info-msg" style={{ marginTop: 12 }}>
-          {usuario
-            ? 'Listo. Descarga tu comprobante aquí o cuando quieras desde Mi panel.'
-            : 'Listo. Guarda o imprime esta pantalla como comprobante; conserva el número para cualquier consulta.'}
-        </div>
+        {confirmacion.comprobanteEnviadoEn
+          ? <div className="info-msg" style={{ marginTop: 12 }}>Te enviamos el comprobante en PDF a tu correo.</div>
+          : <div className="error-msg" style={{ marginTop: 12 }}>
+              Tu donación quedó registrada, pero no pudimos enviar el comprobante por correo.
+              {usuario ? ' Puedes descargarlo aquí o desde Mi cuenta.' : ' Escríbenos indicando el número de comprobante.'}
+            </div>}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
-          {usuario
-            ? <BotonComprobante donacion={confirmacion} />
-            : <button type="button" className="btn-secondary" onClick={() => window.print()}>Imprimir comprobante</button>}
+          {usuario && <BotonComprobante donacion={confirmacion} />}
           <button className="btn-primary" onClick={() => setConfirmacion(null)}>Hacer otra donación</button>
         </div>
       </div>
@@ -119,13 +118,13 @@ export default function Donaciones() {
           {Object.entries(MEDIOS).map(([valor, texto]) => <option key={valor} value={valor}>{texto}</option>)}
         </select>
         {usuario ? (
-          <p className="muted">El comprobante saldrá a nombre de {usuario.nombreCompleto} y quedará en tu panel.</p>
+          <p className="muted">El comprobante saldrá a nombre de {usuario.nombreCompleto} y se enviará al correo de tu cuenta.</p>
         ) : (
           <>
             <label htmlFor="d-nombre">Nombre para el comprobante</label>
             <input id="d-nombre" type="text" maxLength={150} value={nombre} onChange={e => setNombre(e.target.value)} required />
-            <label htmlFor="d-email">Correo (opcional)</label>
-            <input id="d-email" type="email" maxLength={150} value={email} onChange={e => setEmail(e.target.value)} />
+            <label htmlFor="d-email">Correo para recibir el comprobante</label>
+            <input id="d-email" type="email" maxLength={150} value={email} onChange={e => setEmail(e.target.value)} required />
           </>
         )}
         <button type="submit" className="btn-primary" disabled={procesando}>

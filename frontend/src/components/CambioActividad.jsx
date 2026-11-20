@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 // FUJ-119: diálogo para reprogramar o cancelar un evento o un curso.
-// Al confirmar, los inscritos (y la lista de espera en cursos) ven el cambio en su panel. No se envían correos.
+// Al confirmar, el backend avisa por correo a todos los inscritos (y a la lista de espera en cursos).
 //   modo: 'reprogramar' | 'cancelar'   tipo: 'EVENTO' | 'CURSO'
 //   onConfirmar(datos) debe devolver una promesa; si falla, el error se muestra dentro del diálogo.
 
@@ -85,21 +85,21 @@ export default function CambioActividad({ modo, tipo, actividad, onConfirmar, on
             </>
           )}
           <div>
-            <label htmlFor="ca-motivo">Motivo (opcional)</label>
+            <label htmlFor="ca-motivo">Motivo (opcional, se incluye en el aviso)</label>
             <textarea id="ca-motivo" rows="2" maxLength={300} value={form.motivo} onChange={set('motivo')}
                       placeholder={reprogramar ? 'Ej: pronóstico de lluvia' : 'Ej: no se alcanzó el mínimo de inscritos'} />
           </div>
 
           <div className={reprogramar ? 'info-msg' : 'error-msg'} style={{ marginBottom: 0 }}>
             {reprogramar
-              ? `${destinatarios} verán la fecha nueva en su panel.`
-              : `${destinatarios} verán la cancelación en su panel. Esta acción no se puede deshacer.`}
+              ? `${destinatarios} recibirán un correo con la fecha nueva y un recordatorio 24 h antes.`
+              : `${destinatarios} recibirán un correo de cancelación. Esta acción no se puede deshacer.`}
           </div>
           {error && <div className="error-msg" role="alert">{error}</div>}
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button type="submit" className={reprogramar ? 'btn-primary' : 'btn-danger'} disabled={enviando}>
-              {enviando ? 'Guardando...' : reprogramar ? 'Reprogramar' : `Cancelar ${nombre}`}
+              {enviando ? 'Guardando...' : reprogramar ? 'Reprogramar y avisar' : `Cancelar ${nombre} y avisar`}
             </button>
             <button type="button" className="btn-secondary" onClick={onCerrar} disabled={enviando}>Volver</button>
           </div>

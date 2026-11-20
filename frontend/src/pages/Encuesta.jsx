@@ -52,7 +52,7 @@ export default function Encuesta() {
       <div className="container page encuesta">
         <section className="panel encuesta-tarjeta">
           <h1>Enlace no válido</h1>
-          <p className="muted">Este enlace de encuesta no existe o está incompleto. Ábrela desde las encuestas pendientes de tu panel.</p>
+          <p className="muted">Este enlace de encuesta no existe o está incompleto. Revisa que lo hayas copiado completo desde el correo.</p>
           <Link to="/" className="btn-primary" style={{ display: 'inline-block', marginTop: 16 }}>Ir al inicio</Link>
         </section>
       </div>

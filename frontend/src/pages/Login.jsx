@@ -37,6 +37,7 @@ export default function Login() {
         <input id="l-pass" type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required />
         <button type="submit" className="btn-primary">Ingresar</button>
       </form>
+      <p><Link to="/olvide-contrasena">¿Olvidaste tu contraseña?</Link></p>
       {/* RNF-03: quien llega desde "Inscribirme" sigue con su curso aunque primero cree la cuenta */}
       <p>¿No tienes cuenta? <Link to="/registro" state={location.state}>Regístrate</Link></p>
     </div>
