@@ -127,14 +127,14 @@ public class ReportesActividades(AppDbContext db) : IProveedorReportes
             "Horas de voluntariado",
             "Actividades en las que participó cada voluntario y horas acumuladas en el período",
             [new("Voluntario", 2f), new("Correo", 2.2f), new("Estado", 0.9f), new("N° de actividades", 1f, true),
-             new("Actividades", 4f), new("Horas", 0.8f, true)],
+             new("Actividades", 4f), new("Horas", 1f, true)],
             filtrados.Select(x => new[]
             {
                 x.NombreCompleto, x.Email, Fmt.Estado(x.Estado), Fmt.Entero(x.Actividades.Count),
-                string.Join("; ", x.Actividades), Fmt.Num(x.Horas)
+                string.Join("; ", x.Actividades), Fmt.Horas(x.Horas)
             }).ToList(),
             FiltroCombinado.Describir(f, null, Fmt.Estado),
-            [new("Voluntarios", Fmt.Entero(filtrados.Count)), new("Horas totales", Fmt.Num(filtrados.Sum(x => x.Horas)))]);
+            [new("Voluntarios", Fmt.Entero(filtrados.Count)), new("Horas totales", Fmt.Horas(filtrados.Sum(x => x.Horas)))]);
     }
 
     private async Task<TablaReporte> ExportacionesAsync(SolicitanteReporte s, FiltrosReporte f)

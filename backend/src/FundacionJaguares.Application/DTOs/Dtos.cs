@@ -136,9 +136,11 @@ public record MesPublicadoDto(int Anio, int Mes, decimal TotalRecaudado);
 
 // VOLUNTARIADO
 public record PostulacionVoluntarioDto(string NombreCompleto, string Email, string? Telefono);
-public record RegistrarParticipacionDto(Guid? EventoId, string Descripcion, decimal? Horas = null);
+// Horario como "HH:mm" (ej. "15:30" a "18:15"); las horas se calculan a partir de él
+public record RegistrarParticipacionDto(Guid? EventoId, string Descripcion, string? HoraInicio = null, string? HoraFin = null);
 public record ParticipacionDto(Guid Id, Guid? EventoId, string? EventoTitulo, string? Descripcion, DateTime Fecha,
-                               decimal? Horas = null, Guid? CursoId = null, string? CursoTitulo = null);
+                               decimal? Horas = null, Guid? CursoId = null, string? CursoTitulo = null,
+                               string? HoraInicio = null, string? HoraFin = null, int? Dias = null);
 public record VoluntarioConHistorialDto(Guid Id, string NombreCompleto, string Email, string? Telefono,
                                         string Estado, DateTime PostuladoEn, List<ParticipacionDto> Historial,
                                         decimal TotalHoras = 0);
@@ -147,12 +149,14 @@ public record VoluntarioConHistorialDto(Guid Id, string NombreCompleto, string E
 public record ActividadAsignableDto(string Tipo, Guid Id, string Titulo, string? Lugar, DateTime Inicio, DateTime? Fin,
                                     bool TodoElDia, int Asignados);
 public record AsignarVoluntariosDto(List<Guid>? VoluntarioIds, Guid? EventoId, Guid? CursoId, string? Tarea);
-public record RegistrarHorasDto(decimal Horas);
+// Horario de la colaboración ("HH:mm") y días con ese horario (cursos de varios días); el total se calcula
+public record RegistrarHorasDto(string? HoraInicio, string? HoraFin, int? Dias = 1);
 // Finalizada = la actividad ya terminó: solo entonces se pueden registrar horas
 public record AsignacionDto(Guid Id, Guid VoluntarioId, string Voluntario, string? Email,
                             string Tipo, Guid ActividadId, string Actividad, string? Lugar,
                             DateTime Inicio, DateTime? Fin, bool TodoElDia, bool Finalizada,
-                            string? Tarea, string Estado, decimal? Horas, DateTime AsignadoEn);
+                            string? Tarea, string Estado, decimal? Horas, DateTime AsignadoEn,
+                            string? HoraInicio = null, string? HoraFin = null, int? Dias = null);
 public record AsignacionOmitidaDto(Guid VoluntarioId, string Motivo);
 public record ResultadoAsignacionDto(List<AsignacionDto> Asignadas, List<AsignacionOmitidaDto> Omitidas);
 

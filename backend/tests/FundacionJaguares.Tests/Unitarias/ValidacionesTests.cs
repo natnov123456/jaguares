@@ -74,6 +74,32 @@ public class ValidacionesTests
     [InlineData(200)]
     public void ValidarHoras_acepta_valores_validos(decimal horas) => VoluntariadoService.ValidarHoras(horas);
 
+    [Theory]
+    [InlineData("10:00", "12:00", 1, 2)]
+    [InlineData("15:30", "18:15", 1, 2.75)]
+    [InlineData("9:00", "9:20", 1, 0.33)]
+    [InlineData("14:00", "15:45", 4, 7)]
+    public void CalcularHoras_desde_el_horario(string inicio, string fin, int dias, decimal esperado) =>
+        Assert.Equal(esperado, VoluntariadoService.CalcularHoras(inicio, fin, dias).Horas);
+
+    [Theory]
+    [InlineData("12:00", "10:00", 1)]
+    [InlineData("10:00", "10:00", 1)]
+    [InlineData("10", "12:00", 1)]
+    [InlineData("", "12:00", 1)]
+    [InlineData("10:00", "12:00", 0)]
+    [InlineData("08:00", "20:00", 20)] // 240 h: supera el máximo
+    public void CalcularHoras_rechaza_horarios_invalidos(string inicio, string fin, int dias) =>
+        Assert.Throws<ArgumentException>(() => VoluntariadoService.CalcularHoras(inicio, fin, dias));
+
+    [Theory]
+    [InlineData(2.75, "2 h 45 min")]
+    [InlineData(3, "3 h")]
+    [InlineData(0.5, "30 min")]
+    [InlineData(0.33, "20 min")]
+    public void Horas_se_muestran_en_horas_y_minutos(decimal horas, string esperado) =>
+        Assert.Equal(esperado, FundacionJaguares.Application.Reportes.Fmt.Horas(horas));
+
     [Fact]
     public void ValidarPreguntas_sin_preguntas_usa_las_por_defecto()
     {

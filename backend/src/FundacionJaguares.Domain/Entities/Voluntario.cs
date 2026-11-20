@@ -20,6 +20,10 @@ public class ParticipacionVoluntario
     public DateTime Fecha { get; set; } = DateTime.UtcNow;
     // FUJ-118: horas aportadas, curso apoyado y asignación que originó la fila (si la hubo)
     public decimal? Horas { get; set; }
+    // Horario en que colaboró (ej. 15:30 a 18:15) y cuántos días con ese horario; Horas es el total calculado
+    public TimeOnly? HoraInicio { get; set; }
+    public TimeOnly? HoraFin { get; set; }
+    public int? Dias { get; set; }
     public Guid? CursoId { get; set; }
     public Guid? AsignacionId { get; set; }
 }
@@ -34,6 +38,9 @@ public class AsignacionVoluntario
     public string? Tarea { get; set; }
     public string Estado { get; set; } = "ASIGNADA"; // ASIGNADA | COMPLETADA | CANCELADA
     public decimal? Horas { get; set; }
+    public TimeOnly? HoraInicio { get; set; }
+    public TimeOnly? HoraFin { get; set; }
+    public int? Dias { get; set; }
     public Guid? AsignadoPor { get; set; }
     public DateTime AsignadoEn { get; set; } = DateTime.UtcNow;
     public Guid? HorasRegistradasPor { get; set; }

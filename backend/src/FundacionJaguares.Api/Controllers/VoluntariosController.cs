@@ -46,7 +46,7 @@ public class VoluntariosController : ControllerBase
     [Authorize(Roles = Coordinacion)]
     public async Task<IActionResult> RegistrarParticipacion(Guid id, RegistrarParticipacionDto dto)
     {
-        try { return Ok(await _voluntarios.RegistrarParticipacionAsync(id, dto.EventoId, dto.Descripcion, dto.Horas)); }
+        try { return Ok(await _voluntarios.RegistrarParticipacionAsync(id, dto.EventoId, dto.Descripcion, dto.HoraInicio, dto.HoraFin)); }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
     }
@@ -86,7 +86,7 @@ public class VoluntariosController : ControllerBase
     [Authorize(Roles = Coordinacion)]
     public async Task<IActionResult> RegistrarHoras(Guid id, RegistrarHorasDto dto)
     {
-        try { return Ok(await _voluntariado.RegistrarHorasAsync(id, dto.Horas, UsuarioId())); }
+        try { return Ok(await _voluntariado.RegistrarHorasAsync(id, dto.HoraInicio, dto.HoraFin, dto.Dias, UsuarioId())); }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
         catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
