@@ -187,7 +187,8 @@ export const voluntariosApi = {
   asignaciones: (params) => api.get('/Voluntarios/asignaciones', { params }),
   asignar: (data) => api.post('/Voluntarios/asignaciones', data),
   cancelarAsignacion: (id) => api.delete(`/Voluntarios/asignaciones/${id}`),
-  registrarHoras: (id, horas) => api.put(`/Voluntarios/asignaciones/${id}/horas`, { horas }),
+  // Horario { horaInicio: "15:30", horaFin: "18:15", dias }: el backend calcula las horas
+  registrarHoras: (id, horario) => api.put(`/Voluntarios/asignaciones/${id}/horas`, horario),
   misAsignaciones: () => api.get('/Voluntarios/mis-asignaciones'),
 };
 

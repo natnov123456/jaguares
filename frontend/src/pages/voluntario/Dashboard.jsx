@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { voluntariosApi } from '../../services/api';
 import Estado from '../../components/Estado';
-import { fecha, fechaActividad, horas as formatoHoras } from '../../utils/formato';
+import { fecha, fechaActividad, horas as formatoHoras, horario } from '../../utils/formato';
 
 export default function VoluntarioDashboard() {
   const { usuario } = useAuth();
@@ -90,7 +90,11 @@ export default function VoluntarioDashboard() {
                   <li key={h.id} style={{ borderLeft: '3px solid #f59e0b', paddingLeft: 12 }}>
                     <strong>{fecha(h.fecha)}</strong>
                     {(h.eventoTitulo || h.cursoTitulo) && <span className="muted"> · {h.eventoTitulo || h.cursoTitulo}</span>}
-                    {h.horas != null && <span className="badge badge-ok" style={{ marginLeft: 8 }}>{formatoHoras(h.horas)}</span>}
+                    {h.horas != null && (
+                      <span className="badge badge-ok" style={{ marginLeft: 8 }}>
+                        {h.horaInicio ? `${horario(h.horaInicio, h.horaFin, h.dias)} · ` : ''}{formatoHoras(h.horas)}
+                      </span>
+                    )}
                     <div>{h.descripcion}</div>
                   </li>
                 ))}

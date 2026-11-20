@@ -37,9 +37,26 @@ export const ESTADO_BADGE = {
   COMPLETADA: 'badge-ok',
 };
 
-// FUJ-118: horas de voluntariado ("6.5" -> "6,5 h")
+// FUJ-118: horas de voluntariado en horas y minutos (2.75 -> "2 h 45 min", 3 -> "3 h", 0.5 -> "30 min")
 export function horas(valor) {
-  return `${Number(valor ?? 0).toLocaleString('es-BO', { maximumFractionDigits: 2 })} h`;
+  const minutos = Math.round(Number(valor ?? 0) * 60);
+  const h = Math.floor(minutos / 60), m = minutos % 60;
+  if (h === 0 && m === 0) return '0 h';
+  if (m === 0) return `${h} h`;
+  return h === 0 ? `${m} min` : `${h} h ${m} min`;
+}
+
+// Horario de una colaboración: "15:30 a 18:15" (y "× 4 días" si se repitió). Vacío si no hay horario.
+export function horario(inicio, fin, dias) {
+  if (!inicio || !fin) return '';
+  return `${inicio.slice(0, 5)} a ${fin.slice(0, 5)}${dias > 1 ? ` × ${dias} días` : ''}`;
+}
+
+// Horas que resultan de un horario "HH:mm" a "HH:mm" (por días). null si el horario no es válido.
+export function horasDeHorario(inicio, fin, dias = 1) {
+  const minutos = (t) => { const [h, m] = String(t ?? '').split(':').map(Number); return Number.isInteger(h) && Number.isInteger(m) ? h * 60 + m : NaN; };
+  const total = (minutos(fin) - minutos(inicio)) * (Number(dias) || 1);
+  return total > 0 ? Math.round((total / 60) * 100) / 100 : null;
 }
 
 // Fecha de una actividad: los cursos (todoElDia) llegan sin hora y se muestran como rango de días

@@ -628,3 +628,9 @@ button:disabled { opacity: .75; }
 .barras-h-barra { height: 14px; border-radius: 0 4px 4px 0; min-width: 2px; }
 .barras-h-valor { color: #1f2937; font-weight: 600; }
 .error-text { color: #991b1b; }
+
+/* Horas de voluntariado por horario: "de 15:30 a 18:15 = 2 h 45 min" */
+.horario-form { display: inline-flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.horario-campo { display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #4b5563; }
+.horario-campo input { padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font: inherit; }
+.horario-total { font-weight: 600; color: #065f46; min-width: 6.5em; font-size: 0.9rem; }
