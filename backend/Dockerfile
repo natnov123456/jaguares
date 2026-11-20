@@ -13,6 +13,9 @@ COPY --from=compilacion /app .
 ENV ASPNETCORE_URLS=http://+:8080 \
     ASPNETCORE_ENVIRONMENT=Production \
     Almacenamiento__RutaLocal=/datos/uploads
+# La carpeta de archivos (certificados, galería, plantillas) debe pertenecer al usuario que corre la API:
+# un volumen nuevo hereda este dueño. Sin esto, guardar archivos falla con "acceso denegado".
+RUN mkdir -p /datos/uploads && chown -R app:app /datos
 VOLUME /datos/uploads
 EXPOSE 8080
 # Corre sin privilegios de administrador
