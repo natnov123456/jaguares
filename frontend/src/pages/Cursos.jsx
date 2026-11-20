@@ -8,6 +8,10 @@ import BarraFiltros from '../components/filtros/BarraFiltros';
 import useFiltros from '../hooks/useFiltros';
 import { aplicarFiltros } from '../utils/filtros';
 
+// Fecha de hoy en Bolivia como "AAAA-MM-DD" (mismo formato que fechaInicio): un curso que empieza hoy sigue abierto
+const hoyBolivia = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/La_Paz' }).format(new Date());
+const yaComenzo = (c) => String(c.fechaInicio).slice(0, 10) < hoyBolivia();
+
 const DISPONIBILIDAD = [{ valor: 'CON_CUPO', etiqueta: 'Con cupos' }, { valor: 'LLENO', etiqueta: 'Llenos (lista de espera)' }];
 
 export default function Cursos() {
@@ -60,7 +64,7 @@ export default function Cursos() {
   };
 
   const unirse = (id) => ejecutar(id, cursosApi.unirseListaEspera,
-    (d) => `Te anotaste en la lista de espera ⏳ Tu posición es la ${d.posicion}. Si se libera un cupo quedarás inscrito/a automáticamente; lo verás en Mi panel.`);
+    (d) => `Te anotaste en la lista de espera ⏳ Tu posición es la ${d.posicion}. Si se libera un cupo quedarás inscrito/a automáticamente y te avisaremos por email.`);
 
   const salir = (c) => {
     if (!window.confirm(`¿Salir de la lista de espera de "${c.titulo}"? Perderás tu posición.`)) return;
@@ -68,6 +72,9 @@ export default function Cursos() {
   };
 
   const accion = (c) => {
+    if (inscritos.has(c.id)) return <Link to="/mi-cuenta" className="badge badge-ok">✓ Ya estás inscrito/a</Link>;
+    // Solo se inscribe a cursos que empiezan hoy o más adelante (hora de Bolivia)
+    if (yaComenzo(c)) return <span className="badge badge-off">Ya comenzó · inscripciones cerradas</span>;
     // Visitante: se le pide iniciar sesión y vuelve aquí después
     if (!usuario) {
       return (
@@ -81,7 +88,6 @@ export default function Cursos() {
     }
     // Staff: los cursos se gestionan desde el panel, no se inscriben
     if (!puedeInscribirse) return null;
-    if (inscritos.has(c.id)) return <Link to="/mi-cuenta" className="badge badge-ok">✓ Ya estás inscrito/a</Link>;
 
     const ocupado = procesando === c.id;
     const lugar = espera.get(c.id);
@@ -110,8 +116,9 @@ export default function Cursos() {
   const visibles = aplicarFiltros(cursos, valores, {
     texto: c => [c.titulo, c.descripcion], estado: c => (c.cupoDisponible > 0 ? 'CON_CUPO' : 'LLENO'), fecha: c => c.fechaInicio,
   });
-  const pendiente = puedeInscribirse && pendienteId && !inscritos.has(pendienteId) && !espera.has(pendienteId)
+  const elegido = puedeInscribirse && pendienteId && !inscritos.has(pendienteId) && !espera.has(pendienteId)
     ? cursos.find(c => c.id === pendienteId) : null;
+  const pendiente = elegido && !yaComenzo(elegido) ? elegido : null;
 
   return (
     <div className="container" style={{ padding: '32px 24px' }}>
