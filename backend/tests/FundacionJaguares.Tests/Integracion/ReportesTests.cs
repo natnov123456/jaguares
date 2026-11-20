@@ -33,8 +33,11 @@ public class ReportesTests(ApiFixture api)
         var (ana, anaId, _) = await api.NuevoParticipanteAsync("Ana Exportada");
         var (beto, betoId, _) = await api.NuevoParticipanteAsync("Beto Exportado");
         var (caro, _, _) = await api.NuevoParticipanteAsync("Carolina Anaya");
+        // Se inscriben antes de que empiece el curso; luego el curso empieza (hace 2 días)
+        await api.MoverInicioDelCursoAsync(id, Hoy.AddDays(1));
         foreach (var c in new[] { ana, beto, caro })
             await (await c.PostAsync($"/api/Cursos/{id}/inscribir", null)).EsperarAsync(HttpStatusCode.OK);
+        await api.MoverInicioDelCursoAsync(id, Hoy.AddDays(-2));
         await (await docente.PostJsonAsync($"/api/Cursos/{id}/asistencia", new
         {
             fecha = Hoy, registros = new[] { new { participanteId = anaId, presente = true }, new { participanteId = betoId, presente = false } }

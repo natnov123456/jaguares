@@ -202,4 +202,39 @@ public class CursosTests(ApiFixture api)
         await (await docente.PostAsync($"/api/Cursos/{Guid.NewGuid()}/finalizar", null)).EsperarAsync(HttpStatusCode.NotFound);
         await (await docente.PutJsonAsync($"/api/Cursos/{Guid.NewGuid()}/plantilla", new { plantillaId = (Guid?)null })).EsperarAsync(HttpStatusCode.NotFound);
     }
+
+    // Solo se inscribe (o se anota en la lista de espera) a cursos que empiezan hoy o más adelante, en hora de Bolivia
+    [Fact]
+    public async Task Solo_se_inscribe_a_cursos_que_empiezan_hoy_o_despues()
+    {
+        var hoy = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(-4));
+        var dir = await api.DirectoraAsync();
+        var docenteId = await api.DocenteIdAsync();
+        async Task<Guid> CrearAsync(int inicio, int fin, int cupo = 10) =>
+            (await (await dir.PostJsonAsync("/api/Cursos", new
+            {
+                titulo = "Fechas " + Guid.NewGuid().ToString("N")[..5], descripcion = (string?)null,
+                fechaInicio = hoy.AddDays(inicio), fechaFin = hoy.AddDays(fin), cupoMaximo = cupo, asistenciaMinimaPct = 80, docenteId
+            })).JsonAsync()).Id();
+
+        var (ana, _, _) = await api.NuevoParticipanteAsync();
+        var empiezaHoy = await CrearAsync(0, 5);
+        var manana = await CrearAsync(1, 5);
+        var enMarcha = await CrearAsync(-1, 5);
+        var terminado = await CrearAsync(-10, -2);
+
+        await (await ana.PostAsync($"/api/Cursos/{empiezaHoy}/inscribir", null)).EsperarAsync(HttpStatusCode.OK);
+        await (await ana.PostAsync($"/api/Cursos/{manana}/inscribir", null)).EsperarAsync(HttpStatusCode.OK);
+        var r1 = await (await ana.PostAsync($"/api/Cursos/{enMarcha}/inscribir", null)).JsonAsync(HttpStatusCode.BadRequest);
+        Assert.Contains("ya comenzó", r1.Str("error"));
+        var r2 = await (await ana.PostAsync($"/api/Cursos/{terminado}/inscribir", null)).JsonAsync(HttpStatusCode.BadRequest);
+        Assert.Contains("ya terminó", r2.Str("error"));
+
+        // Tampoco se entra a la lista de espera de un curso lleno que ya empezó
+        var (beto, _, _) = await api.NuevoParticipanteAsync();
+        var llenoEnMarcha = await CrearAsync(1, 5, cupo: 1);
+        await (await ana.PostAsync($"/api/Cursos/{llenoEnMarcha}/inscribir", null)).EsperarAsync(HttpStatusCode.OK);
+        await api.MoverInicioDelCursoAsync(llenoEnMarcha, hoy.AddDays(-1));
+        await (await beto.PostAsync($"/api/Cursos/{llenoEnMarcha}/lista-espera", null)).EsperarAsync(HttpStatusCode.BadRequest);
+    }
 }

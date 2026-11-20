@@ -79,6 +79,18 @@ public class CursoService : ICursoService
         return c;
     }
 
+    // Fecha de hoy en Bolivia (UTC-4): un curso que empieza hoy todavía admite inscripciones
+    public static DateOnly HoyBolivia() => DateOnly.FromDateTime(DateTime.UtcNow.AddHours(-4));
+
+    // Solo se puede inscribir (o anotar en la lista de espera) a cursos que empiezan hoy o más adelante
+    private static void ExigirQueNoHayaComenzado(Curso curso)
+    {
+        if (curso.FechaInicio < HoyBolivia())
+            throw new InvalidOperationException(curso.FechaFin < HoyBolivia()
+                ? "El curso ya terminó: no admite inscripciones"
+                : "El curso ya comenzó: solo puedes inscribirte en cursos que empiezan hoy o más adelante");
+    }
+
     public async Task<Inscripcion> InscribirAsync(Guid cursoId, Guid participanteId)
     {
         if (await _cursos.ExisteInscripcionAsync(cursoId, participanteId))
@@ -88,6 +100,7 @@ public class CursoService : ICursoService
                     ?? throw new KeyNotFoundException("Curso no encontrado");
         if (!EstadosAbiertos.Contains(curso.Estado))
             throw new InvalidOperationException("El curso no está abierto a inscripciones");
+        ExigirQueNoHayaComenzado(curso);
 
         if (!await _cursos.ReservarCupoAsync(cursoId))
             throw new InvalidOperationException("No hay cupos disponibles. Puedes unirte a la lista de espera.");
@@ -171,8 +184,7 @@ public class CursoService : ICursoService
                     ?? throw new KeyNotFoundException("Curso no encontrado");
         if (!EstadosAbiertos.Contains(curso.Estado))
             throw new InvalidOperationException("El curso no está abierto a inscripciones");
-        if (curso.FechaFin < DateOnly.FromDateTime(DateTime.UtcNow))
-            throw new InvalidOperationException("El curso ya terminó");
+        ExigirQueNoHayaComenzado(curso);
 
         ListaEspera lugar;
         await using (var tx = await _db.Database.BeginTransactionAsync())
