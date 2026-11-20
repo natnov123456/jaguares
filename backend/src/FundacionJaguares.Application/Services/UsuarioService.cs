@@ -131,4 +131,17 @@ public class UsuarioService : IUsuarioService
         u.ActualizadoEn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
     }
+
+    // Primera puesta en marcha: como no se envían correos, la contraseña de la primera cuenta de Dirección
+    // se asigna desde el servidor con el importador (comando "contrasena"). Solo cuentas internas activas.
+    public async Task<UsuarioDto> AsignarContrasenaPorCorreoAsync(string? email, string? password)
+    {
+        var correo = email?.Trim().ToLowerInvariant() ?? "";
+        var u = await _db.Usuarios.SingleOrDefaultAsync(x => x.Email.ToLower() == correo)
+                ?? throw new KeyNotFoundException($"No existe una cuenta con el correo '{correo}'");
+        if (u.Rol is Rol.PARTICIPANTE or Rol.VOLUNTARIO or Rol.VISITANTE)
+            throw new InvalidOperationException("Solo se asigna desde el servidor la contraseña de cuentas del personal");
+        await CambiarContrasenaAsync(u.Id, password);
+        return ADto(u);
+    }
 }

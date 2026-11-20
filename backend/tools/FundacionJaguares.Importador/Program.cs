@@ -10,13 +10,15 @@ using Npgsql.NameTranslation;
 // Sin --aplicar solo VERIFICA (no escribe nada): úsalo primero y revisa los errores.
 // Conexión: variable JAGUARES_CONEXION (por defecto la base local de desarrollo).
 // Las cuentas internas se crean sin contraseña utilizable: la Directora les asigna una desde "Usuarios y roles".
+// La contraseña de la PRIMERA Directora se asigna desde el servidor (la plataforma no envía correos):
+//   dotnet run --project tools/FundacionJaguares.Importador -- contrasena <correo>
+// La contraseña se lee de la variable JAGUARES_CONTRASENA o se pide por consola sin mostrarla.
 if (args.Length == 0 || args[0] is "-h" or "--help")
 {
     Console.WriteLine("Uso: FundacionJaguares.Importador <carpeta-con-csv> [--aplicar]");
+    Console.WriteLine("     FundacionJaguares.Importador contrasena <correo>   (asigna la contraseña de una cuenta del personal)");
     return 1;
 }
-var carpeta = args[0];
-var aplicar = args.Contains("--aplicar");
 var conexion = Environment.GetEnvironmentVariable("JAGUARES_CONEXION")
                ?? "Host=localhost;Port=5432;Database=fundacion_jaguares;Username=postgres;Password=postgres";
 
@@ -29,6 +31,31 @@ var opciones = new DbContextOptionsBuilder<AppDbContext>()
 await using var db = new AppDbContext(opciones);
 
 var usuarios = new UsuarioService(db);
+
+if (args[0] == "contrasena")
+{
+    if (args.Length < 2) { Console.WriteLine("Indica el correo de la cuenta: contrasena <correo>"); return 1; }
+    var password = Environment.GetEnvironmentVariable("JAGUARES_CONTRASENA");
+    if (string.IsNullOrEmpty(password))
+    {
+        password = LeerOculto("Contraseña nueva (8+ caracteres, letras y números): ");
+        if (LeerOculto("Repite la contraseña: ") != password) { Console.WriteLine("Las contraseñas no coinciden."); return 1; }
+    }
+    try
+    {
+        var cuenta = await usuarios.AsignarContrasenaPorCorreoAsync(args[1], password);
+        Console.WriteLine($"Listo: {cuenta.NombreCompleto} ({cuenta.Rol}) ya puede iniciar sesión con {cuenta.Email}.");
+        return 0;
+    }
+    catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or KeyNotFoundException)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+        return 2;
+    }
+}
+
+var carpeta = args[0];
+var aplicar = args.Contains("--aplicar");
 
 Console.WriteLine($"{(aplicar ? "IMPORTANDO" : "VERIFICANDO (sin escribir)")} datos de {Path.GetFullPath(carpeta)}");
 if (aplicar)
@@ -46,3 +73,20 @@ foreach (var a in resultado.Archivos)
 Console.WriteLine();
 Console.WriteLine(resultado.Exito ? "Resultado: sin errores." : "Resultado: hay filas con errores. Corrige la planilla y vuelve a ejecutar (lo ya cargado no se duplica).");
 return resultado.Exito ? 0 : 2;
+
+// Lee una línea de la consola sin mostrar lo que se escribe
+static string LeerOculto(string mensaje)
+{
+    Console.Write(mensaje);
+    if (Console.IsInputRedirected) { var linea = Console.ReadLine() ?? ""; Console.WriteLine(); return linea; }
+    var texto = new System.Text.StringBuilder();
+    while (true)
+    {
+        var tecla = Console.ReadKey(intercept: true);
+        if (tecla.Key == ConsoleKey.Enter) break;
+        if (tecla.Key == ConsoleKey.Backspace) { if (texto.Length > 0) texto.Length--; continue; }
+        if (!char.IsControl(tecla.KeyChar)) texto.Append(tecla.KeyChar);
+    }
+    Console.WriteLine();
+    return texto.ToString();
+}

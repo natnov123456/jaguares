@@ -39,6 +39,11 @@ JAGUARES_CONEXION="..." \
 - **Se puede ejecutar varias veces:** lo que ya se cargó no se duplica (cuentas y voluntarios por correo; cursos por título y fecha de inicio; donaciones por fecha, monto, referencia y donante; noticias por título).
 - Al final, la columna **Conteo** compara las filas válidas del archivo con los registros en la base: debe decir `OK` en todos. Ese es el control de **conteos origen = destino** que se valida con la Encargada de Operaciones.
 - Las cuentas internas importadas no pueden iniciar sesión hasta que la Directora les asigne una contraseña desde *Panel → Usuarios y roles → Contraseña*. No se envían correos.
+- **La primera Directora** recibe su contraseña desde el servidor, porque todavía no hay nadie que se la asigne:
+  ```bash
+  JAGUARES_CONEXION="..." dotnet run --project tools/FundacionJaguares.Importador -- contrasena directora@correo
+  ```
+  Pide la contraseña dos veces sin mostrarla (8 caracteres o más, con letras y números). Solo funciona con cuentas del personal. En producción, la base no expone su puerto: se ejecuta dentro de la red de Docker (ver `docs/despliegue.md`, paso 6).
 
 Ejemplo real (con las plantillas de ejemplo, contra una base recién migrada):
 

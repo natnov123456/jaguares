@@ -32,8 +32,15 @@ Archivos: `deploy/docker-compose.prod.yml`, `deploy/Caddyfile`, `deploy/.env.exa
    docker compose -f docker-compose.prod.yml logs -f migraciones   # aplica db/*.sql
    ```
    Caddy obtiene el certificado HTTPS automáticamente en el primer acceso y lo renueva solo.
-5. Cargar los datos iniciales y crear las cuentas del personal (ver `docs/datos-iniciales.md`, JAG-76).
-6. Programar el monitoreo de disponibilidad (ver `docs/operacion/disponibilidad-rnf04.md`).
+5. Cargar los datos iniciales y crear las cuentas del personal (ver `docs/datos-iniciales.md`, JAG-76). La planilla `cuentas_internas.csv` debe incluir a la **Directora**.
+6. **Contraseña de la primera Directora.** La plataforma no envía correos y las cuentas importadas no tienen contraseña, así que la de la Directora se asigna desde el servidor (pide la contraseña sin mostrarla en pantalla):
+   ```bash
+   docker run --rm -it --network jaguares_default -v /opt/jaguares/backend:/src -w /src \
+     -e JAGUARES_CONEXION="Host=db;Database=<POSTGRES_DB>;Username=<POSTGRES_USER>;Password=<POSTGRES_PASSWORD>" \
+     mcr.microsoft.com/dotnet/sdk:10.0 dotnet run --project tools/FundacionJaguares.Importador -- contrasena directora@correo
+   ```
+   Con esa cuenta, la Directora entra y asigna las contraseñas del resto del personal desde *Usuarios y roles*.
+7. Programar el monitoreo de disponibilidad (ver `docs/operacion/disponibilidad-rnf04.md`).
 
 ## 2. CI/CD (despliegue automático desde `main`)
 
@@ -68,6 +75,8 @@ El servicio `migraciones` ejecuta `deploy/scripts/aplicar-scripts.sh` antes de i
   docker compose -f docker-compose.prod.yml exec respaldos bash /scripts/probar-restauracion.sh
   ```
   Se recomienda ejecutarla una vez al mes y anotar el resultado en el informe.
+
+**Prueba del despliegue completo con Docker (19/11/2026):** con `docker-compose.prod.yml`, las imágenes construidas desde `main` y `DOMINIO=localhost` (Caddy emite un certificado local). Resultados: migraciones aplicadas (16 scripts); `/health/ready` en 200 con la base de datos y la caché sanas; HTTP → HTTPS con 308; cabeceras HSTS y `X-Frame-Options`; endpoint protegido sin token en 401; respaldo creado y restauración probada ("RESTAURACIÓN EXITOSA"); primera Directora importada, contraseña asignada desde el servidor e inicio de sesión por HTTPS correcto. Falta repetirlo en el servidor real con el dominio oficial.
 
 Los scripts de migración, respaldo y prueba de restauración se probaron contra PostgreSQL 16 local. Primera ejecución: aplicó 16 scripts y omitió los datos de demostración. Segunda ejecución: no aplicó nada. El respaldo se restauró con éxito.
 
