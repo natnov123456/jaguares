@@ -10,7 +10,7 @@ public class DonacionesTests(ApiFixture api)
 {
     private static object Donacion(decimal monto, string medio = "EFECTIVO", string? nombre = null, string? email = null,
         Guid? campanaId = null, string? referencia = null) =>
-        new { monto, medio, referencia, donanteId = (Guid?)null, donanteNombre = nombre, donanteEmail = email, campanaId };
+        new { monto, medio, referencia, donanteId = (Guid?)null, donanteNombre = nombre, donanteEmail = email, campanaId, aceptaTerminos = true, aceptaPrivacidad = true };
 
     [Fact]
     public async Task Registro_manual_valida_monto_medio_y_donante()
@@ -66,7 +66,7 @@ public class DonacionesTests(ApiFixture api)
         Assert.StartsWith("DON-", publica.Str("referencia"));
 
         var (juan, _, _) = await api.NuevoParticipanteAsync();
-        var conSesion = await (await juan.PostJsonAsync("/api/Donaciones/en-linea", new { monto = 30, medio = "", donanteId = (Guid?)null })).JsonAsync();
+        var conSesion = await (await juan.PostJsonAsync("/api/Donaciones/en-linea", new { monto = 30, medio = "", donanteId = (Guid?)null, aceptaTerminos = true, aceptaPrivacidad = true })).JsonAsync();
         Assert.Equal("PASARELA", conSesion.Str("medio"));
         var mias = await (await juan.GetAsync("/api/Donaciones/mias")).JsonAsync();
         Assert.Single(mias.EnumerateArray());

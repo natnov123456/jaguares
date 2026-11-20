@@ -32,7 +32,7 @@ public class AuthTests(ApiFixture api)
     public async Task Registro_crea_participante_y_no_permite_email_repetido()
     {
         var email = $"r{Guid.NewGuid().ToString("N")[..12]}@prueba.bo";
-        var datos = new { nombreCompleto = "Nueva Persona", email, password = "Clave123!", telefono = "70000000" };
+        var datos = new { nombreCompleto = "Nueva Persona", email, password = "Clave123!", telefono = "70000000", aceptaTerminos = true, aceptaPrivacidad = true };
 
         var r = await api.Anonimo().PostJsonAsync("/api/Auth/registro", datos);
         var json = await r.JsonAsync();

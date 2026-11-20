@@ -26,7 +26,7 @@ public class ValidacionesTests
     [InlineData("https://youtu.be/dQw4w9WgXcQ?t=5", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")]
     [InlineData("https://youtube.com/shorts/dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")]
     [InlineData("https://m.youtube.com/watch?feature=x&v=dQw4w9WgXcQ", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ")]
-    [InlineData("https://vimeo.com/76979871", "https://player.vimeo.com/video/76979871")]
+    [InlineData("https://vimeo.com/76979871", "https://player.vimeo.com/video/76979871?dnt=1")]
     public void NormalizarVideo_acepta_youtube_y_vimeo(string url, string embed)
     {
         var (resultado, miniatura) = GaleriaService.NormalizarVideo(url);

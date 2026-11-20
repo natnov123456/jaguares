@@ -25,9 +25,9 @@ public class VoluntariadoTests(ApiFixture api)
     {
         var email = $"v{Guid.NewGuid().ToString("N")[..10]}@correo.com";
         var v = await (await api.Anonimo().PostJsonAsync("/api/Voluntarios/postular",
-            new { nombreCompleto = "Vale Voluntaria", email, telefono = "70000001" })).JsonAsync();
+            new { nombreCompleto = "Vale Voluntaria", email, telefono = "70000001", aceptaTerminos = true, aceptaPrivacidad = true })).JsonAsync();
         await (await api.Anonimo().PostJsonAsync("/api/Voluntarios/postular",
-            new { nombreCompleto = "Otra", email, telefono = (string?)null })).EsperarAsync(HttpStatusCode.BadRequest);
+            new { nombreCompleto = "Otra", email, telefono = (string?)null, aceptaTerminos = true, aceptaPrivacidad = true })).EsperarAsync(HttpStatusCode.BadRequest);
 
         var enc = await api.EncargadoAsync();
         var evento = await EventoAsync("Limpieza del parque", DateTime.UtcNow.AddDays(-2));

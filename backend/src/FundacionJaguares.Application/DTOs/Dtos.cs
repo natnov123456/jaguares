@@ -1,7 +1,9 @@
 namespace FundacionJaguares.Application.DTOs;
 
 // AUTH
-public record RegistroDto(string NombreCompleto, string Email, string Password, string? Telefono);
+// AceptaTerminos / AceptaPrivacidad: las dos casillas obligatorias de cada formulario con datos personales
+public record RegistroDto(string NombreCompleto, string Email, string Password, string? Telefono,
+                          bool? AceptaTerminos = null, bool? AceptaPrivacidad = null);
 public record LoginDto(string Email, string Password);
 public record TokenDto(string Token, string NombreCompleto, string Rol, DateTime Expira);
 
@@ -109,7 +111,8 @@ public record PlantillaCertificadoDto(Guid Id, string Nombre, string TipoActivid
 
 // DONACIONES
 public record CrearDonacionDto(decimal Monto, string Medio, string? Referencia, Guid? DonanteId,
-                               string? DonanteNombre = null, string? DonanteEmail = null, Guid? CampanaId = null);
+                               string? DonanteNombre = null, string? DonanteEmail = null, Guid? CampanaId = null,
+                               bool? AceptaTerminos = null, bool? AceptaPrivacidad = null);
 // FUJ-125: corrección y anulación de una donación (quedan en la bitácora de auditoría)
 public record EditarDonacionDto(decimal Monto, string Medio, string? Referencia, Guid? CampanaId, string? Motivo = null);
 public record AnularDonacionDto(string Motivo);
@@ -135,7 +138,8 @@ public record ResumenTransparenciaDto(int Anio, int Mes, decimal TotalRecaudado,
 public record MesPublicadoDto(int Anio, int Mes, decimal TotalRecaudado);
 
 // VOLUNTARIADO
-public record PostulacionVoluntarioDto(string NombreCompleto, string Email, string? Telefono);
+public record PostulacionVoluntarioDto(string NombreCompleto, string Email, string? Telefono,
+                                       bool? AceptaTerminos = null, bool? AceptaPrivacidad = null);
 // Horario como "HH:mm" (ej. "15:30" a "18:15"); las horas se calculan a partir de él
 public record RegistrarParticipacionDto(Guid? EventoId, string Descripcion, string? HoraInicio = null, string? HoraFin = null);
 public record ParticipacionDto(Guid Id, Guid? EventoId, string? EventoTitulo, string? Descripcion, DateTime Fecha,
@@ -192,7 +196,8 @@ public record PaginaInstitucionalDto(string? Mision, string? Vision, string? His
                                      string? Direccion, string? Telefono, string? EmailContacto, string? Horario,
                                      DateTime? ActualizadoEn);
 // SitioWeb es un campo trampa (honeypot): oculto para personas, los bots lo llenan
-public record ConsultaContactoDto(string? Nombre, string? Email, string? Asunto, string? Mensaje, string? SitioWeb);
+public record ConsultaContactoDto(string? Nombre, string? Email, string? Asunto, string? Mensaje, string? SitioWeb,
+                                  bool? AceptaTerminos = null, bool? AceptaPrivacidad = null);
 
 // GALERÍA (FUJ-126)
 public record GuardarAlbumDto(string Titulo, string? Descripcion, bool Publicado);

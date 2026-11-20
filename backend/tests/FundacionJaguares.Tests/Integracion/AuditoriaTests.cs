@@ -82,7 +82,7 @@ public class AuditoriaTests(ApiFixture api)
     {
         var d = await (await api.Anonimo().PostJsonAsync("/api/Donaciones/en-linea", new
         {
-            monto = 50, medio = "QR", referencia = (string?)null, donanteId = (Guid?)null, donanteNombre = "Visitante Generoso", donanteEmail = "visitante@correo.com"
+            monto = 50, medio = "QR", referencia = (string?)null, donanteId = (Guid?)null, donanteNombre = "Visitante Generoso", donanteEmail = "visitante@correo.com", aceptaTerminos = true, aceptaPrivacidad = true
         })).JsonAsync();
         var regs = Registros(await (await (await api.DirectoraAsync()).GetAsync($"/api/Auditoria/donaciones?q={d.GetProperty("numeroComprobante").GetInt64()}")).JsonAsync());
         var alta = Assert.Single(regs);

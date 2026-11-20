@@ -141,7 +141,7 @@ public sealed class ApiFixture : IAsyncLifetime
     {
         var email = $"p{Guid.NewGuid().ToString("N")[..12]}@prueba.bo";
         var r = await Anonimo().PostAsJsonAsync("/api/Auth/registro",
-            new { nombreCompleto = nombre ?? "Participante Prueba", email, password = "Clave123!", telefono = (string?)null });
+            new { nombreCompleto = nombre ?? "Participante Prueba", email, password = "Clave123!", telefono = (string?)null, aceptaTerminos = true, aceptaPrivacidad = true });
         r.EnsureSuccessStatusCode();
         var cliente = await ComoAsync(email, "Clave123!");
         return (cliente, await IdDeAsync(email), email);

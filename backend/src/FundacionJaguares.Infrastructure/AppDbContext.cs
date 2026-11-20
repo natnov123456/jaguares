@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<TokenContrasena> TokensContrasena => Set<TokenContrasena>();
     public DbSet<Exportacion> Exportaciones => Set<Exportacion>();
     public DbSet<AuditoriaDonacion> AuditoriaDonaciones => Set<AuditoriaDonacion>();
+    public DbSet<RegistroActividad> RegistroActividad => Set<RegistroActividad>();
+    public DbSet<Consentimiento> Consentimientos => Set<Consentimiento>();
     public DbSet<Curso> Cursos => Set<Curso>();
     public DbSet<Inscripcion> Inscripciones => Set<Inscripcion>();
     public DbSet<ListaEspera> ListaEspera => Set<ListaEspera>();
@@ -55,6 +57,10 @@ public class AppDbContext : DbContext
             e.Property(x => x.ValorAnterior).HasColumnType("jsonb");
             e.Property(x => x.ValorNuevo).HasColumnType("jsonb");
         });
+
+        // Registro de actividad y consentimientos: solo se insertan (la base rechaza modificar o borrar)
+        mb.Entity<RegistroActividad>(e => { e.ToTable("registro_actividad"); e.HasKey(x => x.Id); });
+        mb.Entity<Consentimiento>(e => { e.ToTable("consentimientos"); e.HasKey(x => x.Id); });
 
         mb.Entity<Exportacion>(e =>
         {

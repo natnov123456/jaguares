@@ -77,6 +77,11 @@ builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 builder.Services.AddScoped<IEncuestaService, EncuestaService>();
 // FUJ-122: cuentas del personal y roles
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+// Términos y privacidad aceptados en cada formulario, y registro de actividad (quién entró, cuándo y qué hizo)
+builder.Services.AddScoped<IConsentimientoService, ConsentimientoService>();
+builder.Services.AddScoped<IRegistroActividadService, RegistroActividadService>();
+builder.Services.AddSingleton<FundacionJaguares.Api.ColaRegistroActividad>();
+builder.Services.AddHostedService<FundacionJaguares.Api.EscritorRegistroActividad>();
 // FUJ-124: reportes exportables (PDF institucional / Excel). Cada módulo aporta sus reportes con un IProveedorReportes.
 builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<IProveedorReportes, ReportesActividades>();
@@ -235,6 +240,8 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseCors("front");
 app.UseAuthentication();
+// Después de la autenticación (ya se sabe quién es) y antes de la autorización (también quedan los accesos denegados)
+app.UseRegistroActividad();
 app.UseAuthorization();
 app.UseRateLimiter();
 app.MapControllers();

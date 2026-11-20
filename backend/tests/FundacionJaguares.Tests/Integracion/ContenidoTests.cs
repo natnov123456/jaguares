@@ -125,19 +125,19 @@ public class ContenidoTests(ApiFixture api)
     {
         var anon = api.Anonimo();
         var errores = await (await anon.PostJsonAsync("/api/Contacto",
-            new { nombre = "", email = "malo", asunto = (string?)null, mensaje = "corto", sitioWeb = "" })).JsonAsync(HttpStatusCode.BadRequest);
+            new { nombre = "", email = "malo", asunto = (string?)null, mensaje = "corto", sitioWeb = "", aceptaTerminos = true, aceptaPrivacidad = true })).JsonAsync(HttpStatusCode.BadRequest);
         foreach (var campo in new[] { "nombre", "email", "mensaje" })
             Assert.True(errores.GetProperty("errores").TryGetProperty(campo, out _), campo);
 
         await (await anon.PostJsonAsync("/api/Contacto",
-            new { nombre = "Ana", email = "ana@correo.com", asunto = (string?)null, mensaje = "http://a http://b http://c http://d texto", sitioWeb = "" }))
+            new { nombre = "Ana", email = "ana@correo.com", asunto = (string?)null, mensaje = "http://a http://b http://c http://d texto", sitioWeb = "", aceptaTerminos = true, aceptaPrivacidad = true }))
             .EsperarAsync(HttpStatusCode.BadRequest);
         // Campo trampa lleno: responde OK pero no guarda nada
         await (await anon.PostJsonAsync("/api/Contacto",
-            new { nombre = "Bot", email = "bot@spam.com", asunto = "x", mensaje = "Compre ahora barato", sitioWeb = "http://spam" }))
+            new { nombre = "Bot", email = "bot@spam.com", asunto = "x", mensaje = "Compre ahora barato", sitioWeb = "http://spam", aceptaTerminos = true, aceptaPrivacidad = true }))
             .EsperarAsync(HttpStatusCode.OK);
         await (await anon.PostJsonAsync("/api/Contacto",
-            new { nombre = "Ana", email = "ana@correo.com", asunto = "Voluntariado\r\nBcc: x@y.com", mensaje = "Quiero ser voluntaria.", sitioWeb = "" }))
+            new { nombre = "Ana", email = "ana@correo.com", asunto = "Voluntariado\r\nBcc: x@y.com", mensaje = "Quiero ser voluntaria.", sitioWeb = "", aceptaTerminos = true, aceptaPrivacidad = true }))
             .EsperarAsync(HttpStatusCode.OK);
     }
 
