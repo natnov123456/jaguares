@@ -16,7 +16,7 @@
 
 ### Cambios de alcance y de equipo en el Sprint 3
 - Las subtareas de FUJ-122 (JAG-81, 82 y 83), asignadas inicialmente a un integrante que dejó de participar, se repartieron entre Natalia, Jhonattan y Luzmila.
-- **Sin correos ni WhatsApp (19/11):** la plataforma confirma cada acción en pantalla y en el panel de cada persona. La Directora asigna la contraseña inicial del personal (ya no hay enlace por correo) y se retiró el formulario de contacto de FUJ-127; "Quiénes somos" muestra los datos de contacto.
+- **Contraseñas y fechas de inscripción (20/11):** se agregó *¿Olvidaste tu contraseña?* (enlace de 1 hora por correo) y *Cambiar mi contraseña*; solo la propia persona puede cambiar su contraseña y solo la Dirección da de baja cuentas. Ya no se admiten inscripciones a cursos que comenzaron. Los correos (confirmaciones, recordatorios, comprobantes, encuestas y formulario de contacto) funcionan con el SMTP de la Fundación.
 - Se incorporaron al Sprint 3 las correcciones del **informe de evaluación de los Sprints 1 y 2** (notas: 60 y 75): filtros combinados reutilizables, exportación con PDF institucional en todas las pantallas, log de cada PDF generado y de los errores de render, pruebas de combinaciones de filtros y de regresión (snapshot) del PDF, y verificación de permisos antes de exportar sin datos sensibles en los metadatos.
 
 ## 2. Cumplimiento de los requisitos no funcionales
@@ -27,10 +27,10 @@
 | RNF-02 Seguridad | JWT ≤ 60 min, bcrypt ≥ 10, OWASP Top 10 | JWT de 60 min, bcrypt con factor 11, roles verificados en cada endpoint y además en cada solicitud (cuenta activa y rol vigente), bitácora inmutable, HTTPS con HSTS, secretos fuera del código | ✅ |
 | RNF-03 Usabilidad | Inscripción ≤ 3 min, éxito ≥ 90 % | Flujo de inscripción con un clic tras registrarse (JAG-27). Se mide con usuarios reales en la UAT. | ⏳ Pendiente de la sesión UAT |
 | RNF-04 Disponibilidad | ≥ 99,5 % mensual | `/health/live` y `/health/ready`, reinicio automático, monitoreo cada minuto y reporte mensual (JAG-28) | ⏳ Se mide al cierre del primer mes en producción |
-| RNF-05 Mantenibilidad | Cobertura ≥ 70 % | **95,9 %** de líneas (168 pruebas del backend, 6 del frontend), umbral exigido en CI | ✅ |
+| RNF-05 Mantenibilidad | Cobertura ≥ 70 % | **95,6 %** de líneas (172 pruebas del backend, 6 del frontend), umbral exigido en CI | ✅ |
 
 ## 3. Calidad
-- 168 pruebas automatizadas del backend (unitarias, de integración por módulo, de punta a punta y snapshot del PDF) y 6 del frontend. Todas pasan (`docs/pruebas/reporte-regresion.md`).
+- 172 pruebas automatizadas del backend (unitarias, de integración por módulo, de punta a punta y snapshot del PDF) y 6 del frontend. Todas pasan (`docs/pruebas/reporte-regresion.md`).
 - Casos CP-01 a CP-21: todos aprobados, salvo CP-13 (UAT) y CP-14 (primer mes en producción), que dependen de la Fundación y del tiempo.
 - Ningún bug crítico ni alto abierto.
 
@@ -50,4 +50,4 @@
 2. Planillas reales para la carga de datos iniciales.
 3. Sesión de UAT y firma del acta de aceptación (incluye la medición de RNF-03).
 4. Taller de capacitación (2 h) con su grabación y la lista de asistencia firmada.
-5. Credenciales de la pasarela de pago.
+5. Credenciales de la pasarela de pago y del correo institucional (SMTP).

@@ -28,7 +28,7 @@ Observaciones: ______________________________________________________________
 | Servidor / hosting (usuario administrador y clave SSH) | | | ☐ |
 | Archivo de secretos `deploy/.env` (entregado en persona, no por correo) | | | ☐ |
 | Cuenta de Dirección en la plataforma (y desactivación de las cuentas del equipo) | | | ☐ |
-| Pasarela de pago (credenciales del proveedor) | | | ☐ |
+| Correo institucional (SMTP) y pasarela de pago | | | ☐ |
 | Respaldos: ubicación y procedimiento de restauración probado | | | ☐ |
 | Monitor de disponibilidad (Uptime Kuma / registro mensual) | | | ☐ |
 | Documentación (`docs/`) en PDF y en Confluence | | | ☐ |

@@ -7,8 +7,8 @@ Para el personal técnico que mantenga la plataforma después de la entrega.
 ### Nivel 1 — Contexto
 ```
  Visitantes / participantes / voluntarios ──┐
- Personal de la Fundación (5 roles) ────────┼──► Plataforma web Jaguares ──► Pasarela de pago (QR/tarjeta)
-                                            │
+ Personal de la Fundación (5 roles) ────────┼──► Plataforma web Jaguares ──► Servidor de correo (SMTP)
+                                            │                           └─► Pasarela de pago (QR/tarjeta)
 ```
 
 ### Nivel 2 — Contenedores
@@ -19,7 +19,7 @@ Para el personal técnico que mantenga la plataforma después de la entrega.
 | Base de datos | PostgreSQL 16 | Todos los datos; bitácora de auditoría de solo lectura (trigger) |
 | Caché | Redis 7 | Panel de indicadores (10 min). Es opcional: sin Redis se usa memoria |
 | Proxy | Caddy 2 | HTTPS automático (Let's Encrypt), redirección HTTP→HTTPS, encabezados de seguridad |
-| Tarea programada | `RecordatoriosWorker` (dentro de la API) | Apagada por defecto (`Recordatorios:Habilitado = false`): la plataforma no envía correos |
+| Tarea programada | `RecordatoriosWorker` (dentro de la API) | Recordatorios 24 h antes, cada hora |
 | Respaldos | contenedor `postgres` con `respaldo.sh` | `pg_dump` diario, retención de 30 días |
 
 ### Nivel 3 — Componentes de la API
@@ -30,7 +30,7 @@ Controllers (Api/Controllers)          → reciben HTTP, verifican el rol ([Auth
   └─► Reportes (Application/Reportes)  → ReporteService + IProveedorReportes por módulo,
   │                                       PlantillaPdfInstitucional, GeneradorExcel, FiltroCombinado
   └─► Infrastructure                   → AppDbContext (EF Core + Npgsql), repositorios, adaptadores
-                                          (pago, almacenamiento de archivos; correo y WhatsApp desactivados)
+                                          (correo, WhatsApp, pago, almacenamiento de archivos)
 ```
 - **Frontend:** `src/config/permisos.js` define qué ve cada rol (debe coincidir con el backend). `src/utils/filtros.js`, `useFiltros` y `BarraFiltros` forman el módulo de filtros combinados. `BotonExportar` maneja las exportaciones.
 - **Plantilla PDF:** ver `docs/plantilla-pdf-institucional.md`.
@@ -75,4 +75,4 @@ Todo el procedimiento está en **`docs/despliegue.md`**. En resumen:
 | Agregar un reporte exportable | Ver "Cómo agregar un reporte nuevo" en `docs/plantilla-pdf-institucional.md` |
 | Agregar un rol | Valor nuevo en `rol_enum` (script SQL), `Rol` (Domain), tabla `roles`, `permisos.js` y `[Authorize]` |
 | Cambiar la clave JWT | Editar `JWT_SECRET` en `deploy/.env` y reiniciar la API (todas las sesiones se cierran) |
-| Correo y WhatsApp | Desactivados: `EmailAdapter` y `WhatsAppAdapter` no envían nada. Las confirmaciones se muestran en pantalla y en el panel de cada persona |
+| Configurar el correo | `SMTP_*` en `deploy/.env` |

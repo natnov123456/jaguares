@@ -102,7 +102,19 @@ dotnet user-secrets set "ConnectionStrings:Default" "Host=localhost;Port=5432;Da
 ```
 *Se ejecuta una sola vez; el backend la usa automáticamente al correr en modo desarrollo.*
 
-**Sin correos.** La plataforma no envía correos ni WhatsApp: cada acción se confirma en pantalla ("Listo", "Registrado") y cada persona ve sus inscripciones, certificados, encuestas y asignaciones en su panel. Las cuentas del personal las crea la Directora en *Usuarios y roles* con una contraseña inicial que entrega a la persona (y puede asignar una nueva desde la misma pantalla).
+**Enlaces en los correos.** Las encuestas de satisfacción se envían con un enlace al frontend (`App:FrontendUrl`, por defecto `http://localhost:5173`). En producción configúralo con la dirección pública: `dotnet user-secrets set "App:FrontendUrl" "https://tu-dominio"`.
+
+**Correo (opcional).** Sin configuración, los correos (confirmaciones, formulario de contacto) **no se envían**: solo se escriben en la consola del backend, lo cual alcanza para desarrollar. Para enviarlos de verdad, configura un servidor SMTP con *user-secrets* (por ejemplo, Gmail con una contraseña de aplicación):
+```powershell
+cd backend/src/FundacionJaguares.Api
+dotnet user-secrets set "Smtp:Host" "smtp.gmail.com"
+dotnet user-secrets set "Smtp:Puerto" "587"
+dotnet user-secrets set "Smtp:Usuario" "cuenta@gmail.com"
+dotnet user-secrets set "Smtp:Password" "CONTRASEÑA_DE_APLICACION"
+dotnet user-secrets set "Smtp:Remitente" "cuenta@gmail.com"
+# Correo que recibe las consultas si la Directora no cargó uno en "Quiénes somos"
+dotnet user-secrets set "Contacto:EmailDestino" "contacto@jaguares.org"
+```
 
 **Archivos subidos.** Las fotos de la galería se guardan en `backend/src/FundacionJaguares.Api/wwwroot/uploads/` (no se suben al repositorio) y la API las sirve en `http://localhost:5055/uploads/...`. Para usar otra carpeta: `dotnet user-secrets set "Almacenamiento:RutaLocal" "D:\ruta\uploads"`.
 
@@ -181,11 +193,12 @@ Los permisos de la interfaz están centralizados en `frontend/src/config/permiso
 
 ### Sitio Público (Landing Page)
 - **Inicio:** Información de la fundación, estadísticas y noticias.
-- **Cursos:** Listado de talleres con control de cupos en tiempo real. Si un curso está lleno, el participante se une a la **lista de espera** y queda inscrito automáticamente cuando alguien cancela (lo ve en Mi panel).
+- **Cursos:** Listado de talleres con control de cupos en tiempo real. Si un curso está lleno, el participante se une a la **lista de espera** y queda inscrito automáticamente (con aviso por email) cuando alguien cancela. Solo se puede inscribir a cursos que empiezan **hoy o más adelante**: los que ya comenzaron muestran "Ya comenzó · inscripciones cerradas".
 - **Verificar Certificado:** Búsqueda pública por código para validar autenticidad.
 - **Donaciones:** Pasarela para donar en línea (QR, transferencia o tarjeta).
 - **Voluntariado:** Formulario público para postularse como voluntario.
-- **Encuesta (`/encuesta/:token`):** Enlace personal que aparece en *Mi panel* (encuestas pendientes) al terminar una actividad; 3 a 5 preguntas, se responde una sola vez.
+- **Encuesta (`/encuesta/:token`):** Enlace personal que llega por email al terminar una actividad; 3 a 5 preguntas, se responde una sola vez sin iniciar sesión.
+- **Contraseñas:** en *Iniciar sesión* está **¿Olvidaste tu contraseña?**, que envía al correo un enlace (1 hora, un solo uso) para definir una nueva. Con la sesión iniciada, *menú de cuenta → Cambiar mi contraseña*. Solo la propia persona puede cambiar su contraseña.
 
 ### Mi panel (`/mi-cuenta`) — Participante y Voluntario
 - **Resumen:** cursos en marcha, próximos eventos, actividades completadas, certificados y lugares en lista de espera.
@@ -196,11 +209,11 @@ Los permisos de la interfaz están centralizados en `frontend/src/config/permiso
 
 ### Portal de Administración (`/admin`) — cada rol ve solo sus secciones
 - **Panel:** Tarjetas de las secciones permitidas para el rol.
-- **Mis cursos:** Cursos con inscritos/cupo y botón "Finalizar y certificar" (docente: solo los suyos), que también habilita la encuesta de satisfacción en el panel de los participantes.
+- **Mis cursos:** Cursos con inscritos/cupo y botón "Finalizar y certificar" (docente: solo los suyos), que también envía la encuesta de satisfacción.
 - **Encuestas:** Promedio de satisfacción, resultados por pregunta y comentarios (sin nombres) de cada actividad. Directora: todas; docente: sus cursos; encargado: eventos.
-- **Eventos:** Listado (incluye los ya realizados) y creación de eventos. Al terminar, **Cerrar asistencia** finaliza el evento y habilita la encuesta de satisfacción en el panel de quienes asistieron.
+- **Eventos:** Listado (incluye los ya realizados) y creación de eventos. Al terminar, **Cerrar asistencia** finaliza el evento y envía la encuesta de satisfacción a quienes asistieron.
 - **Voluntarios:** Registro único con historial de actividades y total de horas aportadas.
-- **Asignaciones:** Asignar voluntarios a eventos o cursos publicados (cada uno lo ve en su portal) y registrar sus horas cuando la actividad termina; las horas se suman a su historial.
+- **Asignaciones:** Asignar voluntarios a eventos o cursos publicados (cada uno recibe un aviso por email/WhatsApp) y registrar sus horas cuando la actividad termina; las horas se suman a su historial.
 - **Donaciones:** La directora ve el reporte mensual con selector de mes; el encargado registra efectivo y ve sus registros.
 - **Noticias:** Editor para publicar novedades en el sitio público.
 

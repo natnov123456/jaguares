@@ -10,11 +10,11 @@ Este manual explica, por rol, cómo hacer las tareas del día a día. Cada perso
 
 ## 0. Primeros pasos (todos los roles)
 
-**Tu cuenta.** La Dirección crea tu cuenta y te entrega en persona tu correo de acceso y una contraseña inicial. La plataforma no envía correos. Si olvidas la contraseña, pide a la Dirección que te asigne una nueva.
+**Activar la cuenta.** La Dirección crea tu cuenta y te llega un correo *"Tu cuenta en la Fundación Unión de los Jaguares"*. Abre el enlace (vale 24 horas y sirve una sola vez) y define tu contraseña: al menos 8 caracteres, con letras y números. Si el enlace venció, pide a la Dirección que te lo reenvíe. *[Captura: pantalla "Define tu contraseña"]*
+
+**Tu contraseña es solo tuya.** Nadie más puede cambiarla, ni la Dirección. Para cambiarla: *menú de tu nombre → Cambiar mi contraseña* (pide la actual). Si la olvidaste: en *Iniciar sesión* toca **¿Olvidaste tu contraseña?**, escribe tu correo y abre el enlace que te llega (vale 1 hora y sirve una sola vez).
 
 **Ingresar.** *Ingresar* → correo y contraseña. Llegas al **Panel de control**, que muestra las tarjetas de tus módulos. *[Captura: panel de control]*
-
-**Menú superior.** Tus módulos están agrupados en menús desplegables (*Cursos*, *Eventos y voluntariado*, *Finanzas*, *Sitio web*, *Gestión*); solo ves los de tu rol. Si un grupo tiene un solo módulo para ti, aparece como enlace directo. Tu nombre, a la derecha, abre el menú de cuenta con *Ver sitio público* y *Cerrar sesión*. En el celular, todo está en el botón ☰.
 
 **La sesión dura 60 minutos.** Si la Dirección te cambia el rol o desactiva tu cuenta, la sesión se cierra en ese momento.
 
@@ -34,10 +34,10 @@ Tiene acceso a todos los módulos.
 
 ### 1.1 Usuarios y roles
 *Panel → Usuarios y roles* *[Captura]*
-1. **Nueva cuenta del personal:** nombre, correo, teléfono (opcional), rol y **contraseña inicial** (8 caracteres o más, con letras y números) → *Crear cuenta*. Entrégale a la persona su correo y su contraseña; no se envía ningún correo. Debajo del rol se describe qué puede hacer.
+1. **Nueva cuenta del personal:** nombre, correo, teléfono (opcional) y rol → *Crear y enviar enlace*. Debajo del rol se describe qué puede hacer.
 2. **Cambiar el rol:** elige otro rol en la lista de esa persona. Deberá volver a iniciar sesión.
-3. **Desactivar o activar:** *Desactivar* bloquea el ingreso de inmediato. Nunca puedes desactivarte ni cambiarte el rol a ti misma, y siempre debe quedar una cuenta de Dirección activa.
-4. **Contraseña:** asigna una contraseña nueva a la persona (por ejemplo, si la olvidó). La anterior deja de servir. También sirve para las cuentas cargadas con la importación de datos iniciales, que se crean sin contraseña.
+3. **Desactivar o activar (dar de baja):** solo la Dirección puede hacerlo. *Desactivar* bloquea el ingreso de inmediato. Nunca puedes desactivarte ni cambiarte el rol a ti misma, y siempre debe quedar una cuenta de Dirección activa.
+4. **Reenviar enlace:** si la persona no definió su contraseña a tiempo. La Dirección **no** ve ni cambia contraseñas: la persona la define con el enlace o con *¿Olvidaste tu contraseña?*.
 
 | Rol | Puede |
 |---|---|
@@ -56,15 +56,15 @@ Tiene acceso a todos los módulos.
 ### 1.3 Cursos
 *Panel → Cursos de la fundación* *[Captura]*
 - **+ Crear curso:** título, descripción, **docente a cargo**, fechas, cupo, asistencia mínima para certificar y plantilla del certificado.
-- La columna *Docente* permite reasignar el curso. El docente nuevo lo ve en su panel.
+- La columna *Docente* permite reasignar el curso. El docente nuevo recibe un aviso por correo.
 - *Asistencia y datos* abre el detalle del curso (ver 4. Docente).
-- *Reprogramar* / *Cancelar*: los inscritos y la lista de espera ven el cambio en su panel.
+- *Reprogramar* / *Cancelar* avisan por correo a los inscritos y a la lista de espera.
 - *Finalizar y certificar* emite los certificados (solo a quien alcanza la asistencia mínima) y envía la encuesta.
 
 ### 1.4 Contenidos del sitio
 - **Noticias:** lista de publicadas y borradores (con filtros y exportación) y formulario *Nueva noticia*. Desmarca *Publicar ahora* para guardar un borrador.
 - **Galería:** crea álbumes, sube fotos (JPG/PNG de hasta 5 MB) o enlaces de YouTube/Vimeo y decide si el álbum es público.
-- **Quiénes somos:** misión, visión, historia, equipo y datos de contacto (se muestran en la página; el sitio no tiene formulario de mensajes).
+- **Quiénes somos:** misión, visión, historia, equipo y datos de contacto.
 - **Plantillas de certificado:** logo, firmas y texto por tipo de actividad, con vista previa. Abajo se exportan los **certificados emitidos**.
 
 ### 1.5 Registro de exportaciones
@@ -77,7 +77,7 @@ Tiene acceso a todos los módulos.
 ### 2.1 Donaciones
 *Panel → Donaciones* *[Captura]*
 - Elige **mes y año**. Arriba ves el *Total recaudado*.
-- **Registrar efectivo** (columna derecha): monto, recibo, nombre y correo del donante (opcionales) y campaña. El comprobante PDF se descarga desde la lista con *Comprobante PDF* para entregarlo al donante.
+- **Registrar efectivo** (columna derecha): monto, recibo, nombre y correo del donante (opcionales) y campaña. Si pones el correo, el donante recibe su comprobante PDF.
 - **Corregir:** cambia el monto, el medio o la referencia, con un motivo opcional.
 - **Anular:** el motivo es obligatorio. La donación deja de sumar en el reporte, las campañas y la transparencia.
 - Las correcciones y anulaciones quedan registradas en la bitácora con tu nombre y la hora.
@@ -101,12 +101,12 @@ Elige el mes, revisa el total recaudado y reparte el destino de los fondos por c
 ## 3. Encargado/a de operaciones
 
 ### 3.1 Eventos
-*Panel → Eventos*: crea eventos (título, lugar, inicio y fin), reprográmalos o cancélalos (los inscritos lo ven en su panel). Debajo de la lista: *Inscritos y asistencia del evento* → elige un evento → **Exportar** (Excel o PDF con nombre, correo, inscripción, asistencia y hora de ingreso).
+*Panel → Eventos*: crea eventos (título, lugar, inicio y fin), reprográmalos o cancélalos (se avisa a los inscritos). Debajo de la lista: *Inscritos y asistencia del evento* → elige un evento → **Exportar** (Excel o PDF con nombre, correo, inscripción, asistencia y hora de ingreso).
 
 ### 3.2 Check-in con QR (asistencia a eventos)
 *Panel → Check-in QR* desde el **celular** *[Captura]*:
 1. Elige el evento y toca *Activar cámara*.
-2. Apunta al QR del participante (lo tiene en *Mi panel*). Verás "Asistencia registrada" con su nombre.
+2. Apunta al QR del participante (lo tiene en *Mi panel* o en el correo de recordatorio). Verás "Asistencia registrada" con su nombre.
 3. Si vuelve a pasar, aparece "La asistencia ya fue registrada": no se duplica.
 4. Si no trajo el celular: escribe su código en *O escribe el código*.
 5. Abajo, la lista de inscritos con la hora de ingreso, con filtros y **Exportar asistencia**.
@@ -122,7 +122,7 @@ Al terminar el evento, en *Eventos* → **Cerrar asistencia**: se envía la encu
 ## 4. Docente
 
 *Panel → Mis cursos*: solo los cursos que la Dirección te asignó.
-- **Asistencia** (detalle del curso) *[Captura]*: elige el día y marca *Presente / Ausente* a cada inscrito. Todos empiezan como presentes, así que solo tocas a los ausentes. Hay botones *Todos presentes / Todos ausentes*. Al guardar, cada participante ve su porcentaje en su panel. Puedes corregir un día ya registrado.
+- **Asistencia** (detalle del curso) *[Captura]*: elige el día y marca *Presente / Ausente* a cada inscrito. Todos empiezan como presentes, así que solo tocas a los ausentes. Hay botones *Todos presentes / Todos ausentes*. Al guardar, cada participante recibe un correo con su porcentaje. Puedes corregir un día ya registrado.
 - **Exportar inscritos y asistencia:** PDF o Excel con el porcentaje de cada persona y quiénes alcanzan el mínimo.
 - **Datos del curso:** título, descripción, cupo y asistencia mínima. Las fechas se cambian con *Reprogramar*, que avisa a los inscritos.
 - **Finalizar y certificar:** emite certificados solo a quienes alcanzan la asistencia mínima y envía la encuesta.
@@ -140,7 +140,8 @@ Al terminar el evento, en *Eventos* → **Cerrar asistencia**: se envía la encu
 
 | Pregunta | Respuesta |
 |---|---|
-| Olvidé mi contraseña | Pide a la Dirección que te asigne una nueva desde *Usuarios y roles → Contraseña*. |
+| No me llegó el correo para la contraseña | Revisa el correo no deseado. Si pasaron 24 h, pide a la Dirección *Reenviar enlace*. |
+| Olvidé mi contraseña | *Iniciar sesión → ¿Olvidaste tu contraseña?* y abre el enlace del correo (1 hora). |
 | "No tienes permiso para exportar este reporte" | Tu rol no incluye ese módulo. Pide el reporte a quien corresponde. |
 | "No hay datos para exportar" | Con esos filtros no hay registros. Usa *Limpiar filtros* o amplía las fechas. |
 | Me sacó de la sesión | Pasaron 60 minutos o la Dirección cambió tu rol. Vuelve a ingresar. |

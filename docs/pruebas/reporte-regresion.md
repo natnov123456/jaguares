@@ -1,14 +1,14 @@
 # Reporte de pruebas de regresión e integración (JAG-75)
 
-**Fecha de ejecución:** 19/11/2026 · **Rama:** `main` · **Entorno:** PostgreSQL 16 aislado por ejecución (`jaguares_test_xxxx`), API completa en memoria (WebApplicationFactory). Los avisos que generan los servicios se capturan en memoria para verificarlos; en producción la plataforma no envía correos.
+**Fecha de ejecución:** 20/11/2026 · **Rama:** `main` · **Entorno:** PostgreSQL 16 aislado por ejecución (`jaguares_test_xxxx`), API completa en memoria (WebApplicationFactory), correos capturados.
 
 ## Resultado general
 
 | Suite | Pruebas | Aprobadas | Fallidas |
 |---|---|---|---|
-| Backend (`dotnet test backend/tests/FundacionJaguares.Tests`) | 168 | **168** | 0 |
+| Backend (`dotnet test backend/tests/FundacionJaguares.Tests`) | 172 | **172** | 0 |
 | Frontend (`npm test`: filtros combinados) | 6 | **6** | 0 |
-| Cobertura de líneas del backend (RNF-05, meta ≥ 70 %) | — | **95,9 %** (ramas 78,7 %) | — |
+| Cobertura de líneas del backend (RNF-05, meta ≥ 70 %) | — | **95,6 %** (ramas 77,9 %) | — |
 
 Se ejecutan automáticamente en cada push y pull request (`.github/workflows/backend-tests.yml`) y antes de cada despliegue (`despliegue.yml`). Si una falla, no se despliega.
 
@@ -16,15 +16,15 @@ Se ejecutan automáticamente en cada push y pull request (`.github/workflows/bac
 
 | Flujo | Pasos verificados | Resultado |
 |---|---|---|
-| **Curso** | Directora crea y asigna docente → persona nueva se registra e inscribe (cupo baja en 1, aviso "Inscripción confirmada") → recordatorio 24 h antes → docente pasa lista (100 %) → finaliza → certificado emitido y verificable en público → encuesta respondida → resultado visible para el docente → reporte exportable | ✅ |
+| **Curso** | Directora crea y asigna docente → persona nueva se registra e inscribe (cupo baja en 1, correo de confirmación) → recordatorio 24 h antes → docente pasa lista (100 %) → finaliza → certificado emitido y verificable en público → encuesta respondida → resultado visible para el docente → reporte exportable | ✅ |
 | **Evento** | Inscripción con QR único → recordatorio con el QR adjunto → check-in con el QR (registra; repetido → 409 "ya registrado") → cierre de asistencia → encuesta → asistencia en el Excel exportado | ✅ |
-| **Donación** | Donación en línea sin cuenta → comprobante PDF generado → registro ALTA en la bitácora → reporte mensual del Contador y exportación → publicación de transparencia → el sitio público muestra el total **sin** nombre, correo ni referencia del donante | ✅ |
+| **Donación** | Donación en línea sin cuenta → comprobante PDF por correo → registro ALTA en la bitácora → reporte mensual del Contador y exportación → publicación de transparencia → el sitio público muestra el total **sin** nombre, correo ni referencia del donante | ✅ |
 
 ## Casos de prueba CP-01 a CP-21
 
 | CP | Historia / RNF | Prioridad | Cómo se verifica | Resultado |
 |---|---|---|---|---|
-| CP-01 | FUJ-101 Inscripción con cupos | Must | `CursosTests.Inscripcion_con_cupos_lista_de_espera_y_promocion_al_cancelar`, flujo E2E de curso | ✅ |
+| CP-01 | FUJ-101 Inscripción con cupos | Must | `CursosTests.Inscripcion_con_cupos_lista_de_espera_y_promocion_al_cancelar`, `CursosTests.Solo_se_inscribe_a_cursos_que_empiezan_hoy_o_despues`, flujo E2E de curso | ✅ |
 | CP-02 | FUJ-102 Asistencia a evento | Must | `EventosTests.Asistencia_manual_y_cierre_con_encuesta`, `EventosTests.Checkin_QR_…`, flujo E2E de evento | ✅ |
 | CP-03 | FUJ-103 Certificado automático | Must | `CursosTests.Finalizar_curso_emite_certificados_…`, `AsistenciaCursosTests` (solo con asistencia mínima) | ✅ |
 | CP-04 | FUJ-104 Verificación pública | Must | `CursosTests.Finalizar_…` (código válido / "no encontrado"), flujo E2E de curso | ✅ |
@@ -33,20 +33,20 @@ Se ejecutan automáticamente en cada push y pull request (`.github/workflows/bac
 | CP-07 | FUJ-107 Registro de voluntarios | Should | `VoluntariadoTests.Postulacion_publica_sin_duplicados_…` | ✅ |
 | CP-08 | FUJ-108 Noticias | Should | `ContenidoTests.Noticias_publicadas_aparecen_…`, `ReportesContenidoTests` | ✅ |
 | CP-09 | FUJ-109 Donación en línea | Must | `DonacionesTests.Donacion_en_linea_publica_y_con_sesion`, flujo E2E de donación | ✅ |
-| CP-10 | FUJ-110 Confirmación automática | Must | Flujo E2E de curso (confirmación "Inscripción confirmada" al instante, visible en Mi panel) | ✅ |
+| CP-10 | FUJ-110 Confirmación automática | Must | Flujo E2E de curso (correo "Inscripción confirmada" al instante) | ✅ |
 | CP-11 | RNF-01 Rendimiento | Must | Prueba de carga del Sprint 2 (JAG-25). Además, `IndicadoresTests.CP17_…` verifica la respuesta del panel en ≤ 2 s. | ✅ (ver JAG-25) |
 | CP-12 | RNF-02 Seguridad | Must | `AuthTests.Endpoint_protegido_sin_token_devuelve_401_y_con_otro_rol_403`, `UsuariosTests.Desactivar_o_cambiar_rol_invalida_la_sesion_abierta` | ✅ |
 | CP-13 | RNF-03 Usabilidad | Must | Prueba con usuarios reales en la UAT (`docs/uat/rnf03-prueba-usabilidad-inscripcion.md`) | ⏳ Pendiente de la sesión con la Fundación |
 | CP-14 | RNF-04 Disponibilidad | Must | `SaludTests` + `deploy/monitoreo/reporte-disponibilidad.sh` al cierre del primer mes en producción | ⏳ Se mide en producción |
-| CP-15 | RNF-05 Cobertura ≥ 70 % | Must | CI con umbral: **95,9 %** | ✅ |
-| CP-16 | FUJ-122 Usuarios y roles | Must | `UsuariosTests.CP16_contador_no_entra_a_cursos_pero_si_a_donaciones` y demás reglas | ✅ |
+| CP-15 | RNF-05 Cobertura ≥ 70 % | Must | CI con umbral: **95,6 %** | ✅ |
+| CP-16 | FUJ-122 Usuarios y roles | Must | `UsuariosTests.CP16_contador_no_entra_a_cursos_pero_si_a_donaciones`, `UsuariosTests.Olvide_mi_contrasena_envia_un_enlace_de_una_hora_al_correo`, `UsuariosTests.Solo_la_propia_persona_cambia_su_contrasena` y demás reglas | ✅ |
 | CP-17 | FUJ-123 Panel de indicadores | Should | `IndicadoresTests.CP17_…` (cifras = consultas SQL directas, ≤ 2 s, caché) | ✅ |
 | CP-18 | FUJ-124 Exportación | Should | `ReportesTests.CP18_asistencia_de_un_evento_con_20_participantes_en_excel` | ✅ |
 | CP-19 | FUJ-125 Bitácora | Must | `AuditoriaTests.CP19_editar_el_monto_de_100_a_150_…` | ✅ |
 | CP-20 | FUJ-126 Galería | Could | `ContenidoTests.Galeria_albumes_imagenes_con_miniatura_videos_y_errores_claros` | ✅ |
-| CP-21 | FUJ-127 Contacto | Could | `ContenidoTests.Quienes_somos_editable_por_la_directora_con_validaciones`, `ContenidoTests.El_formulario_de_contacto_ya_no_existe`. El formulario de mensajes se retiró el 19/11 al desactivar los correos | ✅ (alcance ajustado) |
+| CP-21 | FUJ-127 Contacto | Could | `ContenidoTests.Contacto_valida_campos_y_descarta_bots` (correo capturado al instante) | ✅ |
 
-**Must aprobados:** 13 de 15 automatizables. CP-13 y CP-14 dependen de la sesión con usuarios reales y del primer mes en producción. **Should/Could:** 6 de 6 (100 %; CP-21 con el alcance ajustado).
+**Must aprobados:** 13 de 15 automatizables. CP-13 y CP-14 dependen de la sesión con usuarios reales y del primer mes en producción. **Should/Could:** 6 de 6 (100 %).
 
 ## Correcciones de la evaluación verificadas por pruebas
 
@@ -67,7 +67,8 @@ Se ejecutan automáticamente en cada push y pull request (`.github/workflows/bac
 | El reporte financiero mensual no se podía descargar | Exportación PDF/Excel institucional |
 | Un token seguía válido hasta 60 min después de desactivar la cuenta | Validación de cuenta activa y rol en cada solicitud |
 | Detrás del proxy, los límites por IP verían una sola IP para todos | `X-Forwarded-For` habilitado para el proxy interno |
-| Sin correos, la primera Directora de una instalación nueva no tenía cómo obtener su contraseña (las cuentas importadas no tienen contraseña) | Comando `contrasena <correo>` del importador (JAG-76), probado en el despliegue con Docker; `ImportadorTests.Contrasena_de_la_primera_directora_se_asigna_desde_el_servidor` |
+| Se podía inscribir (o entrar a la lista de espera) en cursos que ya habían comenzado o terminado | Solo se admiten cursos que empiezan hoy o más adelante (hora de Bolivia); el catálogo muestra "Ya comenzó" |
+| Quien olvidaba su contraseña dependía de que la Dirección le reenviara el enlace | *¿Olvidaste tu contraseña?* en el inicio de sesión (enlace de 1 hora por correo) y *Cambiar mi contraseña* para cada persona; nadie más puede cambiarla |
 
 No quedan bugs críticos ni altos abiertos.
 

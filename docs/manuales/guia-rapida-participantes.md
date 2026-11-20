@@ -3,15 +3,15 @@
 **Fundación Unión de los Jaguares — cursos, eventos y certificados en línea**
 
 ### 1. Inscribirte a un curso (menos de 3 minutos)
-1. Entra a **Cursos** y usa el buscador si quieres encontrar uno.
+1. Entra a **Cursos** y usa el buscador si quieres encontrar uno. Puedes inscribirte en cursos que empiezan **hoy o más adelante**; los que ya comenzaron dicen "Ya comenzó".
 2. Toca **Inscribirme**.
 3. Si es tu primera vez, toca **Regístrate**: nombre, correo y contraseña. Si ya tienes cuenta, ingresa.
-4. Vuelves al curso elegido: toca **Confirmar inscripción**. ¡Listo! Tu inscripción aparece en **Mi panel**.
+4. Vuelves al curso elegido: toca **Confirmar inscripción**. ¡Listo! Te llega un correo de confirmación.
 
-> ¿El curso está lleno? Toca **Unirme a la lista de espera**. Si se libera un cupo, quedas inscrito/a automáticamente y lo verás en **Mi panel**.
+> ¿El curso está lleno? Toca **Unirme a la lista de espera**. Si se libera un cupo, quedas inscrito/a automáticamente y te avisamos por correo.
 
 ### 2. Eventos y tu código QR
-Inscríbete desde **Calendario** o **Eventos**. Tu **código QR** está en **Mi panel**. Muéstralo al ingresar.
+Inscríbete desde **Calendario** o **Eventos**. Tu **código QR** está en **Mi panel** y llega en el recordatorio un día antes. Muéstralo al ingresar.
 
 ### 3. Mi panel
 - Tus cursos y eventos (próximos y pasados).
@@ -23,7 +23,9 @@ Inscríbete desde **Calendario** o **Eventos**. Tu **código QR** está en **Mi 
 ### 4. Certificados
 Se emiten al terminar el curso si alcanzaste la **asistencia mínima** (la verás en *Mi panel*). Cualquier persona puede comprobar que un certificado es auténtico en **Certificados → Verificar**, con su código.
 
-### 5. Tus actividades
-La plataforma no envía correos: revisa **Mi panel** para ver la fecha, la hora y el lugar de cada actividad, tu QR, tus certificados y las encuestas pendientes. Si una actividad cambia de fecha o se cancela, lo verás ahí.
+### 5. Recordatorios
+Recibes un correo **un día antes** de cada actividad, con la fecha, la hora, el lugar y, en los eventos, tu QR. Si una actividad cambia de fecha o se cancela, también te avisamos.
 
-**¿Dudas?** Encuentra el teléfono, la dirección y el horario en **Quiénes somos → Datos de contacto**.
+**¿Olvidaste tu contraseña?** Tócalo en *Iniciar sesión*: te llega un enlace al correo para crear una nueva.
+
+**¿Dudas?** Escríbenos desde **Quiénes somos → Contacto**.
