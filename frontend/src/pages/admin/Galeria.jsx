@@ -51,7 +51,7 @@ export default function AdminGaleria() {
     galeriaApi.album(id)
       .then(r => {
         setAlbum(r.data);
-        setEdicion({ titulo: r.data.titulo, descripcion: r.data.descripcion ?? '', publicado: r.data.publicado });
+        setEdicion({ titulo: r.data.titulo, descripcion: r.data.descripcion ?? '' });
       })
       .catch(() => setMsg({ tipo: 'error', texto: 'No se pudo cargar el álbum' })), []);
 
@@ -77,11 +77,26 @@ export default function AdminGaleria() {
     e.preventDefault();
     setMsg(null);
     try {
-      await galeriaApi.actualizarAlbum(selId, edicion);
-      setMsg({ tipo: 'success', texto: edicion.publicado ? '✅ Álbum guardado y visible en el sitio' : '✅ Álbum guardado (oculto)' });
+      // El estado (publicado u oculto) se mantiene: se cambia solo con el botón Publicar / Ocultar
+      await galeriaApi.actualizarAlbum(selId, { ...edicion, publicado: album.publicado });
+      setMsg({ tipo: 'success', texto: '✅ Datos del álbum guardados' });
       cargarAlbumes();
       cargarAlbum(selId);
     } catch (err) { error(err, 'No se pudo guardar el álbum'); }
+  };
+
+  // Un clic publica el álbum (se ve en el sitio) o lo oculta
+  const cambiarVisibilidad = async () => {
+    setMsg(null);
+    const publicar = !album.publicado;
+    if (publicar && album.items.length === 0 &&
+        !window.confirm('El álbum todavía no tiene fotos ni videos. ¿Publicarlo igual?')) return;
+    try {
+      await galeriaApi.actualizarAlbum(selId, { titulo: album.titulo, descripcion: album.descripcion ?? '', publicado: publicar });
+      setMsg({ tipo: 'success', texto: publicar ? '✅ Álbum publicado: ya se ve en la galería del sitio' : 'Álbum oculto: ya no se ve en el sitio' });
+      cargarAlbumes();
+      cargarAlbum(selId);
+    } catch (err) { error(err, publicar ? 'No se pudo publicar' : 'No se pudo ocultar'); }
   };
 
   const eliminarAlbum = async () => {
@@ -165,6 +180,17 @@ export default function AdminGaleria() {
             </section>
           ) : (
             <>
+              <section className={`gal-estado ${album.publicado ? 'publicado' : ''}`} aria-live="polite">
+                <p>
+                  {album.publicado
+                    ? <><span className="badge badge-ok">Publicado</span> Se ve en la galería del sitio.</>
+                    : <><span className="badge">Oculto</span> Solo lo ve el personal.</>}
+                </p>
+                <button type="button" className={album.publicado ? 'btn-secondary' : 'btn-primary'} onClick={cambiarVisibilidad}>
+                  {album.publicado ? 'Ocultar' : 'Publicar'}
+                </button>
+              </section>
+
               <section className="panel">
                 <h2>Datos del álbum</h2>
                 <form onSubmit={guardar} className="form-stack">
@@ -178,13 +204,8 @@ export default function AdminGaleria() {
                     <textarea id="a-desc" rows="2" value={edicion.descripcion} maxLength={2000}
                               onChange={e => setEdicion({ ...edicion, descripcion: e.target.value })} />
                   </div>
-                  <label className="gal-check">
-                    <input type="checkbox" checked={edicion.publicado}
-                           onChange={e => setEdicion({ ...edicion, publicado: e.target.checked })} />
-                    Publicado (visible en el sitio)
-                  </label>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button type="submit" className="btn-primary">Guardar</button>
+                    <button type="submit" className="btn-primary">Guardar cambios</button>
                     <button type="button" className="btn-danger" onClick={eliminarAlbum}>Eliminar álbum</button>
                   </div>
                 </form>
