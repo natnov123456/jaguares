@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import CasillasLegales, { SIN_ACEPTAR } from '../components/CasillasLegales';
 import { useAuth } from '../context/AuthContext';
 import { campanasApi, donacionesApi } from '../services/api';
 import BotonComprobante from '../components/BotonComprobante';
@@ -22,6 +24,7 @@ export default function Donaciones() {
   const [error, setError] = useState('');
   const [confirmacion, setConfirmacion] = useState(null);
   const [procesando, setProcesando] = useState(false);
+  const [legal, setLegal] = useState(SIN_ACEPTAR);
 
   // Si la lista no carga se puede donar igual, sin elegir campaña
   const cargarCampanas = () => campanasApi.vigentes().then(r => setCampanas(r.data)).catch(() => {});
@@ -35,7 +38,7 @@ export default function Donaciones() {
       const { data } = await donacionesApi.enLinea({
         monto: parseFloat(monto), medio, referencia: null, donanteId: null,
         donanteNombre: usuario ? null : nombre, donanteEmail: usuario ? null : email,
-        campanaId: campanaId || null,
+        campanaId: campanaId || null, ...legal,
       });
       await cargarCampanas(); // la barra ya incluye esta donación
       setConfirmacion(data);
@@ -127,6 +130,10 @@ export default function Donaciones() {
             <input id="d-email" type="email" maxLength={150} value={email} onChange={e => setEmail(e.target.value)} required />
           </>
         )}
+        <CasillasLegales valores={legal} cambiar={setLegal} prefijo="d" />
+        <p className="muted" style={{ fontSize: '0.85rem', margin: 0 }}>
+          Las donaciones son voluntarias. Si hubo un cobro duplicado o un error, revisa la <Link to="/reembolsos" style={{ textDecoration: 'underline' }}>Política de reembolsos</Link>.
+        </p>
         <button type="submit" className="btn-primary" disabled={procesando}>
           {procesando ? 'Procesando pago...' : 'Donar'}
         </button>

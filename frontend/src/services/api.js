@@ -37,6 +37,8 @@ export const authApi = {
   definirContrasena: (token, password) => api.post('/Auth/definir-contrasena', { token, password }),
   olvideContrasena: (email) => api.post('/Auth/olvide-contrasena', { email }),
   cambiarMiContrasena: (actual, nueva) => api.put('/Auth/mi-contrasena', { actual, nueva }),
+  // Deja constancia del cierre de sesión en el registro de actividad
+  salir: (token) => api.post('/Auth/salir', null, { headers: { Authorization: `Bearer ${token}` } }),
 };
 
 export const cursosApi = {
@@ -228,4 +230,9 @@ export const auditoriaApi = {
 // JAG-85 / FUJ-123: panel de indicadores (mes = "AAAA-MM")
 export const indicadoresApi = {
   obtener: (mes) => api.get('/Indicadores', { params: { mes } }),
+};
+
+// Registro de actividad (solo la Dirección): quién entró, cuándo y qué hizo
+export const registroActividadApi = {
+  listar: (params) => api.get('/RegistroActividad', { params }),
 };

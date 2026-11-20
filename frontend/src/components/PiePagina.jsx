@@ -34,6 +34,13 @@ export default function PiePagina() {
             <Link to="/certificados">Verificar certificado</Link>
             <Link to="/donaciones">Donar</Link>
           </div>
+          <div>
+            <h4>Legal</h4>
+            <Link to="/terminos">Términos y condiciones</Link>
+            <Link to="/privacidad">Política de privacidad</Link>
+            <Link to="/cookies">Política de cookies</Link>
+            <Link to="/reembolsos">Política de reembolsos</Link>
+          </div>
         </nav>
       </div>
       <div className="pie-final">© {ANIO} Fundación Unión de los Jaguares · Hecho con 🧡 en La Paz</div>

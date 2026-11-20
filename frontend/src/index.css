@@ -455,7 +455,7 @@ button:disabled { opacity: .75; }
 .pie-marca strong { color: #f59e0b; font-size: 1.1rem; }
 .pie-marca p { font-size: .9rem; color: #9ca3af; margin-top: 4px; }
 .pie-logo { width: 52px; height: 52px; flex-shrink: 0; }
-.pie-enlaces { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.pie-enlaces { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .pie-enlaces h4 {
   color: #fbbf24;
   font-size: .8rem;

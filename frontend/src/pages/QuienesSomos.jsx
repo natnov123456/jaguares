@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { contactoApi, institucionalApi } from '../services/api';
+import CasillasLegales, { SIN_ACEPTAR } from '../components/CasillasLegales';
 import './QuienesSomos.css';
 
 // FUJ-127: misión, visión, historia, equipo y contacto + formulario de consulta
@@ -22,6 +23,7 @@ function FormularioContacto() {
   const [errores, setErrores] = useState({});
   const [estado, setEstado] = useState(null); // { tipo, texto }
   const [enviando, setEnviando] = useState(false);
+  const [legal, setLegal] = useState(SIN_ACEPTAR);
 
   const cambiar = (campo) => (e) => {
     setForm({ ...form, [campo]: e.target.value });
@@ -32,15 +34,18 @@ function FormularioContacto() {
     e.preventDefault();
     setEstado(null);
     const errs = validar(form);
+    if (!legal.aceptaTerminos) errs.aceptaTerminos = 'Debes aceptar los Términos y condiciones';
+    if (!legal.aceptaPrivacidad) errs.aceptaPrivacidad = 'Debes aceptar la Política de privacidad';
     setErrores(errs);
     if (Object.keys(errs).length > 0) return;
     setEnviando(true);
     try {
       const { data } = await contactoApi.enviar({
         nombre: form.nombre.trim(), email: form.email.trim(), asunto: form.asunto.trim() || null,
-        mensaje: form.mensaje.trim(), sitioWeb: form.sitioWeb,
+        mensaje: form.mensaje.trim(), sitioWeb: form.sitioWeb, ...legal,
       });
       setForm(VACIO);
+      setLegal(SIN_ACEPTAR);
       setEstado({ tipo: 'success', texto: data.mensaje });
     } catch (err) {
       const r = err.response?.data;
@@ -75,6 +80,8 @@ function FormularioContacto() {
         <label htmlFor="c-sitioWeb">Sitio web</label>
         <input id="c-sitioWeb" tabIndex={-1} autoComplete="off" value={form.sitioWeb} onChange={cambiar('sitioWeb')} />
       </div>
+      <CasillasLegales valores={legal} prefijo="c" errores={errores}
+                       cambiar={(v) => { setLegal(v); setErrores({ ...errores, aceptaTerminos: undefined, aceptaPrivacidad: undefined }); }} />
       <button type="submit" className="btn-primary" disabled={enviando}>{enviando ? 'Enviando...' : 'Enviar consulta'}</button>
     </form>
   );

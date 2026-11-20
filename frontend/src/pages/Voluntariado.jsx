@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import CasillasLegales, { SIN_ACEPTAR } from '../components/CasillasLegales';
 import { Link } from 'react-router-dom';
 import { voluntariosApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -9,6 +10,7 @@ export default function Voluntariado() {
   // Si hay sesión se precarga el nombre; el email no viaja en la sesión, así que se pide igual
   const [form, setForm] = useState({ nombreCompleto: usuario?.nombreCompleto ?? '', email: '', telefono: '' });
   const [msg, setMsg] = useState(null);
+  const [legal, setLegal] = useState(SIN_ACEPTAR);
 
   if (puede(usuario, 'verPortalVoluntario')) {
     return (
@@ -35,9 +37,10 @@ export default function Voluntariado() {
   const postular = async (e) => {
     e.preventDefault();
     try {
-      await voluntariosApi.postular(form);
+      await voluntariosApi.postular({ ...form, ...legal });
       setMsg({ tipo: 'success', texto: '¡Postulación enviada con éxito! Te contactaremos pronto.' });
       setForm({ nombreCompleto: '', email: '', telefono: '' });
+      setLegal(SIN_ACEPTAR);
     } catch (err) {
       setMsg({ tipo: 'error', texto: err.response?.data?.error || 'Error al postularse' });
     }
@@ -54,6 +57,7 @@ export default function Voluntariado() {
         <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required />
         <label>Teléfono</label>
         <input type="tel" value={form.telefono} onChange={e => setForm({...form, telefono: e.target.value})} />
+        <CasillasLegales valores={legal} cambiar={setLegal} prefijo="v" />
         <button type="submit" className="btn-primary">Postularme</button>
       </form>
     </div>

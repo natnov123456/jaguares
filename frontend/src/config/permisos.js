@@ -60,6 +60,7 @@ export const PERMISOS = {
   // FUJ-123: panel de indicadores; evaluación: registro de exportaciones
   verIndicadores: [DIRECTORA],
   verExportaciones: [DIRECTORA],
+  verRegistroActividad: [DIRECTORA],
 };
 
 export function puede(usuario, permiso) {
@@ -121,6 +122,8 @@ export const SECCIONES_PANEL = [
     descripcion: 'Editar misión, visión, historia, equipo y datos de contacto.' },
   { permiso: 'verExportaciones', ruta: '/admin/exportaciones', grupo: 'gestion', titulo: 'Registro de exportaciones', icono: '🗂️',
     descripcion: 'Quién generó cada reporte PDF o Excel, cuándo, con qué filtros y si hubo errores.' },
+  { permiso: 'verRegistroActividad', ruta: '/admin/actividad', grupo: 'gestion', titulo: 'Registro de actividad', icono: '🕵️',
+    descripcion: 'Quién entró, a qué hora, desde dónde y qué hizo en la plataforma.' },
   { permiso: 'publicarTransparencia', ruta: '/admin/transparencia', grupo: 'finanzas', titulo: 'Transparencia', icono: '📊',
     descripcion: 'Publicar en el sitio en qué se usaron las donaciones de cada mes.' },
 ];

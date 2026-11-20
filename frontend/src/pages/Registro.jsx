@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import CasillasLegales, { SIN_ACEPTAR } from '../components/CasillasLegales';
 import './Auth.css';
 
 export default function Registro() {
   const [form, setForm] = useState({ nombreCompleto: '', email: '', password: '', telefono: '' });
   const [error, setError] = useState('');
+  const [legal, setLegal] = useState(SIN_ACEPTAR);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,7 +16,7 @@ export default function Registro() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await authApi.registro(form);
+      await authApi.registro({ ...form, ...legal });
       await login(form.email, form.password);
       // RNF-03: si venía de "Inscribirme", vuelve al curso para confirmar con un clic
       navigate(location.state?.desde ?? '/mi-cuenta', { replace: true });
@@ -36,6 +38,7 @@ export default function Registro() {
         <input id="r-pass" type="password" autoComplete="new-password" minLength={6} value={form.password} onChange={e => setForm({...form, password: e.target.value})} required />
         <label htmlFor="r-tel">Teléfono (opcional)</label>
         <input id="r-tel" type="tel" autoComplete="tel" value={form.telefono} onChange={e => setForm({...form, telefono: e.target.value})} />
+        <CasillasLegales valores={legal} cambiar={setLegal} prefijo="r" />
         <button type="submit" className="btn-primary">Registrarse</button>
       </form>
       <p>¿Ya tienes cuenta? <Link to="/login" state={location.state}>Inicia sesión</Link></p>

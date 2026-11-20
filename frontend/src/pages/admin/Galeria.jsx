@@ -216,6 +216,10 @@ export default function AdminGaleria() {
                 <div className="form-stack">
                   <div>
                     <label htmlFor="a-fotos">Subir fotos (JPG o PNG, máximo 5 MB cada una)</label>
+                    <p className="muted" style={{ fontSize: '0.85rem', margin: '2px 0 6px' }}>
+                      Sube solo fotos propias de la Fundación o con permiso de su autor. Si aparecen niñas, niños o adolescentes,
+                      necesitas la autorización de su madre, padre o tutor (Código Niña, Niño y Adolescente).
+                    </p>
                     <input id="a-fotos" type="file" accept="image/jpeg,image/png" multiple onChange={subir} disabled={!!progreso} />
                   </div>
                   {progreso && <div className="info-msg">Subiendo {progreso.actual} de {progreso.total}...</div>}
