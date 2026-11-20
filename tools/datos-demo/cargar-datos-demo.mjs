@@ -104,6 +104,8 @@ const PARTICIPANTES = [
   return { nombre, email: `${n}.${a}@demo.jaguares.org`, telefono: `7${entre(1000000, 9999999)}` };
 });
 const CLAVE_DEMO = 'Demo2026!';
+// Las dos casillas obligatorias de los formularios públicos (Términos y Privacidad)
+const ACEPTA = { aceptaTerminos: true, aceptaPrivacidad: true };
 
 const VOLUNTARIOS = [
   ['Andrés Patzi Ramos', 'andres.patzi@demo.jaguares.org', '71234501'],
@@ -127,7 +129,7 @@ async function cuentas() {
   }
   ok(`${PERSONAL.length} cuentas del personal (una por rol)`);
   for (const p of PARTICIPANTES) {
-    await api('POST', '/Auth/registro', { cuerpo: { nombreCompleto: p.nombre, email: p.email, password: CLAVE_DEMO, telefono: p.telefono }, aceptar: [400] });
+    await api('POST', '/Auth/registro', { cuerpo: { nombreCompleto: p.nombre, email: p.email, password: CLAVE_DEMO, telefono: p.telefono, ...ACEPTA }, aceptar: [400] });
     p.id = await idDe(p.email);
     p.token = await entrar(p.email, CLAVE_DEMO);
   }
@@ -139,7 +141,7 @@ async function cuentas() {
 async function voluntarios() {
   paso('Registro de voluntarios');
   for (const [nombre, email, telefono] of VOLUNTARIOS)
-    await api('POST', '/Voluntarios/postular', { cuerpo: { nombreCompleto: nombre, email, telefono }, aceptar: [400] });
+    await api('POST', '/Voluntarios/postular', { cuerpo: { nombreCompleto: nombre, email, telefono, ...ACEPTA }, aceptar: [400] });
   const filas = (await sql(`SELECT id, email FROM voluntarios WHERE email = ANY($1) OR email = 'voluntario@example.com'`,
     [VOLUNTARIOS.map(v => v[1])])).rows;
   for (const f of filas) await sql('UPDATE voluntarios SET postulado_en = $2 WHERE id = $1', [f.id, instante(-entre(60, 200))]);
@@ -392,7 +394,7 @@ async function donaciones() {
   // Donaciones en línea de Juan (se ven en "Mis donaciones" con su comprobante)
   const juan = await entrar('juan@example.com', CLAVE['juan@example.com']);
   for (const monto of [100, 250])
-    await api('POST', '/Donaciones/en-linea', { token: juan, cuerpo: { monto, medio: 'QR', referencia: null, donanteId: null, campanaId: campanas[0].id } });
+    await api('POST', '/Donaciones/en-linea', { token: juan, cuerpo: { monto, medio: 'QR', referencia: null, donanteId: null, campanaId: campanas[0].id, ...ACEPTA } });
   ok(`${creadas.length + 2} donaciones en 6 meses`);
 
   // Bitácora: dos correcciones y una anulación (quedan con usuario, hora, antes y después)
@@ -455,7 +457,7 @@ async function contacto() {
   for (const [nombre, email, asunto, mensaje] of [
     ['Rosa Flores', 'rosa.flores@demo.bo', 'Quiero ser voluntaria', 'Hola, tengo 22 años y me gustaría apoyar en el programa de apoyo escolar los sábados. ¿Cómo me inscribo?'],
     ['Colegio Don Bosco', 'pastoral@donbosco.demo.bo', 'Alianza para la feria de reciclaje', 'Nos interesa participar con nuestros estudiantes en la próxima feria. ¿Podemos coordinar una reunión?'],
-  ]) await api('POST', '/Contacto', { cuerpo: { nombre, email, asunto, mensaje, sitioWeb: null } });
+  ]) await api('POST', '/Contacto', { cuerpo: { nombre, email, asunto, mensaje, sitioWeb: null, ...ACEPTA } });
   ok('2 consultas enviadas al correo institucional');
 }
 
