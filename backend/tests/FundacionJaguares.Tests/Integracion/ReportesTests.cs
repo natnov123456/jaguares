@@ -33,8 +33,11 @@ public class ReportesTests(ApiFixture api)
         var (ana, anaId, _) = await api.NuevoParticipanteAsync("Ana Exportada");
         var (beto, betoId, _) = await api.NuevoParticipanteAsync("Beto Exportado");
         var (caro, _, _) = await api.NuevoParticipanteAsync("Carolina Anaya");
+        // Se inscriben antes de que empiece el curso; luego el curso empieza (hace 2 días)
+        await api.MoverInicioDelCursoAsync(id, Hoy.AddDays(1));
         foreach (var c in new[] { ana, beto, caro })
             await (await c.PostAsync($"/api/Cursos/{id}/inscribir", null)).EsperarAsync(HttpStatusCode.OK);
+        await api.MoverInicioDelCursoAsync(id, Hoy.AddDays(-2));
         await (await docente.PostJsonAsync($"/api/Cursos/{id}/asistencia", new
         {
             fecha = Hoy, registros = new[] { new { participanteId = anaId, presente = true }, new { participanteId = betoId, presente = false } }
@@ -162,9 +165,9 @@ public class ReportesTests(ApiFixture api)
         var fila = Assert.Single(marzo);
         Assert.Equal("2", fila[3]);
         Assert.Equal("Feria A; Feria B", fila[4]);
-        Assert.Equal("5,5", fila[5]);
+        Assert.Equal("5 h 30 min", fila[5]);
         var todo = Filas(await (await coord.GetAsync($"/api/Reportes/horas-voluntariado?formato=json&q={marca}")).JsonAsync());
-        Assert.Equal("9,5", Assert.Single(todo)[5]);
+        Assert.Equal("9 h 30 min", Assert.Single(todo)[5]);
         await (await coord.GetAsync($"/api/Reportes/horas-voluntariado?formato=pdf&q={marca}&desde=2025-01-01&hasta=2025-12-31"))
             .EsperarAsync(HttpStatusCode.UnprocessableEntity);
     }

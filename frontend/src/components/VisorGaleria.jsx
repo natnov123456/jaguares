@@ -1,11 +1,19 @@
 import { useEffect } from 'react';
 import { archivoUrl } from '../services/api';
 
-// Vista ampliada de la galería (FUJ-126): imagen grande o video insertado, con flechas y teclado
+// Vista ampliada de la galería (FUJ-126): solo la foto, a pantalla completa, o el video insertado.
+// Flechas y teclado para pasar de una a otra; Esc o un clic fuera de la foto la cierran.
 export default function VisorGaleria({ items, indice, onCambiar, onCerrar }) {
   const item = items[indice];
   const hayVarios = items.length > 1;
   const mover = (paso) => onCambiar((indice + paso + items.length) % items.length);
+
+  // Mientras está abierta, la página de fondo no se desplaza
+  useEffect(() => {
+    const antes = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = antes; };
+  }, []);
 
   useEffect(() => {
     const tecla = (e) => {
@@ -25,20 +33,22 @@ export default function VisorGaleria({ items, indice, onCambiar, onCerrar }) {
       {hayVarios && (
         <button className="visor-flecha izq" onClick={e => { e.stopPropagation(); mover(-1); }} aria-label="Anterior">‹</button>
       )}
-      <figure className="visor-contenido" onClick={e => e.stopPropagation()}>
+      <figure className="visor-contenido">
         {item.tipo === 'VIDEO' ? (
-          <div className="visor-video">
+          <div className="visor-video" onClick={e => e.stopPropagation()}>
             <iframe src={item.videoUrl} title={item.titulo || 'Video'} allowFullScreen
                     allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                     referrerPolicy="strict-origin-when-cross-origin" />
           </div>
         ) : (
-          <img src={archivoUrl(item.imagenUrl)} alt={item.titulo || 'Foto de la galería'} />
+          <img src={archivoUrl(item.imagenUrl)} alt={item.titulo || 'Foto de la galería'} onClick={e => e.stopPropagation()} />
         )}
-        <figcaption>
-          {item.titulo && <span>{item.titulo}</span>}
-          {hayVarios && <span className="visor-contador">{indice + 1} / {items.length}</span>}
-        </figcaption>
+        {(item.titulo || hayVarios) && (
+          <figcaption onClick={e => e.stopPropagation()}>
+            {item.titulo && <span>{item.titulo}</span>}
+            {hayVarios && <span className="visor-contador">{indice + 1} / {items.length}</span>}
+          </figcaption>
+        )}
       </figure>
       {hayVarios && (
         <button className="visor-flecha der" onClick={e => { e.stopPropagation(); mover(1); }} aria-label="Siguiente">›</button>

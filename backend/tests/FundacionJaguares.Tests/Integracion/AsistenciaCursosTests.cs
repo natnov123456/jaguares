@@ -11,15 +11,21 @@ public class AsistenciaCursosTests(ApiFixture api)
 {
     private static readonly DateOnly Hoy = DateOnly.FromDateTime(DateTime.UtcNow);
 
-    // Curso ya empezado (desde hace 3 días) asignado al docente del seed, o a otro docente
-    private async Task<JsonElement> CursoEnMarchaAsync(string titulo, int minimo = 50, bool deOtroDocente = false)
+    // Curso ya empezado (desde hace 3 días) asignado al docente del seed, o a otro docente. Las personas se
+    // inscriben antes de que empiece (no se admiten inscripciones a cursos ya comenzados) y luego empieza.
+    private async Task<JsonElement> CursoEnMarchaAsync(string titulo, int minimo = 50, bool deOtroDocente = false,
+                                                       params HttpClient[] inscritos)
     {
         var docenteId = deOtroDocente ? await api.OtroDocenteIdAsync() : await api.DocenteIdAsync();
-        return await (await (await api.DirectoraAsync()).PostJsonAsync("/api/Cursos", new
+        var curso = await (await (await api.DirectoraAsync()).PostJsonAsync("/api/Cursos", new
         {
-            titulo, descripcion = (string?)null, fechaInicio = Hoy.AddDays(-3), fechaFin = Hoy.AddDays(5),
+            titulo, descripcion = (string?)null, fechaInicio = Hoy.AddDays(1), fechaFin = Hoy.AddDays(5),
             cupoMaximo = 10, asistenciaMinimaPct = minimo, docenteId
         })).JsonAsync();
+        foreach (var p in inscritos)
+            await (await p.PostAsync($"/api/Cursos/{curso.Id()}/inscribir", null)).EsperarAsync(HttpStatusCode.OK);
+        await api.MoverInicioDelCursoAsync(curso.Id(), Hoy.AddDays(-3));
+        return curso;
     }
 
     private static object Lista(DateOnly fecha, params (Guid Id, bool Presente)[] registros) => new
@@ -34,13 +40,11 @@ public class AsistenciaCursosTests(ApiFixture api)
     public async Task Docente_pasa_lista_y_cada_participante_ve_su_porcentaje()
     {
         var titulo = "Curso con lista " + Guid.NewGuid().ToString("N")[..5];
-        var curso = await CursoEnMarchaAsync(titulo, minimo: 50);
-        var id = curso.Id();
-        var docente = await api.DocenteAsync();
         var (ana, anaId, emailAna) = await api.NuevoParticipanteAsync("Ana Lista");
         var (beto, betoId, _) = await api.NuevoParticipanteAsync("Beto Lista");
-        await (await ana.PostAsync($"/api/Cursos/{id}/inscribir", null)).EsperarAsync(HttpStatusCode.OK);
-        await (await beto.PostAsync($"/api/Cursos/{id}/inscribir", null)).EsperarAsync(HttpStatusCode.OK);
+        var curso = await CursoEnMarchaAsync(titulo, 50, false, ana, beto);
+        var id = curso.Id();
+        var docente = await api.DocenteAsync();
         var url = $"/api/Cursos/{id}/asistencia";
 
         // Antes de la primera clase no hay porcentaje
@@ -101,11 +105,10 @@ public class AsistenciaCursosTests(ApiFixture api)
     [Fact]
     public async Task Solo_el_docente_asignado_o_la_directora_gestionan_el_curso()
     {
-        var curso = await CursoEnMarchaAsync("Curso ajeno " + Guid.NewGuid().ToString("N")[..5], deOtroDocente: true);
+        var (ana, anaId, _) = await api.NuevoParticipanteAsync();
+        var curso = await CursoEnMarchaAsync("Curso ajeno " + Guid.NewGuid().ToString("N")[..5], 50, true, ana);
         var id = curso.Id();
         var docente = await api.DocenteAsync();
-        var (ana, anaId, _) = await api.NuevoParticipanteAsync();
-        await (await ana.PostAsync($"/api/Cursos/{id}/inscribir", null)).EsperarAsync(HttpStatusCode.OK);
 
         await (await docente.GetAsync($"/api/Cursos/{id}/gestion")).EsperarAsync(HttpStatusCode.Forbidden);
         await (await docente.GetAsync($"/api/Cursos/{id}/asistencia?fecha={Hoy:yyyy-MM-dd}")).EsperarAsync(HttpStatusCode.Forbidden);
@@ -131,6 +134,6 @@ public class AsistenciaCursosTests(ApiFixture api)
             new { titulo = "Curso editado", descripcion = "Nueva", cupoMaximo = 12, asistenciaMinimaPct = 70 })).JsonAsync();
         Assert.Equal("Curso editado", editado.Str("titulo"));
         Assert.Equal(11, editado.GetProperty("cupoDisponible").GetInt32());
-        Assert.Equal(curso.Str("fechaInicio"), editado.Str("fechaInicio"));
+        Assert.Equal(Hoy.AddDays(-3).ToString("yyyy-MM-dd"), editado.Str("fechaInicio"));
     }
 }

@@ -1,0 +1,13 @@
+{
+  "name": "jaguares-datos-demo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Carga datos de prueba en la plataforma de la Fundación Unión de los Jaguares para demostraciones",
+  "type": "module",
+  "scripts": {
+    "cargar": "node cargar-datos-demo.mjs"
+  },
+  "dependencies": {
+    "pg": "8.13.1"
+  }
+}

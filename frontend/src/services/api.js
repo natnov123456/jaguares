@@ -35,6 +35,10 @@ export const authApi = {
   registro: (data) => api.post('/Auth/registro', data),
   // FUJ-122: el personal define su contraseña con el enlace del correo
   definirContrasena: (token, password) => api.post('/Auth/definir-contrasena', { token, password }),
+  olvideContrasena: (email) => api.post('/Auth/olvide-contrasena', { email }),
+  cambiarMiContrasena: (actual, nueva) => api.put('/Auth/mi-contrasena', { actual, nueva }),
+  // Deja constancia del cierre de sesión en el registro de actividad
+  salir: (token) => api.post('/Auth/salir', null, { headers: { Authorization: `Bearer ${token}` } }),
 };
 
 export const cursosApi = {
@@ -185,7 +189,8 @@ export const voluntariosApi = {
   asignaciones: (params) => api.get('/Voluntarios/asignaciones', { params }),
   asignar: (data) => api.post('/Voluntarios/asignaciones', data),
   cancelarAsignacion: (id) => api.delete(`/Voluntarios/asignaciones/${id}`),
-  registrarHoras: (id, horas) => api.put(`/Voluntarios/asignaciones/${id}/horas`, { horas }),
+  // Horario { horaInicio: "15:30", horaFin: "18:15", dias }: el backend calcula las horas
+  registrarHoras: (id, horario) => api.put(`/Voluntarios/asignaciones/${id}/horas`, horario),
   misAsignaciones: () => api.get('/Voluntarios/mis-asignaciones'),
 };
 
@@ -225,4 +230,9 @@ export const auditoriaApi = {
 // JAG-85 / FUJ-123: panel de indicadores (mes = "AAAA-MM")
 export const indicadoresApi = {
   obtener: (mes) => api.get('/Indicadores', { params: { mes } }),
+};
+
+// Registro de actividad (solo la Dirección): quién entró, cuándo y qué hizo
+export const registroActividadApi = {
+  listar: (params) => api.get('/RegistroActividad', { params }),
 };

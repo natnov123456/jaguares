@@ -33,6 +33,9 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    // Queda en el registro de actividad; si falla (sin conexión, sesión vencida) se cierra igual
+    const token = localStorage.getItem('token');
+    if (token) authApi.salir(token).catch(() => {});
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
     setUsuario(null);

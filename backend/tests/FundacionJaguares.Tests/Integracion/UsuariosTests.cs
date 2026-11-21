@@ -158,4 +158,70 @@ public class UsuariosTests(ApiFixture api)
         await (await (await api.DocenteAsync()).GetAsync("/api/Usuarios")).EsperarAsync(HttpStatusCode.Forbidden);
         await (await api.Anonimo().GetAsync("/api/Usuarios")).EsperarAsync(HttpStatusCode.Unauthorized);
     }
+
+    [Fact]
+    public async Task Olvide_mi_contrasena_envia_un_enlace_de_una_hora_al_correo()
+    {
+        var (_, id, email) = await api.NuevoParticipanteAsync("Olga Olvidadiza");
+        var url = "/api/Auth/olvide-contrasena";
+
+        // Un correo que no existe recibe la misma respuesta y no se envía nada
+        var nadie = $"nadie{Guid.NewGuid().ToString("N")[..8]}@prueba.bo";
+        var r1 = await (await api.Anonimo().PostJsonAsync(url, new { email = nadie })).JsonAsync();
+        Assert.Empty(api.Correos.Para(nadie));
+        await (await api.Anonimo().PostJsonAsync(url, new { email = "no-es-correo" })).EsperarAsync(HttpStatusCode.BadRequest);
+
+        var r2 = await (await api.Anonimo().PostJsonAsync(url, new { email = email.ToUpperInvariant() })).JsonAsync();
+        Assert.Equal(r1.Str("mensaje"), r2.Str("mensaje"));
+        var correo = Assert.Single(api.Correos.Para(email), c => c.Asunto == "Recupera tu contraseña");
+        Assert.Contains("1 hora", correo.Texto);
+
+        // Con el enlace define una contraseña nueva; la anterior deja de servir y el enlace no se reusa
+        await (await api.Anonimo().PostJsonAsync("/api/Auth/definir-contrasena", new { token = TokenDelCorreo(email), password = "Nueva2026x" }))
+            .EsperarAsync(HttpStatusCode.NoContent);
+        await (await LoginAsync(email, "Clave123!")).EsperarAsync(HttpStatusCode.Unauthorized);
+        await (await LoginAsync(email, "Nueva2026x")).EsperarAsync(HttpStatusCode.OK);
+        await (await api.Anonimo().PostJsonAsync("/api/Auth/definir-contrasena", new { token = TokenDelCorreo(email), password = "Otra2026x" }))
+            .EsperarAsync(HttpStatusCode.BadRequest);
+
+        // El enlace vence a la hora
+        await (await api.Anonimo().PostJsonAsync(url, new { email })).JsonAsync();
+        await api.EnBdAsync(async db =>
+        {
+            var t = db.TokensContrasena.Where(x => x.UsuarioId == id && x.UsadoEn == null).OrderByDescending(x => x.ExpiraEn).First();
+            Assert.InRange(t.ExpiraEn - DateTime.UtcNow, TimeSpan.FromMinutes(55), TimeSpan.FromMinutes(61));
+            t.ExpiraEn = DateTime.UtcNow.AddMinutes(-1);
+            await Task.CompletedTask;
+        });
+        await (await api.Anonimo().PostJsonAsync("/api/Auth/definir-contrasena", new { token = TokenDelCorreo(email), password = "Tarde2026x" }))
+            .EsperarAsync(HttpStatusCode.BadRequest);
+
+        // Una cuenta desactivada no recibe enlaces
+        var staff = NuevoEmail();
+        var cuenta = await CrearAsync(staff, "CONTADOR");
+        await (await (await api.DirectoraAsync()).PutJsonAsync($"/api/Usuarios/{cuenta.Id()}/activo", new { activo = false })).EsperarAsync(HttpStatusCode.OK);
+        var antes = api.Correos.Para(staff).Count;
+        await (await api.Anonimo().PostJsonAsync(url, new { email = staff })).JsonAsync();
+        Assert.Equal(antes, api.Correos.Para(staff).Count);
+    }
+
+    [Fact]
+    public async Task Solo_la_propia_persona_cambia_su_contrasena()
+    {
+        var (cliente, id, email) = await api.NuevoParticipanteAsync();
+        var url = "/api/Auth/mi-contrasena";
+
+        await (await api.Anonimo().PutJsonAsync(url, new { actual = "Clave123!", nueva = "Nueva2026x" })).EsperarAsync(HttpStatusCode.Unauthorized);
+        await (await cliente.PutJsonAsync(url, new { actual = "equivocada1", nueva = "Nueva2026x" })).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await cliente.PutJsonAsync(url, new { actual = "Clave123!", nueva = "corta1" })).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await cliente.PutJsonAsync(url, new { actual = "Clave123!", nueva = "Nueva2026x" })).EsperarAsync(HttpStatusCode.NoContent);
+        await (await LoginAsync(email, "Clave123!")).EsperarAsync(HttpStatusCode.Unauthorized);
+        await (await LoginAsync(email, "Nueva2026x")).EsperarAsync(HttpStatusCode.OK);
+
+        // La Directora no tiene forma de cambiar la contraseña de otra persona
+        var dir = await api.DirectoraAsync();
+        var r = await dir.PutJsonAsync($"/api/Usuarios/{id}/contrasena", new { password = "Robada2026x" });
+        Assert.True(r.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed, $"Llegó {r.StatusCode}");
+        await (await LoginAsync(email, "Robada2026x")).EsperarAsync(HttpStatusCode.Unauthorized);
+    }
 }

@@ -25,23 +25,27 @@ public class VoluntariadoTests(ApiFixture api)
     {
         var email = $"v{Guid.NewGuid().ToString("N")[..10]}@correo.com";
         var v = await (await api.Anonimo().PostJsonAsync("/api/Voluntarios/postular",
-            new { nombreCompleto = "Vale Voluntaria", email, telefono = "70000001" })).JsonAsync();
+            new { nombreCompleto = "Vale Voluntaria", email, telefono = "70000001", aceptaTerminos = true, aceptaPrivacidad = true })).JsonAsync();
         await (await api.Anonimo().PostJsonAsync("/api/Voluntarios/postular",
-            new { nombreCompleto = "Otra", email, telefono = (string?)null })).EsperarAsync(HttpStatusCode.BadRequest);
+            new { nombreCompleto = "Otra", email, telefono = (string?)null, aceptaTerminos = true, aceptaPrivacidad = true })).EsperarAsync(HttpStatusCode.BadRequest);
 
         var enc = await api.EncargadoAsync();
         var evento = await EventoAsync("Limpieza del parque", DateTime.UtcNow.AddDays(-2));
         await (await enc.PostJsonAsync($"/api/Voluntarios/{v.Id()}/participaciones",
-            new { eventoId = evento.Id(), descripcion = "Apoyo en logística", horas = 3.5m })).EsperarAsync(HttpStatusCode.OK);
+            new { eventoId = evento.Id(), descripcion = "Apoyo en logística", horaInicio = "9:00", horaFin = "12:30" })).EsperarAsync(HttpStatusCode.OK);
         await (await enc.PostJsonAsync($"/api/Voluntarios/{Guid.NewGuid()}/participaciones",
-            new { eventoId = (Guid?)null, descripcion = "x", horas = (decimal?)null })).EsperarAsync(HttpStatusCode.NotFound);
+            new { eventoId = (Guid?)null, descripcion = "x" })).EsperarAsync(HttpStatusCode.NotFound);
         await (await enc.PostJsonAsync($"/api/Voluntarios/{v.Id()}/participaciones",
-            new { eventoId = (Guid?)null, descripcion = "x", horas = -2m })).EsperarAsync(HttpStatusCode.BadRequest);
+            new { eventoId = (Guid?)null, descripcion = "x", horaInicio = "18:00", horaFin = "16:00" })).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await enc.PostJsonAsync($"/api/Voluntarios/{v.Id()}/participaciones",
+            new { eventoId = (Guid?)null, descripcion = "x", horaInicio = "25:00", horaFin = "26:00" })).EsperarAsync(HttpStatusCode.BadRequest);
 
         var lista = await (await enc.GetAsync("/api/Voluntarios")).JsonAsync();
         var conHistorial = lista.EnumerateArray().Single(x => x.Id() == v.Id());
         Assert.Equal("Limpieza del parque", conHistorial.GetProperty("historial")[0].Str("eventoTitulo"));
         Assert.Equal(3.5m, conHistorial.GetProperty("totalHoras").GetDecimal());
+        Assert.Equal("09:00", conHistorial.GetProperty("historial")[0].Str("horaInicio"));
+        Assert.Equal("12:30", conHistorial.GetProperty("historial")[0].Str("horaFin"));
         await (await (await api.JuanAsync()).GetAsync("/api/Voluntarios")).EsperarAsync(HttpStatusCode.Forbidden);
     }
 
@@ -79,7 +83,7 @@ public class VoluntariadoTests(ApiFixture api)
         Assert.Contains(mias.EnumerateArray(), a => a.Id() == asignacion.Id());
 
         // Antes de que termine no se registran horas
-        await (await enc.PutJsonAsync($"/api/Voluntarios/asignaciones/{asignacion.Id()}/horas", new { horas = 4 })).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await enc.PutJsonAsync($"/api/Voluntarios/asignaciones/{asignacion.Id()}/horas", new { horaInicio = "10:00", horaFin = "12:00" })).EsperarAsync(HttpStatusCode.BadRequest);
 
         // Se simula que el evento ya pasó
         await api.EnBdAsync(async db =>
@@ -88,17 +92,22 @@ public class VoluntariadoTests(ApiFixture api)
             e!.FechaInicio = DateTime.UtcNow.AddDays(-1);
             e.FechaFin = DateTime.UtcNow.AddDays(-1).AddHours(2);
         });
-        await (await enc.PutJsonAsync($"/api/Voluntarios/asignaciones/{asignacion.Id()}/horas", new { horas = 0 })).EsperarAsync(HttpStatusCode.BadRequest);
-        var conHoras = await (await enc.PutJsonAsync($"/api/Voluntarios/asignaciones/{asignacion.Id()}/horas", new { horas = 4.5m })).JsonAsync();
-        Assert.Equal(4.5m, conHoras.GetProperty("horas").GetDecimal());
+        await (await enc.PutJsonAsync($"/api/Voluntarios/asignaciones/{asignacion.Id()}/horas", new { horaInicio = "10:00", horaFin = "10:00" })).EsperarAsync(HttpStatusCode.BadRequest);
+        // De 15:30 a 18:15 = 2 h 45 min
+        var conHoras = await (await enc.PutJsonAsync($"/api/Voluntarios/asignaciones/{asignacion.Id()}/horas", new { horaInicio = "15:30", horaFin = "18:15" })).JsonAsync();
+        Assert.Equal(2.75m, conHoras.GetProperty("horas").GetDecimal());
+        Assert.Equal(("15:30", "18:15", 1), (conHoras.Str("horaInicio"), conHoras.Str("horaFin"), conHoras.GetProperty("dias").GetInt32()));
+        // Corregir: de 14:00 a 15:45 durante 2 días = 3 h 30 min
+        conHoras = await (await enc.PutJsonAsync($"/api/Voluntarios/asignaciones/{asignacion.Id()}/horas", new { horaInicio = "14:00", horaFin = "15:45", dias = 2 })).JsonAsync();
+        Assert.Equal(3.5m, conHoras.GetProperty("horas").GetDecimal());
         Assert.Equal("COMPLETADA", conHoras.Str("estado"));
 
         // Una asignación completada ya no se cancela
         await (await enc.DeleteAsync($"/api/Voluntarios/asignaciones/{asignacion.Id()}")).EsperarAsync(HttpStatusCode.BadRequest);
-        await (await enc.PutJsonAsync($"/api/Voluntarios/asignaciones/{Guid.NewGuid()}/horas", new { horas = 1 })).EsperarAsync(HttpStatusCode.NotFound);
+        await (await enc.PutJsonAsync($"/api/Voluntarios/asignaciones/{Guid.NewGuid()}/horas", new { horaInicio = "10:00", horaFin = "11:00" })).EsperarAsync(HttpStatusCode.NotFound);
 
         var historial = await (await (await api.VoluntarioAsync()).GetAsync("/api/Voluntarios/mi-historial")).JsonAsync();
-        Assert.True(historial.GetProperty("totalHoras").GetDecimal() >= 4.5m);
+        Assert.True(historial.GetProperty("totalHoras").GetDecimal() >= 3.5m);
     }
 
     [Fact]
@@ -120,7 +129,7 @@ public class VoluntariadoTests(ApiFixture api)
         Assert.Equal("CURSO", asignacion.Str("tipo"));
 
         await (await dir.DeleteAsync($"/api/Voluntarios/asignaciones/{asignacion.Id()}")).EsperarAsync(HttpStatusCode.NoContent);
-        await (await dir.PutJsonAsync($"/api/Voluntarios/asignaciones/{asignacion.Id()}/horas", new { horas = 2 })).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await dir.PutJsonAsync($"/api/Voluntarios/asignaciones/{asignacion.Id()}/horas", new { horaInicio = "10:00", horaFin = "12:00" })).EsperarAsync(HttpStatusCode.BadRequest);
         await (await dir.DeleteAsync($"/api/Voluntarios/asignaciones/{Guid.NewGuid()}")).EsperarAsync(HttpStatusCode.NotFound);
 
         var pasado = await EventoAsync("Evento terminado", DateTime.UtcNow.AddDays(-5));

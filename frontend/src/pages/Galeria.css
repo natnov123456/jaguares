@@ -53,23 +53,52 @@
   font-size: 1.1rem;
 }
 
-/* Vista ampliada */
+/* Vista ampliada: solo la foto, a pantalla completa (por encima del menú) */
 .visor {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.92);
-  z-index: 300;
+  background: #000;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 56px;
+  cursor: zoom-out;
 }
-.visor-contenido { margin: 0; max-width: 100%; max-height: 100%; display: flex; flex-direction: column; align-items: center; }
-.visor-contenido img { max-width: 100%; max-height: calc(100vh - 140px); object-fit: contain; border-radius: 4px; }
-.visor-video { width: min(960px, 90vw); aspect-ratio: 16 / 9; }
-.visor-video iframe { width: 100%; height: 100%; border: 0; border-radius: 4px; }
-.visor-contenido figcaption { color: #e5e7eb; margin-top: 10px; display: flex; gap: 16px; font-size: 0.95rem; }
-.visor-contador { color: #9ca3af; }
+.visor-contenido {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.visor-contenido img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  cursor: default;
+}
+.visor-video { width: min(1280px, 100vw); aspect-ratio: 16 / 9; max-height: 100vh; }
+.visor-video iframe { width: 100%; height: 100%; border: 0; }
+/* Título y contador superpuestos abajo, sin achicar la foto */
+.visor-contenido figcaption {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 140px);
+  color: #f9fafb;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 6px 14px;
+  border-radius: 999px;
+  display: flex;
+  gap: 14px;
+  font-size: 0.95rem;
+  cursor: default;
+}
+.visor-contador { color: #d1d5db; }
 .visor-cerrar, .visor-flecha {
   position: absolute;
   background: rgba(255, 255, 255, 0.12);
@@ -84,14 +113,14 @@
   align-items: center;
   justify-content: center;
 }
-.visor-cerrar { top: 12px; right: 12px; }
-.visor-flecha { top: 50%; transform: translateY(-50%); }
+.visor-cerrar { top: 12px; right: 12px; z-index: 1; }
+.visor-flecha { top: 50%; transform: translateY(-50%); z-index: 1; width: 52px; height: 52px; }
 .visor-flecha.izq { left: 8px; }
 .visor-flecha.der { right: 8px; }
 .visor-cerrar:hover, .visor-flecha:hover { background: rgba(255, 255, 255, 0.25); }
 @media (max-width: 600px) {
-  .visor { padding: 56px 8px; }
-  .visor-flecha { top: auto; bottom: 8px; transform: none; }
+  .visor-flecha { top: auto; bottom: 60px; transform: none; }
+  .visor-contenido figcaption { max-width: calc(100% - 24px); bottom: 12px; }
 }
 
 /* Administración */
@@ -122,5 +151,18 @@
 }
 .gal-lista-albumes button.activo { border-color: #f59e0b; background: #fffbeb; }
 .gal-errores { margin: 8px 0 0 18px; }
-.gal-check { display: flex; align-items: center; gap: 8px; }
-.gal-check input { width: auto; }
+/* Estado del álbum con un solo botón: Publicar / Ocultar */
+.gal-estado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+.gal-estado.publicado { border-color: #a7f3d0; background: #ecfdf5; }
+.gal-estado p { margin: 0; display: flex; align-items: center; gap: 8px; }

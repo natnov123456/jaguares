@@ -35,6 +35,7 @@ services:
       Smtp__Usuario: ${SMTP_USUARIO}
       Smtp__Password: ${SMTP_CLAVE}
       Smtp__Remitente: ${SMTP_REMITENTE}
+      Smtp__UsarSsl: ${SMTP_SSL:-true}
       Contacto__EmailDestino: ${CONTACTO_DESTINO}
     volumes:
       - uploads:/datos/uploads

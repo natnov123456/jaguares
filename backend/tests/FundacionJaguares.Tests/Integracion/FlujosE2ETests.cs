@@ -145,7 +145,7 @@ public class FlujosE2ETests(ApiFixture api)
         var d = await (await api.Anonimo().PostJsonAsync("/api/Donaciones/en-linea", new
         {
             monto = 345.5m, medio = "QR", referencia = $"E2E-{marca}", donanteId = (Guid?)null,
-            donanteNombre = $"Donante Privado {marca}", donanteEmail = correo
+            donanteNombre = $"Donante Privado {marca}", donanteEmail = correo, aceptaTerminos = true, aceptaPrivacidad = true
         })).JsonAsync();
         var numero = d.GetProperty("numeroComprobante").GetInt64();
 

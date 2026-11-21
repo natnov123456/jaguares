@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { voluntariosApi } from '../../services/api';
 import Estado from '../../components/Estado';
-import { fechaActividad, horas as formatoHoras } from '../../utils/formato';
+import { fechaActividad, horas as formatoHoras, horario, horasDeHorario } from '../../utils/formato';
 import BarraFiltros from '../../components/filtros/BarraFiltros';
 import BotonExportar from '../../components/BotonExportar';
 import useFiltros from '../../hooks/useFiltros';
@@ -91,17 +91,23 @@ export default function AsignacionesVoluntarios() {
     }
   };
 
+  // Horario que se está editando para una asignación (o el ya registrado)
+  const horarioDe = (a) => horasEditadas[a.id] ?? { inicio: a.horaInicio ?? '', fin: a.horaFin ?? '', dias: a.dias ?? 1 };
+  const editarHorario = (a, campo, valor) => setHorasEditadas(h => ({ ...h, [a.id]: { ...horarioDe(a), [campo]: valor } }));
+
   const guardarHoras = async (a) => {
-    const valor = Number(String(horasEditadas[a.id] ?? a.horas ?? '').replace(',', '.'));
-    if (!(valor > 0 && valor <= 200)) {
-      setMsg({ tipo: 'error', texto: 'Ingresa horas mayores a 0 y como máximo 200' });
+    const { inicio, fin, dias } = horarioDe(a);
+    const total = horasDeHorario(inicio, fin, dias);
+    if (total === null) {
+      setMsg({ tipo: 'error', texto: 'Indica la hora de inicio y la de fin; la de fin debe ser posterior (ej. de 15:30 a 18:15).' });
       return;
     }
+    if (total > 200) { setMsg({ tipo: 'error', texto: 'El total no puede superar 200 horas.' }); return; }
     setGuardando(a.id);
     setMsg(null);
     try {
-      await voluntariosApi.registrarHoras(a.id, valor);
-      setMsg({ tipo: 'success', texto: `Horas de ${a.voluntario} registradas (${formatoHoras(valor)}). Se sumaron a su historial.` });
+      await voluntariosApi.registrarHoras(a.id, { horaInicio: inicio, horaFin: fin, dias: Number(dias) || 1 });
+      setMsg({ tipo: 'success', texto: `Horas de ${a.voluntario} registradas: ${horario(inicio, fin, Number(dias))} = ${formatoHoras(total)}. Se sumaron a su historial.` });
       setHorasEditadas(h => { const n = { ...h }; delete n[a.id]; return n; });
       cargar();
     } catch (err) {
@@ -198,13 +204,25 @@ export default function AsignacionesVoluntarios() {
                           <td><Estado valor={a.estado} /></td>
                           <td>
                             {a.finalizada ? (
-                              <form onSubmit={(e) => { e.preventDefault(); guardarHoras(a); }}
-                                    style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                                <input type="number" min="0.25" max="200" step="0.25" required
-                                       aria-label={`Horas de ${a.voluntario}`}
-                                       value={horasEditadas[a.id] ?? a.horas ?? ''}
-                                       onChange={e => setHorasEditadas(h => ({ ...h, [a.id]: e.target.value }))}
-                                       style={{ width: 80, padding: 6, border: '1px solid #d1d5db', borderRadius: 4 }} />
+                              <form onSubmit={(e) => { e.preventDefault(); guardarHoras(a); }} className="horario-form">
+                                <label className="horario-campo">de
+                                  <input type="time" required aria-label={`Hora de inicio de ${a.voluntario}`}
+                                         value={horarioDe(a).inicio} onChange={e => editarHorario(a, 'inicio', e.target.value)} />
+                                </label>
+                                <label className="horario-campo">a
+                                  <input type="time" required aria-label={`Hora de fin de ${a.voluntario}`}
+                                         value={horarioDe(a).fin} onChange={e => editarHorario(a, 'fin', e.target.value)} />
+                                </label>
+                                {a.tipo === 'CURSO' && (
+                                  <label className="horario-campo" title="Días que colaboró con ese horario">×
+                                    <input type="number" min="1" max="60" required aria-label={`Días de ${a.voluntario}`}
+                                           value={horarioDe(a).dias} onChange={e => editarHorario(a, 'dias', e.target.value)}
+                                           style={{ width: 56 }} /> días
+                                  </label>
+                                )}
+                                <span className="horario-total" aria-live="polite">
+                                  {(() => { const t = horasDeHorario(horarioDe(a).inicio, horarioDe(a).fin, horarioDe(a).dias); return t ? `= ${formatoHoras(t)}` : ''; })()}
+                                </span>
                                 <button type="submit" className="btn-primary" style={{ padding: '6px 10px' }} disabled={guardando === a.id}>
                                   {guardando === a.id ? '...' : a.estado === 'COMPLETADA' ? 'Corregir' : 'Guardar'}
                                 </button>

@@ -23,17 +23,18 @@ Archivos: `deploy/docker-compose.prod.yml`, `deploy/Caddyfile`, `deploy/.env.exa
    git clone https://github.com/natnov123456/jaguares.git /opt/jaguares
    cd /opt/jaguares/deploy
    cp .env.example .env && chmod 600 .env
-   nano .env        # dominio, claves de BD, JWT_SECRET (openssl rand -base64 48), SMTP...
+   nano .env        # dominio, claves de BD, JWT_SECRET (openssl rand -base64 48)...
    ```
-   Los secretos viven **solo** en `deploy/.env`, nunca en el código: cadena de conexión, clave JWT, SMTP y pasarela de pago. Si `JWT_SECRET` es el valor de desarrollo o tiene menos de 32 caracteres, la API **no arranca** en producción.
+   Los secretos viven **solo** en `deploy/.env`, nunca en el código: cadena de conexión, clave JWT, **correo (SMTP)** y pasarela de pago. Si `JWT_SECRET` es el valor de desarrollo o tiene menos de 32 caracteres, la API **no arranca** en producción.
 4. Primer arranque:
    ```bash
    docker compose -f docker-compose.prod.yml --env-file .env up -d
    docker compose -f docker-compose.prod.yml logs -f migraciones   # aplica db/*.sql
    ```
    Caddy obtiene el certificado HTTPS automáticamente en el primer acceso y lo renueva solo.
-5. Cargar los datos iniciales y crear las cuentas del personal (ver `docs/datos-iniciales.md`, JAG-76).
-6. Programar el monitoreo de disponibilidad (ver `docs/operacion/disponibilidad-rnf04.md`).
+5. Configurar el **correo (SMTP)** en `.env` (`SMTP_HOST`, `SMTP_PUERTO`, `SMTP_USUARIO`, `SMTP_CLAVE`, `SMTP_REMITENTE`, `SMTP_SSL` y `CONTACTO_DESTINO`). Con Gmail: `smtp.gmail.com`, puerto 587 y una *contraseña de aplicación*. Sin SMTP la plataforma funciona, pero no salen las confirmaciones, los recordatorios, los enlaces de contraseña ni las consultas de contacto.
+6. Cargar los datos iniciales y crear las cuentas del personal (ver `docs/datos-iniciales.md`, JAG-76). La planilla `cuentas_internas.csv` debe incluir a la **Directora**: le llega por correo el enlace para definir su contraseña (si venció, usa *¿Olvidaste tu contraseña?* en el inicio de sesión).
+7. Programar el monitoreo de disponibilidad (ver `docs/operacion/disponibilidad-rnf04.md`).
 
 ## 2. CI/CD (despliegue automático desde `main`)
 
@@ -45,7 +46,7 @@ Archivos: `deploy/docker-compose.prod.yml`, `deploy/Caddyfile`, `deploy/.env.exa
 
 Si una prueba falla, no se publica ni se despliega nada. No hay pasos manuales.
 
-Configuración en GitHub (*Settings → Secrets and variables → Actions*): `SSH_HOST`, `SSH_USUARIO`, `SSH_CLAVE`. Además, crear el entorno `produccion` (*Settings → Environments*) si se quiere exigir una aprobación antes de desplegar.
+Configuración en GitHub (*Settings → Secrets and variables → Actions*): `SSH_HOST`, `SSH_USUARIO`, `SSH_CLAVE`. Además, crear el entorno `produccion` (*Settings → Environments*) si se quiere exigir una aprobación antes de desplegar. Mientras esos secretos no estén cargados, el workflow corre las pruebas y genera las imágenes, pero **omite** el paso de despliegue con un aviso (no falla).
 
 ## 3. Migraciones de base de datos
 
@@ -69,6 +70,8 @@ El servicio `migraciones` ejecuta `deploy/scripts/aplicar-scripts.sh` antes de i
   ```
   Se recomienda ejecutarla una vez al mes y anotar el resultado en el informe.
 
+**Prueba del despliegue completo con Docker (19 y 20/11/2026):** con `docker-compose.prod.yml`, las imágenes construidas desde `main` y `DOMINIO=localhost` (Caddy emite un certificado local). Resultados: migraciones aplicadas; `/health/ready` en 200 con base de datos y caché sanas; HTTP → HTTPS (308); cabeceras HSTS y `X-Frame-Options`; endpoint protegido sin token en 401; respaldo creado y restauración probada ("RESTAURACIÓN EXITOSA"). Con un servidor SMTP de pruebas (Mailpit): llegó el correo de *¿Olvidaste tu contraseña?*, el enlace definió la contraseña nueva y la anterior dejó de servir, y la consulta del formulario de contacto llegó al correo institucional con "responder a" del visitante. Falta repetirlo en el servidor real con el dominio oficial y el SMTP de la Fundación.
+
 Los scripts de migración, respaldo y prueba de restauración se probaron contra PostgreSQL 16 local. Primera ejecución: aplicó 16 scripts y omitió los datos de demostración. Segunda ejecución: no aplicó nada. El respaldo se restauró con éxito.
 
 ## 5. Operación diaria
@@ -86,4 +89,4 @@ Los scripts de migración, respaldo y prueba de restauración se probaron contra
 
 - HTTPS obligatorio con HSTS y encabezados de seguridad (`nosniff`, `X-Frame-Options`, `Referrer-Policy`) desde Caddy.
 - La API corre sin privilegios (`USER app`) y solo se expone a través de Caddy. La base de datos y Redis no tienen puertos publicados.
-- La IP real del visitante llega a la API (`X-Forwarded-For`), así los límites por IP del formulario de contacto y de la donación en línea siguen funcionando detrás del proxy.
+- La IP real del visitante llega a la API (`X-Forwarded-For`), así los límites por IP de la donación en línea y de las encuestas siguen funcionando detrás del proxy.

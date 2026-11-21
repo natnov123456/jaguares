@@ -11,6 +11,8 @@ namespace FundacionJaguares.Application.Services;
 // JAG-82 / FUJ-122: la Directora crea las cuentas del personal, les asigna un rol y puede desactivarlas.
 // La cuenta nueva no tiene contraseña utilizable: la persona la define con un enlace de un solo uso (24 h)
 // que recibe por correo. Del token solo se guarda su hash SHA-256.
+// Contraseñas: solo la propia persona la define o la cambia (con su contraseña actual, o con el enlace de
+// "¿Olvidaste tu contraseña?" que llega a su correo). Nadie más, ni la Directora, puede cambiarla.
 public interface IUsuarioService
 {
     Task<List<UsuarioDto>> ListarAsync(string? texto, Rol? rol, bool? activo);
@@ -20,11 +22,14 @@ public interface IUsuarioService
     Task<UsuarioDto> CambiarActivoAsync(Guid usuarioId, bool activo, Guid directoraId);
     Task ReenviarEnlaceAsync(Guid usuarioId);
     Task DefinirContrasenaAsync(DefinirContrasenaDto dto);
+    Task SolicitarRecuperacionAsync(string? email);
+    Task CambiarMiContrasenaAsync(Guid usuarioId, string? actual, string? nueva);
 }
 
 public class UsuarioService : IUsuarioService
 {
     public static readonly TimeSpan VigenciaEnlace = TimeSpan.FromHours(24);
+    public static readonly TimeSpan VigenciaRecuperacion = TimeSpan.FromHours(1);
     public const int LargoMinimoContrasena = 8;
 
     // Roles que la Directora puede asignar. VISITANTE no es un rol de cuenta.
@@ -137,14 +142,20 @@ public class UsuarioService : IUsuarioService
         await EnviarEnlaceAsync(u, primeraVez: false);
     }
 
-    private async Task EnviarEnlaceAsync(User u, bool primeraVez)
+    // Crea un enlace nuevo de un solo uso e invalida los anteriores que aún no se usaron. Devuelve el token.
+    private async Task<string> NuevoEnlaceAsync(User u, TimeSpan vigencia)
     {
-        // Un enlace nuevo invalida los anteriores que aún no se usaron
         await _db.TokensContrasena.Where(t => t.UsuarioId == u.Id && t.UsadoEn == null)
             .ExecuteUpdateAsync(s => s.SetProperty(t => t.ExpiraEn, DateTime.UtcNow));
         var token = NuevoToken();
-        _db.TokensContrasena.Add(new TokenContrasena { UsuarioId = u.Id, TokenHash = Hash(token), ExpiraEn = DateTime.UtcNow + VigenciaEnlace });
+        _db.TokensContrasena.Add(new TokenContrasena { UsuarioId = u.Id, TokenHash = Hash(token), ExpiraEn = DateTime.UtcNow + vigencia });
         await _db.SaveChangesAsync();
+        return token;
+    }
+
+    private async Task EnviarEnlaceAsync(User u, bool primeraVez)
+    {
+        var token = await NuevoEnlaceAsync(u, VigenciaEnlace);
 
         var url = $"{_app.FrontendUrl.TrimEnd('/')}/definir-contrasena?token={token}";
         var rol = await _db.Roles.Where(r => r.Codigo == u.Rol.ToString()).Select(r => r.Nombre).FirstOrDefaultAsync() ?? u.Rol.ToString();
@@ -162,7 +173,7 @@ public class UsuarioService : IUsuarioService
         var ahora = DateTime.UtcNow;
         var t = await _db.TokensContrasena.FirstOrDefaultAsync(x => x.TokenHash == hash);
         if (t is null || t.UsadoEn is not null || t.ExpiraEn <= ahora)
-            throw new InvalidOperationException("El enlace no es válido o ya venció. Pide a la Dirección que te envíe uno nuevo.");
+            throw new InvalidOperationException("El enlace no es válido o ya venció. Pide uno nuevo desde \"¿Olvidaste tu contraseña?\" en el inicio de sesión.");
         var u = await _db.Usuarios.FindAsync(t.UsuarioId) ?? throw new InvalidOperationException("El enlace no es válido");
         if (!u.Activo) throw new InvalidOperationException("Tu cuenta está desactivada. Contacta a la fundación.");
 
@@ -173,6 +184,36 @@ public class UsuarioService : IUsuarioService
 
         u.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
         u.ActualizadoEn = ahora;
+        await _db.SaveChangesAsync();
+    }
+
+    // "¿Olvidaste tu contraseña?": si el correo es de una cuenta activa, le llega un enlace válido por 1 hora.
+    // Responde igual exista o no la cuenta, para no revelar qué correos están registrados.
+    public async Task SolicitarRecuperacionAsync(string? email)
+    {
+        var correo = email?.Trim().ToLowerInvariant() ?? "";
+        if (!ContactoService.EmailValido(correo)) throw new ArgumentException("Ingresa un correo válido");
+        var u = await _db.Usuarios.FirstOrDefaultAsync(x => x.Email.ToLower() == correo && x.Activo);
+        if (u is null) return;
+
+        var token = await NuevoEnlaceAsync(u, VigenciaRecuperacion);
+        var url = $"{_app.FrontendUrl.TrimEnd('/')}/definir-contrasena?token={token}";
+        await _email.EnviarAsync(u.Email, "Recupera tu contraseña",
+            $"Hola {u.NombreCompleto}, recibimos un pedido para cambiar tu contraseña. " +
+            $"Defínela desde este enlace (válido por 1 hora y de un solo uso): {url}\n\n" +
+            "Si no lo pediste, ignora este correo: tu contraseña actual sigue funcionando.");
+    }
+
+    // Cada persona cambia su propia contraseña desde su cuenta, confirmando la actual
+    public async Task CambiarMiContrasenaAsync(Guid usuarioId, string? actual, string? nueva)
+    {
+        var u = await _db.Usuarios.FindAsync(usuarioId) ?? throw new KeyNotFoundException("Usuario no encontrado");
+        if (string.IsNullOrEmpty(actual) || !BCrypt.Net.BCrypt.Verify(actual, u.PasswordHash))
+            throw new ArgumentException("La contraseña actual no es correcta");
+        ValidarContrasena(nueva);
+        if (actual == nueva) throw new ArgumentException("La contraseña nueva debe ser distinta de la actual");
+        u.PasswordHash = BCrypt.Net.BCrypt.HashPassword(nueva);
+        u.ActualizadoEn = DateTime.UtcNow;
         await _db.SaveChangesAsync();
     }
 }

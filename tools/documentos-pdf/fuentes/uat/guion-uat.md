@@ -22,7 +22,7 @@
 | D4 | Exportar el panel de indicadores a PDF | Se descarga un PDF con encabezado de la Fundación y el mes elegido | | |
 | D5 | Crear un curso y asignarle un docente | El curso aparece en el catálogo; el docente recibe un aviso | | |
 | D6 | Publicar una noticia con imagen y guardar otra como borrador | La publicada se ve en el sitio; el borrador no | | |
-| D7 | Crear un álbum y subir 3 fotos | El álbum aparece en *Galería* con miniaturas | | |
+| D7 | Crear un álbum, subir 3 fotos y tocar **Publicar** | El álbum aparece en *Galería* con miniaturas; al abrir una foto se ve sola y en grande | | |
 | D8 | Revisar el *Registro de exportaciones* | Se ven los PDF/Excel generados en la sesión, con usuario y filtros | | |
 
 ## 2. Contador — donaciones, reportes y bitácora
@@ -47,7 +47,7 @@
 | O3 | Registrar con el código escrito a mano a alguien que no trajo el celular | Queda registrado | | |
 | O4 | Exportar la asistencia del evento a Excel | Archivo con nombre, correo, inscripción, asistencia y hora — CP-18 | | |
 | O5 | Cerrar la asistencia del evento | Se envía la encuesta a los asistentes | | |
-| O6 | Asignar 2 voluntarios a una actividad y registrar sus horas | Los voluntarios lo ven en su portal; las horas suman en su historial | | |
+| O6 | Asignar 2 voluntarios a una actividad y registrar su horario (ej. de 15:30 a 18:15) | Se calcula el total (2 h 45 min); los voluntarios lo ven en su portal y las horas suman en su historial | | |
 | O7 | Exportar las horas de voluntariado del mes | Archivo con voluntario, actividades y horas acumuladas | | |
 
 ## 4. Docente — su curso
@@ -68,6 +68,9 @@
 | P3 | Descargar su certificado y verificar el código en *Certificados* | El verificador muestra su nombre, curso y fecha | | |
 | P4 | Inscribirse a un evento y mostrar su QR | El QR aparece en *Mi panel* | | |
 | P5 | Responder la encuesta del correo | "¡Gracias por tu opinión!" | | |
+| P6 | Intentar inscribirse en un curso que ya comenzó | Aparece "Ya comenzó · inscripciones cerradas" y no deja inscribirse | | |
+| P7 | En *Iniciar sesión*, usar **¿Olvidaste tu contraseña?** y definir una nueva con el enlace del correo | Llega el correo; con la contraseña nueva entra y la anterior ya no sirve | | |
+| P8 | Enviar una consulta desde **Quiénes somos → Contacto** | "¡Gracias!…"; la consulta llega al correo institucional | | |
 
 ---
 
@@ -111,7 +114,7 @@ Los defectos se registran como **Bug** en Jira (proyecto JAG), enlazados a la hi
 | | Participante | |
 
 **Resultados:**
-- Tareas del guion completadas: ____ de 32.
+- Tareas del guion completadas: ____ de 35.
 - RNF-03 (inscripción ≤ 3 min, éxito ≥ 90 %): ☐ Cumple ☐ No cumple — tasa ____ %, tiempo máximo ____.
 - Observaciones registradas: ____ (críticas ____ · menores ____ · mejoras ____).
 - Defectos críticos pendientes: ☐ Ninguno ☐ Sí (detallar): ______________________________.

@@ -12,7 +12,9 @@ namespace FundacionJaguares.Api.Controllers;
 public class DonacionesController : ControllerBase
 {
     private readonly IDonacionService _donaciones;
-    public DonacionesController(IDonacionService donaciones) => _donaciones = donaciones;
+    private readonly IConsentimientoService _consentimientos;
+    public DonacionesController(IDonacionService donaciones, IConsentimientoService consentimientos)
+    { _donaciones = donaciones; _consentimientos = consentimientos; }
 
     // RF-05: registro manual (efectivo en oficina, transferencias recibidas)
     [HttpPost]
@@ -34,7 +36,15 @@ public class DonacionesController : ControllerBase
     {
         var claimId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
         Guid? usuarioId = Guid.TryParse(claimId, out var id) ? id : null;
-        try { return Ok(await _donaciones.RegistrarDonacionEnLineaAsync(dto, usuarioId)); }
+        try
+        {
+            // La donación en línea pide datos personales: exige las dos aceptaciones
+            ConsentimientoService.Exigir(dto.AceptaTerminos, dto.AceptaPrivacidad);
+            var d = await _donaciones.RegistrarDonacionEnLineaAsync(dto, usuarioId);
+            var email = dto.DonanteEmail ?? User.FindFirstValue(ClaimTypes.Email);
+            await _consentimientos.RegistrarAsync(Formularios.Donacion, usuarioId, email, HttpContext.Origen());
+            return Ok(d);
+        }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
     }

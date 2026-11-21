@@ -16,7 +16,7 @@ public interface IVoluntariadoService
     Task<ResultadoAsignacionDto> AsignarAsync(AsignarVoluntariosDto dto, Guid asignadoPor);
     Task<List<AsignacionDto>> ListarAsync(Guid? eventoId, Guid? cursoId);
     Task CancelarAsync(Guid asignacionId);
-    Task<AsignacionDto> RegistrarHorasAsync(Guid asignacionId, decimal horas, Guid registradoPor);
+    Task<AsignacionDto> RegistrarHorasAsync(Guid asignacionId, string? horaInicio, string? horaFin, int? dias, Guid registradoPor);
     Task<List<AsignacionDto>> MisAsignacionesAsync(Guid usuarioId, string? email);
 }
 
@@ -41,6 +41,31 @@ public class VoluntariadoService : IVoluntariadoService
             throw new ArgumentException($"Las horas deben ser mayores a 0 y como máximo {MaxHoras}");
         if (decimal.Round(horas, 2) != horas)
             throw new ArgumentException("Las horas admiten como máximo 2 decimales (ej. 3.5)");
+    }
+
+    public const int MaxDias = 60;
+
+    // "15:30" -> 15:30. Acepta "9:00" y "09:00".
+    public static TimeOnly LeerHora(string? texto, string campo)
+    {
+        if (TimeOnly.TryParseExact(texto?.Trim(), ["H:mm", "HH:mm"], System.Globalization.CultureInfo.InvariantCulture,
+                                   System.Globalization.DateTimeStyles.None, out var h))
+            return h;
+        throw new ArgumentException($"Indica la hora de {campo} en formato 24 h (ej. 15:30)");
+    }
+
+    // Horas = (fin - inicio) x días. Ej.: de 15:30 a 18:15 = 2 h 45 min = 2,75; con 4 días = 11 h.
+    public static (TimeOnly Inicio, TimeOnly Fin, int Dias, decimal Horas) CalcularHoras(string? horaInicio, string? horaFin, int? dias = 1)
+    {
+        var inicio = LeerHora(horaInicio, "inicio");
+        var fin = LeerHora(horaFin, "fin");
+        if (fin <= inicio) throw new ArgumentException("La hora de fin debe ser posterior a la de inicio (ej. de 15:30 a 18:15)");
+        var d = dias ?? 1;
+        if (d < 1 || d > MaxDias) throw new ArgumentException($"Los días deben estar entre 1 y {MaxDias}");
+        var minutos = (decimal)(fin - inicio).TotalMinutes * d;
+        var horas = decimal.Round(minutos / 60m, 2);
+        if (horas > MaxHoras) throw new ArgumentException($"El total no puede superar {MaxHoras} horas");
+        return (inicio, fin, d, horas);
     }
 
     // ---------- Actividades ----------
@@ -219,7 +244,8 @@ public class VoluntariadoService : IVoluntariadoService
 
     private static AsignacionDto ADto(AsignacionVoluntario a, Voluntario v, Actividad act, DateTime ahora) =>
         new(a.Id, v.Id, v.NombreCompleto, v.Email, act.Tipo, act.Id, act.Titulo, act.Lugar, act.Inicio, act.Fin,
-            act.TodoElDia, act.Finalizada(ahora), a.Tarea, a.Estado, a.Horas, a.AsignadoEn);
+            act.TodoElDia, act.Finalizada(ahora), a.Tarea, a.Estado, a.Horas, a.AsignadoEn,
+            a.HoraInicio?.ToString("HH:mm"), a.HoraFin?.ToString("HH:mm"), a.Dias);
 
     // ---------- Cancelar ----------
 
@@ -251,9 +277,10 @@ public class VoluntariadoService : IVoluntariadoService
 
     // La primera vez marca la asignación como COMPLETADA y crea la fila del historial; si ya tenía
     // horas, las corrige en ambos lugares (no se duplica: participaciones.asignacion_id es único).
-    public async Task<AsignacionDto> RegistrarHorasAsync(Guid asignacionId, decimal horas, Guid registradoPor)
+    public async Task<AsignacionDto> RegistrarHorasAsync(Guid asignacionId, string? horaInicio, string? horaFin, int? dias,
+                                                         Guid registradoPor)
     {
-        ValidarHoras(horas);
+        var (inicio, fin, nDias, horas) = CalcularHoras(horaInicio, horaFin, dias);
         var a = await _db.AsignacionesVoluntario.FindAsync(asignacionId)
                 ?? throw new KeyNotFoundException("Asignación no encontrada");
         if (a.Estado == "CANCELADA")
@@ -268,6 +295,9 @@ public class VoluntariadoService : IVoluntariadoService
                 ?? throw new KeyNotFoundException("Voluntario no encontrado");
 
         a.Horas = horas;
+        a.HoraInicio = inicio;
+        a.HoraFin = fin;
+        a.Dias = nDias;
         a.Estado = "COMPLETADA";
         a.HorasRegistradasPor = registradoPor;
         a.HorasRegistradasEn = ahora;
@@ -290,6 +320,9 @@ public class VoluntariadoService : IVoluntariadoService
             _db.ParticipacionesVoluntario.Add(p);
         }
         p.Horas = horas;
+        p.HoraInicio = inicio;
+        p.HoraFin = fin;
+        p.Dias = nDias;
         p.Descripcion = a.Tarea ?? $"Voluntariado en {actividad.Titulo}";
 
         await _db.SaveChangesAsync();

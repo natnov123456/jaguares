@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { voluntariosApi } from '../../services/api';
 import Estado from '../../components/Estado';
-import { fecha, horas as formatoHoras } from '../../utils/formato';
+import { fecha, horas as formatoHoras, horario, horasDeHorario } from '../../utils/formato';
 import BarraFiltros from '../../components/filtros/BarraFiltros';
 import BotonExportar from '../../components/BotonExportar';
 import useFiltros from '../../hooks/useFiltros';
@@ -13,7 +13,7 @@ export default function AdminVoluntarios() {
   const [loading, setLoading] = useState(true);
   const [abierto, setAbierto] = useState(null);
   const [actividad, setActividad] = useState('');
-  const [horasManual, setHorasManual] = useState('');
+  const [horarioManual, setHorarioManual] = useState({ inicio: '', fin: '' });
   const [mensaje, setMensaje] = useState('');
   const { valores, cambiar, limpiar } = useFiltros();
   const [periodoHoras, setPeriodoHoras] = useState({ desde: '', hasta: '' });
@@ -38,10 +38,11 @@ export default function AdminVoluntarios() {
     setMensaje('');
     try {
       await voluntariosApi.registrarParticipacion(voluntarioId, {
-        eventoId: null, descripcion: actividad, horas: horasManual ? Number(horasManual) : null,
+        eventoId: null, descripcion: actividad,
+        horaInicio: horarioManual.inicio || null, horaFin: horarioManual.fin || null,
       });
       setActividad('');
-      setHorasManual('');
+      setHorarioManual({ inicio: '', fin: '' });
       setMensaje('✅ Actividad registrada');
       cargar();
     } catch (err) {
@@ -139,7 +140,11 @@ export default function AdminVoluntarios() {
                               <li key={h.id}>
                                 <strong>{new Date(h.fecha).toLocaleDateString('es-BO')}</strong>
                                 {(h.eventoTitulo || h.cursoTitulo) && ` — ${h.eventoTitulo || h.cursoTitulo}`}: {h.descripcion}
-                                {h.horas != null && <span className="badge badge-ok" style={{ marginLeft: 8 }}>{formatoHoras(h.horas)}</span>}
+                                {h.horas != null && (
+                                  <span className="badge badge-ok" style={{ marginLeft: 8 }}>
+                                    {h.horaInicio ? `${horario(h.horaInicio, h.horaFin, h.dias)} · ` : ''}{formatoHoras(h.horas)}
+                                  </span>
+                                )}
                               </li>
                             ))}
                           </ul>
@@ -148,9 +153,19 @@ export default function AdminVoluntarios() {
                           <input type="text" value={actividad} onChange={e => setActividad(e.target.value)} required
                                  placeholder="Ej: Apoyo en feria de reciclaje" maxLength={300}
                                  style={{ flex: 1, padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px' }} />
-                          <input type="number" min="0.25" max="200" step="0.25" value={horasManual}
-                                 onChange={e => setHorasManual(e.target.value)} placeholder="Horas" aria-label="Horas (opcional)"
-                                 style={{ width: 90, padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px' }} />
+                          <span className="horario-form" title="Horario en que colaboró (opcional)">
+                            <label className="horario-campo">de
+                              <input type="time" value={horarioManual.inicio} aria-label="Hora de inicio (opcional)"
+                                     onChange={e => setHorarioManual(h => ({ ...h, inicio: e.target.value }))} />
+                            </label>
+                            <label className="horario-campo">a
+                              <input type="time" value={horarioManual.fin} aria-label="Hora de fin (opcional)"
+                                     onChange={e => setHorarioManual(h => ({ ...h, fin: e.target.value }))} />
+                            </label>
+                            <span className="horario-total">
+                              {horasDeHorario(horarioManual.inicio, horarioManual.fin) ? `= ${formatoHoras(horasDeHorario(horarioManual.inicio, horarioManual.fin))}` : ''}
+                            </span>
+                          </span>
                           <button type="submit" className="btn-primary">Registrar actividad</button>
                         </form>
                         {mensaje && <p style={{ marginTop: 8, fontSize: '0.9rem' }}>{mensaje}</p>}

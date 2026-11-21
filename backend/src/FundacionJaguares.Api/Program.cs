@@ -77,6 +77,11 @@ builder.Services.AddScoped<IParticipanteService, ParticipanteService>();
 builder.Services.AddScoped<IEncuestaService, EncuestaService>();
 // FUJ-122: cuentas del personal y roles
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+// Términos y privacidad aceptados en cada formulario, y registro de actividad (quién entró, cuándo y qué hizo)
+builder.Services.AddScoped<IConsentimientoService, ConsentimientoService>();
+builder.Services.AddScoped<IRegistroActividadService, RegistroActividadService>();
+builder.Services.AddSingleton<FundacionJaguares.Api.ColaRegistroActividad>();
+builder.Services.AddHostedService<FundacionJaguares.Api.EscritorRegistroActividad>();
 // FUJ-124: reportes exportables (PDF institucional / Excel). Cada módulo aporta sus reportes con un IProveedorReportes.
 builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<IProveedorReportes, ReportesActividades>();
@@ -152,6 +157,10 @@ builder.Services.AddRateLimiter(o =>
     o.AddPolicy("encuesta-publica", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(10) }));
+    // "¿Olvidaste tu contraseña?": envía correos, así que se limita por IP para evitar abusos
+    o.AddPolicy("recuperar-contrasena", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(15) }));
 });
 
 // 7) Swagger (compatible con Swashbuckle 10 / Microsoft.OpenApi 2.x)
@@ -231,6 +240,8 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseCors("front");
 app.UseAuthentication();
+// Después de la autenticación (ya se sabe quién es) y antes de la autorización (también quedan los accesos denegados)
+app.UseRegistroActividad();
 app.UseAuthorization();
 app.UseRateLimiter();
 app.MapControllers();

@@ -1,0 +1,13 @@
+{
+  "name": "jaguares-documentos-pdf",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Genera en PDF los documentos de docs/ a partir de sus fuentes en Markdown",
+  "type": "module",
+  "scripts": {
+    "generar": "node generar-pdf.mjs"
+  },
+  "dependencies": {
+    "marked": "15.0.12"
+  }
+}

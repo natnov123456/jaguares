@@ -12,7 +12,29 @@ public class ReportesAdministracion(IUsuarioService usuarios, AppDbContext db) :
         new("usuarios", "Usuarios y roles", ["DIRECTORA"], UsuariosAsync),
         // Evaluación: pantalla de certificados (plantillas) con exportación de los certificados emitidos
         new("certificados", "Certificados emitidos", ["DIRECTORA"], CertificadosAsync),
+        new("registro-actividad", "Registro de actividad", ["DIRECTORA"], RegistroActividadAsync),
     ];
+
+    // Quién entró, a qué hora y qué hizo. Sin rango de fechas se exportan los últimos 30 días.
+    private async Task<TablaReporte> RegistroActividadAsync(SolicitanteReporte s, FiltrosReporte f)
+    {
+        var hasta = f.Hasta ?? DateOnly.FromDateTime(DateTime.UtcNow.AddHours(-4));
+        var desde = f.Desde ?? hasta.AddDays(-29);
+        var pagina = await new RegistroActividadService(db).ListarAsync(
+            new FiltroRegistroActividad(f.Q, f.Estado, desde, hasta, null, 1, RegistroActividadService.MaxPagina * 25));
+        var filas = pagina.Registros;
+        return new TablaReporte("Registro de actividad", "Quién entró, a qué hora, desde dónde y qué hizo en la plataforma",
+            [new("Fecha y hora", 1.3f), new("Persona", 1.8f), new("Rol", 1.1f), new("Acción", 2.4f), new("Detalle", 1.8f),
+             new("Resultado", 0.8f), new("IP", 1f)],
+            filas.Select(r => new[]
+            {
+                Fmt.FechaHora(r.Fecha), r.Usuario ?? r.Email ?? "Visitante", r.Rol ?? "—", r.Accion, r.Recurso ?? "—",
+                r.Exito ? "Correcto" : $"Error {r.Estado}", r.Ip ?? "—"
+            }).ToList(),
+            FiltroCombinado.Describir(f with { Desde = desde, Hasta = hasta }, null, e => e == "EXITO" ? "Correctos" : "Con error"),
+            [new("Registros", Fmt.Entero(filas.Count)), new("Con error", Fmt.Entero(filas.Count(r => !r.Exito))),
+             new("Personas distintas", Fmt.Entero(filas.Select(r => r.UsuarioId?.ToString() ?? r.Email).Where(x => x != null).Distinct().Count()))]);
+    }
 
     private async Task<TablaReporte> CertificadosAsync(SolicitanteReporte s, FiltrosReporte f)
     {

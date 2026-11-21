@@ -158,7 +158,7 @@ public partial class GaleriaService : IGaleriaService
             return ($"https://www.youtube-nocookie.com/embed/{id}", $"https://i.ytimg.com/vi/{id}/hqdefault.jpg");
         }
         var vm = Vimeo().Match(u);
-        if (vm.Success) return ($"https://player.vimeo.com/video/{vm.Groups[1].Value}", null);
+        if (vm.Success) return ($"https://player.vimeo.com/video/{vm.Groups[1].Value}?dnt=1", null); // dnt: sin seguimiento
         throw new ArgumentException("Enlace no válido: usa un video de YouTube o Vimeo");
     }
 

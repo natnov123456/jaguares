@@ -1,7 +1,9 @@
 namespace FundacionJaguares.Application.DTOs;
 
 // AUTH
-public record RegistroDto(string NombreCompleto, string Email, string Password, string? Telefono);
+// AceptaTerminos / AceptaPrivacidad: las dos casillas obligatorias de cada formulario con datos personales
+public record RegistroDto(string NombreCompleto, string Email, string Password, string? Telefono,
+                          bool? AceptaTerminos = null, bool? AceptaPrivacidad = null);
 public record LoginDto(string Email, string Password);
 public record TokenDto(string Token, string NombreCompleto, string Rol, DateTime Expira);
 
@@ -12,6 +14,8 @@ public record CrearUsuarioDto(string NombreCompleto, string Email, FundacionJagu
 public record CambiarRolDto(FundacionJaguares.Domain.Entities.Rol Rol);
 public record CambiarActivoDto(bool Activo);
 public record DefinirContrasenaDto(string Token, string Password);
+public record OlvideContrasenaDto(string? Email);
+public record CambiarMiContrasenaDto(string? Actual, string? Nueva);
 
 // CURSOS
 // Solo la directora crea cursos y elige el docente a cargo
@@ -107,7 +111,8 @@ public record PlantillaCertificadoDto(Guid Id, string Nombre, string TipoActivid
 
 // DONACIONES
 public record CrearDonacionDto(decimal Monto, string Medio, string? Referencia, Guid? DonanteId,
-                               string? DonanteNombre = null, string? DonanteEmail = null, Guid? CampanaId = null);
+                               string? DonanteNombre = null, string? DonanteEmail = null, Guid? CampanaId = null,
+                               bool? AceptaTerminos = null, bool? AceptaPrivacidad = null);
 // FUJ-125: corrección y anulación de una donación (quedan en la bitácora de auditoría)
 public record EditarDonacionDto(decimal Monto, string Medio, string? Referencia, Guid? CampanaId, string? Motivo = null);
 public record AnularDonacionDto(string Motivo);
@@ -133,10 +138,13 @@ public record ResumenTransparenciaDto(int Anio, int Mes, decimal TotalRecaudado,
 public record MesPublicadoDto(int Anio, int Mes, decimal TotalRecaudado);
 
 // VOLUNTARIADO
-public record PostulacionVoluntarioDto(string NombreCompleto, string Email, string? Telefono);
-public record RegistrarParticipacionDto(Guid? EventoId, string Descripcion, decimal? Horas = null);
+public record PostulacionVoluntarioDto(string NombreCompleto, string Email, string? Telefono,
+                                       bool? AceptaTerminos = null, bool? AceptaPrivacidad = null);
+// Horario como "HH:mm" (ej. "15:30" a "18:15"); las horas se calculan a partir de él
+public record RegistrarParticipacionDto(Guid? EventoId, string Descripcion, string? HoraInicio = null, string? HoraFin = null);
 public record ParticipacionDto(Guid Id, Guid? EventoId, string? EventoTitulo, string? Descripcion, DateTime Fecha,
-                               decimal? Horas = null, Guid? CursoId = null, string? CursoTitulo = null);
+                               decimal? Horas = null, Guid? CursoId = null, string? CursoTitulo = null,
+                               string? HoraInicio = null, string? HoraFin = null, int? Dias = null);
 public record VoluntarioConHistorialDto(Guid Id, string NombreCompleto, string Email, string? Telefono,
                                         string Estado, DateTime PostuladoEn, List<ParticipacionDto> Historial,
                                         decimal TotalHoras = 0);
@@ -145,12 +153,14 @@ public record VoluntarioConHistorialDto(Guid Id, string NombreCompleto, string E
 public record ActividadAsignableDto(string Tipo, Guid Id, string Titulo, string? Lugar, DateTime Inicio, DateTime? Fin,
                                     bool TodoElDia, int Asignados);
 public record AsignarVoluntariosDto(List<Guid>? VoluntarioIds, Guid? EventoId, Guid? CursoId, string? Tarea);
-public record RegistrarHorasDto(decimal Horas);
+// Horario de la colaboración ("HH:mm") y días con ese horario (cursos de varios días); el total se calcula
+public record RegistrarHorasDto(string? HoraInicio, string? HoraFin, int? Dias = 1);
 // Finalizada = la actividad ya terminó: solo entonces se pueden registrar horas
 public record AsignacionDto(Guid Id, Guid VoluntarioId, string Voluntario, string? Email,
                             string Tipo, Guid ActividadId, string Actividad, string? Lugar,
                             DateTime Inicio, DateTime? Fin, bool TodoElDia, bool Finalizada,
-                            string? Tarea, string Estado, decimal? Horas, DateTime AsignadoEn);
+                            string? Tarea, string Estado, decimal? Horas, DateTime AsignadoEn,
+                            string? HoraInicio = null, string? HoraFin = null, int? Dias = null);
 public record AsignacionOmitidaDto(Guid VoluntarioId, string Motivo);
 public record ResultadoAsignacionDto(List<AsignacionDto> Asignadas, List<AsignacionOmitidaDto> Omitidas);
 
@@ -186,7 +196,8 @@ public record PaginaInstitucionalDto(string? Mision, string? Vision, string? His
                                      string? Direccion, string? Telefono, string? EmailContacto, string? Horario,
                                      DateTime? ActualizadoEn);
 // SitioWeb es un campo trampa (honeypot): oculto para personas, los bots lo llenan
-public record ConsultaContactoDto(string? Nombre, string? Email, string? Asunto, string? Mensaje, string? SitioWeb);
+public record ConsultaContactoDto(string? Nombre, string? Email, string? Asunto, string? Mensaje, string? SitioWeb,
+                                  bool? AceptaTerminos = null, bool? AceptaPrivacidad = null);
 
 // GALERÍA (FUJ-126)
 public record GuardarAlbumDto(string Titulo, string? Descripcion, bool Publicado);

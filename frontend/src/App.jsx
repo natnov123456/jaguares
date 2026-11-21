@@ -22,6 +22,10 @@ import Galeria from './pages/Galeria';
 import QuienesSomos from './pages/QuienesSomos';
 import Encuesta from './pages/Encuesta';
 import DefinirContrasena from './pages/DefinirContrasena';
+import OlvideContrasena from './pages/OlvideContrasena';
+import CambiarContrasena from './pages/CambiarContrasena';
+import Legal from './pages/Legal';
+import RegistroActividad from './pages/admin/RegistroActividad';
 
 // Participante / Voluntario
 import MiCuenta from './pages/MiCuenta';
@@ -81,6 +85,12 @@ export default function App() {
           {/* FUJ-120: enlace personal de la encuesta (no requiere sesión: lo identifica el token) */}
           <Route path="/encuesta/:token" element={<Encuesta />} />
           <Route path="/definir-contrasena" element={<DefinirContrasena />} />
+          <Route path="/olvide-contrasena" element={<OlvideContrasena />} />
+          <Route path="/terminos" element={<Legal key="terminos" documento="terminos" />} />
+          <Route path="/privacidad" element={<Legal key="privacidad" documento="privacidad" />} />
+          <Route path="/cookies" element={<Legal key="cookies" documento="cookies" />} />
+          <Route path="/reembolsos" element={<Legal key="reembolsos" documento="reembolsos" />} />
+          <Route path="/mi-contrasena" element={<ProtectedRoute><CambiarContrasena /></ProtectedRoute>} />
 
           {/* Participante y Voluntario */}
           <Route path="/mi-cuenta" element={protegida('verMiCuenta', <MiCuenta />)} />
@@ -107,6 +117,7 @@ export default function App() {
           <Route path="/admin/bitacora" element={protegida('verBitacora', <Bitacora />)} />
           <Route path="/admin/indicadores" element={protegida('verIndicadores', <Indicadores />)} />
           <Route path="/admin/exportaciones" element={protegida('verExportaciones', <Exportaciones />)} />
+          <Route path="/admin/actividad" element={protegida('verRegistroActividad', <RegistroActividad />)} />
 
           {/* Voluntario */}
           <Route path="/voluntario" element={protegida('verPortalVoluntario', <VoluntarioDashboard />)} />

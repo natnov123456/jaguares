@@ -67,11 +67,11 @@ public class ReportesGestion(ICursoService cursos, IEventoService eventos, IVolu
             filtrados.Select(v => new[]
             {
                 v.NombreCompleto, v.Email, v.Telefono ?? "—", Fmt.Estado(v.Estado), Fmt.Fecha(v.PostuladoEn),
-                Fmt.Entero(v.Historial.Count), Fmt.Num(v.TotalHoras)
+                Fmt.Entero(v.Historial.Count), Fmt.Horas(v.TotalHoras)
             }).ToList(),
             FiltroCombinado.Describir(f, null, Fmt.Estado),
             [new("Voluntarios", Fmt.Entero(filtrados.Count)), new("Activos", Fmt.Entero(filtrados.Count(v => v.Estado == "ACTIVO"))),
-             new("Horas aportadas", Fmt.Num(filtrados.Sum(v => v.TotalHoras)))]);
+             new("Horas aportadas", Fmt.Horas(filtrados.Sum(v => v.TotalHoras)))]);
     }
 
     private async Task<TablaReporte> AsignacionesAsync(SolicitanteReporte s, FiltrosReporte f)
@@ -83,14 +83,15 @@ public class ReportesGestion(ICursoService cursos, IEventoService eventos, IVolu
             .OrderBy(a => a.Inicio).ThenBy(a => a.Voluntario).ToList();
         return new TablaReporte("Asignaciones de voluntariado", "Voluntarios asignados a cursos y eventos, con sus horas",
             [new("Actividad", 2.4f), new("Tipo", 0.8f), new("Fecha", 1.2f), new("Voluntario", 2f), new("Tarea", 1.8f),
-             new("Estado", 1f), new("Horas", 0.7f, true)],
+             new("Estado", 1f), new("Horario", 1.4f), new("Horas", 0.9f, true)],
             filtrados.Select(a => new[]
             {
                 a.Actividad, a.Tipo == "CURSO" ? "Curso" : "Evento", a.TodoElDia ? Fmt.Fecha(a.Inicio) : Fmt.FechaHora(a.Inicio),
-                a.Voluntario, a.Tarea ?? "—", Fmt.Estado(a.Estado), a.Horas is null ? "—" : Fmt.Num(a.Horas.Value)
+                a.Voluntario, a.Tarea ?? "—", Fmt.Estado(a.Estado), Fmt.Horario(a.HoraInicio, a.HoraFin, a.Dias),
+                a.Horas is null ? "—" : Fmt.Horas(a.Horas.Value)
             }).ToList(),
             FiltroCombinado.Describir(f, null, Fmt.Estado),
-            [new("Asignaciones", Fmt.Entero(filtrados.Count)), new("Horas registradas", Fmt.Num(filtrados.Sum(a => a.Horas ?? 0)))]);
+            [new("Asignaciones", Fmt.Entero(filtrados.Count)), new("Horas registradas", Fmt.Horas(filtrados.Sum(a => a.Horas ?? 0)))]);
     }
 
     private async Task<TablaReporte> EncuestasAsync(SolicitanteReporte s, FiltrosReporte f)

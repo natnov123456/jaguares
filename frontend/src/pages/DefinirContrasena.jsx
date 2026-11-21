@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { authApi } from '../services/api';
 
-// JAG-83 / FUJ-122: el personal define su contraseña con el enlace (un solo uso, 24 h) que recibió por correo
+// JAG-83 / FUJ-122: se define la contraseña con el enlace de un solo uso que llegó por correo
+// (cuenta nueva del personal: 24 h; "¿Olvidaste tu contraseña?": 1 h)
 export default function DefinirContrasena() {
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
@@ -35,7 +36,10 @@ export default function DefinirContrasena() {
     <div className="container page" style={{ maxWidth: 460 }}>
       <h1>Define tu contraseña</h1>
       {!token ? (
-        <div className="error-msg">El enlace no es válido. Ábrelo desde el correo que te envió la fundación.</div>
+        <div className="error-msg">
+          El enlace no es válido. Ábrelo desde el correo que te envió la fundación o pide uno nuevo en{' '}
+          <Link to="/olvide-contrasena" style={{ textDecoration: 'underline' }}>¿Olvidaste tu contraseña?</Link>.
+        </div>
       ) : listo ? (
         <div className="success-msg">
           ¡Listo! Tu contraseña quedó guardada. <Link to="/login" style={{ color: '#b45309' }}>Inicia sesión</Link>.

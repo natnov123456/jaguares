@@ -7,6 +7,7 @@ using FundacionJaguares.Infrastructure.Adapters;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Npgsql;
@@ -140,7 +141,7 @@ public sealed class ApiFixture : IAsyncLifetime
     {
         var email = $"p{Guid.NewGuid().ToString("N")[..12]}@prueba.bo";
         var r = await Anonimo().PostAsJsonAsync("/api/Auth/registro",
-            new { nombreCompleto = nombre ?? "Participante Prueba", email, password = "Clave123!", telefono = (string?)null });
+            new { nombreCompleto = nombre ?? "Participante Prueba", email, password = "Clave123!", telefono = (string?)null, aceptaTerminos = true, aceptaPrivacidad = true });
         r.EnsureSuccessStatusCode();
         var cliente = await ComoAsync(email, "Clave123!");
         return (cliente, await IdDeAsync(email), email);
@@ -169,6 +170,16 @@ public sealed class ApiFixture : IAsyncLifetime
 
     // Solo la directora crea cursos y asigna el docente a cargo: por defecto, el docente del seed
     public Task<Guid> DocenteIdAsync() => IdDeAsync(Usuarios.Docente);
+
+    // Solo se inscribe a cursos que todavía no empezaron. Para probar un curso "en marcha", las pruebas
+    // inscriben antes y luego mueven el inicio al pasado (como si la clase ya hubiera empezado).
+    public async Task MoverInicioDelCursoAsync(Guid cursoId, DateOnly inicio)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var filas = await db.Cursos.Where(c => c.Id == cursoId).ExecuteUpdateAsync(s => s.SetProperty(c => c.FechaInicio, inicio));
+        if (filas != 1) throw new InvalidOperationException($"Curso {cursoId} no encontrado");
+    }
 
     // Un segundo docente para comprobar que nadie gestiona cursos que no le asignaron
     private Guid? _otroDocente;
