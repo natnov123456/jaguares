@@ -8,7 +8,11 @@ import { fechaHora } from '../../utils/formato';
 
 // Registro de actividad: quién entró, a qué hora, desde dónde y qué hizo. Solo la Dirección lo consulta.
 // Se guarda en la base de datos y no se puede modificar ni borrar.
-const RESULTADOS = [{ valor: 'EXITO', etiqueta: 'Correctos' }, { valor: 'ERROR', etiqueta: 'Con error o denegados' }];
+const RESULTADOS = [
+  { valor: 'EXITO', etiqueta: 'Correctos' },
+  { valor: 'ERROR', etiqueta: 'Con error o denegados' },
+  { valor: 'SOSPECHOSO', etiqueta: 'Sospechosos (denegados o bloqueados)' },
+];
 const TAMANO = 50;
 
 const ETIQUETA_ROL = {
@@ -24,6 +28,67 @@ function navegadorCorto(ua) {
   const so = /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'macOS'
     : /Linux/.test(ua) ? 'Linux' : '';
   return so ? `${nav} · ${so}` : nav;
+}
+
+const Dato = ({ titulo, valor, detalle }) => (
+  <div className="kpi"><p className="kpi-titulo">{titulo}</p><p className="kpi-valor">{valor}</p><p className="kpi-detalle">{detalle}</p></div>
+);
+const Enlace = ({ texto, onClick }) => (
+  <button type="button" className="btn-link" onClick={onClick}
+          style={{ background: 'none', border: 'none', padding: 0, color: '#b45309', textDecoration: 'underline', cursor: 'pointer', font: 'inherit' }}>
+    {texto}
+  </button>
+);
+
+// Vigilancia de las últimas 24 horas: lo que conviene revisar. Al tocar una IP o una cuenta se filtra la tabla.
+function PanelVigilancia({ alElegir }) {
+  const [resumen, setResumen] = useState(null);
+  useEffect(() => {
+    let vigente = true;
+    registroActividadApi.seguridad(24).then(r => { if (vigente) setResumen(r.data); }).catch(() => {});
+    return () => { vigente = false; };
+  }, []);
+  if (!resumen) return null;
+  const alerta = resumen.ips.length > 0 || resumen.cuentas.length > 0 || resumen.bloqueos > 0;
+  return (
+    <section className="panel" style={{ marginBottom: 16, borderLeft: `4px solid ${alerta ? '#dc2626' : '#16a34a'}` }}>
+      <h2 style={{ marginTop: 0, fontSize: '1.1rem' }}>
+        Vigilancia de seguridad · últimas 24 horas {alerta ? '— revisar' : '— sin señales de riesgo'}
+      </h2>
+      <div className="kpis">
+        <Dato titulo="Inicios de sesión fallidos" valor={resumen.loginsFallidos} detalle="Contraseña o correo incorrectos" />
+        <Dato titulo="Bloqueos por intentos" valor={resumen.bloqueos} detalle="Cuenta o IP frenada por seguridad" />
+        <Dato titulo="Accesos denegados" valor={resumen.accesosDenegados} detalle="Intentos de entrar a pantallas sin permiso" />
+      </div>
+      {resumen.ips.length > 0 && (
+        <>
+          <h3 style={{ fontSize: '0.95rem', marginBottom: 4 }}>IPs con muchos fallos</h3>
+          <ul style={{ margin: 0 }}>
+            {resumen.ips.map(x => (
+              <li key={x.ip}>
+                <Enlace texto={x.ip} onClick={() => alElegir(x.ip)} /> — {x.fallos} fallos contra {x.cuentasDistintas} cuenta(s) · último {fechaHora(x.ultimo)}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {resumen.cuentas.length > 0 && (
+        <>
+          <h3 style={{ fontSize: '0.95rem', marginBottom: 4 }}>Cuentas con varios intentos fallidos</h3>
+          <ul style={{ margin: 0 }}>
+            {resumen.cuentas.map(x => (
+              <li key={x.email}>
+                <Enlace texto={x.email} onClick={() => alElegir(x.email)} /> — {x.fallos} intentos fallidos · último {fechaHora(x.ultimo)}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <p className="muted" style={{ fontSize: '0.8rem', marginBottom: 0 }}>
+        Tras 5 intentos fallidos seguidos la cuenta se bloquea 15 minutos (y la IP tras 20) y se avisa por correo a la Dirección.
+      </p>
+    </section>
+  );
 }
 
 export default function RegistroActividad() {
@@ -59,6 +124,7 @@ export default function RegistroActividad() {
           <p>Quién entró, a qué hora, desde dónde y qué hizo en la plataforma, incluidos los intentos fallidos. No se puede modificar ni borrar.</p>
         </div>
       </div>
+      <PanelVigilancia alElegir={(texto) => { cambiar('q', texto); cambiar('estado', 'SOSPECHOSO'); }} />
       <section className="panel">
         <BarraFiltros valores={valores} cambiar={cambiar} limpiar={limpiar} texto="Persona, correo, acción o IP" estados={RESULTADOS}
                       etiquetaEstado="Resultado" fechas="Fecha" total={datos?.total} visibles={datos?.total}>

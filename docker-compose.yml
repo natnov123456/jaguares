@@ -32,6 +32,8 @@ services:
       Smtp__Remitente: ${SMTP_REMITENTE:-no-responder@jaguares.org.bo}
       Smtp__UsarSsl: ${SMTP_SSL:-true}
       Contacto__EmailDestino: ${CONTACTO_DESTINO:-}
+      # Solo el frontend (App__FrontendUrl) puede llamar a la API desde el navegador
+      Cors__Origenes: ${CORS_ORIGENES:-}
     volumes:
       # Certificados, fotos de la galería y plantillas
       - archivos:/datos/uploads
@@ -47,6 +49,9 @@ services:
     image: jaguares_front
     container_name: jaguares_front
     restart: unless-stopped
+    environment:
+      # Para la política de seguridad (CSP): el navegador solo puede llamar a este backend
+      URL_BACKEND: ${URL_BACKEND:-http://localhost:8080}
     ports: ["${PUERTO_FRONTEND:-3000}:80"]
 
 volumes:

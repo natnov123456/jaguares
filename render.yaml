@@ -26,6 +26,9 @@ services:
         value: https://jaguares-front.onrender.com
       - key: Proxy__Confiable
         value: "true"
+      # Seguridad: redirige HTTP a HTTPS y bloquea tras intentos fallidos de inicio de sesión
+      - key: Seguridad__ForzarHttps
+        value: "true"
       # Correo: Brevo por el puerto 2525 (el plan gratis de Render bloquea 25, 465 y 587).
       # Smtp__Usuario, Smtp__Password y Smtp__Remitente (correo verificado en Brevo) se cargan en el panel
       - key: Smtp__Host
@@ -64,6 +67,7 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+    # Cabeceras de seguridad. CSP: solo scripts propios; la API, imágenes y videos solo desde orígenes permitidos
     headers:
       - path: /assets/*
         name: Cache-Control
@@ -71,3 +75,21 @@ services:
       - path: /*
         name: X-Content-Type-Options
         value: nosniff
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://jaguares-backend-6mjz.onrender.com; media-src 'self' blob: https://jaguares-backend-6mjz.onrender.com; frame-src blob: https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), microphone=(), geolocation=(), payment=()
+      - path: /*
+        name: Cross-Origin-Opener-Policy
+        value: same-origin

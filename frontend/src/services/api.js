@@ -235,4 +235,6 @@ export const indicadoresApi = {
 // Registro de actividad (solo la Dirección): quién entró, cuándo y qué hizo
 export const registroActividadApi = {
   listar: (params) => api.get('/RegistroActividad', { params }),
+  // Vigilancia: inicios de sesión fallidos, accesos denegados, bloqueos, IPs y cuentas con muchos fallos
+  seguridad: (horas = 24) => api.get('/RegistroActividad/seguridad', { params: { horas } }),
 };
