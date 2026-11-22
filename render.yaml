@@ -23,7 +23,7 @@ services:
       - key: Jwt__Secret
         generateValue: true
       - key: App__FrontendUrl
-        value: http://localhost:3000
+        value: https://jaguares-front.onrender.com
       - key: Proxy__Confiable
         value: "true"
       - key: Smtp__Host
