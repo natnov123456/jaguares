@@ -37,7 +37,7 @@ public static class ProcesadorImagen
         return (datos, esPng);
     }
 
-    private static async Task CopiarConLimiteAsync(Stream origen, Stream destino, long limite)
+    internal static async Task CopiarConLimiteAsync(Stream origen, Stream destino, long limite)
     {
         var buffer = new byte[81920];
         long total = 0;

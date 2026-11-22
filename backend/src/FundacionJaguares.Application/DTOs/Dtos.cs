@@ -123,7 +123,13 @@ public record CampanaDto(Guid Id, string Nombre, string? Descripcion, decimal Me
                          bool Vigente, decimal Recaudado, decimal Porcentaje, int CantidadDonaciones, DateTime CreadoEn);
 
 public record MiDonacionDto(Guid Id, long NumeroComprobante, DateTime Fecha, decimal Monto, string Moneda,
-                            string Medio, string? Referencia, string Estado);
+                            string Medio, string? Referencia, string Estado, string? MotivoRechazo = null);
+// Donación en línea que espera que Contabilidad o la Dirección confirme el pago en el banco
+public record DonacionPendienteDto(Guid Id, long NumeroComprobante, DateTime Fecha, decimal Monto, string Moneda, string Medio,
+                                   string? Referencia, string? DonanteNombre, string? DonanteEmail, string? Campana,
+                                   string? TipoComprobante);
+public record VerificarDonacionDto(bool Confirmar, string? Motivo);
+public record ArchivoComprobantePagoDto(byte[] Contenido, string Tipo, string Nombre);
 public record ComprobanteDto(string NombreArchivo, byte[] Pdf);
 public record DonanteDto(string Nombre, string? Email, string? Telefono, bool EsAnonimo);
 public record ReporteDonacionesDto(int Anio, int Mes, decimal Total, int Cantidad, List<FundacionJaguares.Domain.Entities.Donacion> Detalle);

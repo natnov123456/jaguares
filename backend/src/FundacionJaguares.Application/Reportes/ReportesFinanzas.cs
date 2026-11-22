@@ -71,7 +71,7 @@ public class ReportesFinanzas(IAuditoriaService auditoria, IDonacionService dona
             [new("Total recaudado", Fmt.Bs(filtrados.Sum(c => c.Recaudado)))]);
     }
 
-    public static string Accion(string a) => a switch { "ALTA" => "Alta", "EDICION" => "Edición", "ANULACION" => "Anulación", _ => a };
+    public static string Accion(string a) => a switch { "ALTA" => "Alta", "EDICION" => "Edición", "ANULACION" => "Anulación", "VERIFICACION" => "Verificación del pago", "RECHAZO" => "Rechazo del pago", _ => a };
 
     // Resumen legible del JSON guardado: "monto: 100 → 150; medio: EFECTIVO → QR"
     public static string Cambios(string? anterior, string nuevo)

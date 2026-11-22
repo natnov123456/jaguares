@@ -16,6 +16,7 @@ public class SeguridadOpciones
     // Límites de solicitudes por IP (además del bloqueo por fallos)
     public int LoginPorMinuto { get; set; } = 10;
     public int RegistrosPorHora { get; set; } = 10;
+    public int DonacionesPorHora { get; set; } = 20;
     // Redirige a HTTPS las solicitudes que llegan por HTTP a través del proxy (Render, Caddy)
     public bool ForzarHttps { get; set; }
 }

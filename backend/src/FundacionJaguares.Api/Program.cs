@@ -170,7 +170,7 @@ builder.Services.AddRateLimiter(o =>
         new { error = "Demasiadas solicitudes seguidas. Espera un momento y vuelve a intentarlo." }, ct));
     o.AddPolicy("donacion-en-linea", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = Math.Max(1, seguridad.DonacionesPorHora), Window = TimeSpan.FromHours(1) }));
     // FUJ-120: el enlace de la encuesta es público (token); se limita para frenar intentos de adivinarlo
     o.AddPolicy("encuesta-publica", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",

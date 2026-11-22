@@ -167,8 +167,8 @@ public static class PlantillaPdfInstitucional
         using (var wstream = new SKManagedWStream(salida))
         using (var doc = SKDocument.CreatePdf(wstream, metadatos))
         {
-            using var normal = SKTypeface.FromFamilyName("Arial", SKFontStyle.Normal) ?? SKTypeface.Default;
-            using var negrita = SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold) ?? SKTypeface.Default;
+            using var normal = Services.Tipografias.Sans();
+            using var negrita = Services.Tipografias.Sans(negrita: true);
             for (var p = 1; p <= m.Paginas; p++)
             {
                 var c = doc.BeginPage(m.Ancho, m.Alto);

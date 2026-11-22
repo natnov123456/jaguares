@@ -180,7 +180,7 @@ public static class DescripcionAcciones
         ["Certificados.CrearPlantilla"] = "Creación de plantilla de certificado", ["Certificados.ActualizarPlantilla"] = "Edición de plantilla de certificado",
         ["Certificados.EliminarPlantilla"] = "Eliminación de plantilla de certificado",
         ["Donaciones.Registrar"] = "Registro de donación", ["Donaciones.EnLinea"] = "Donación en línea", ["Donaciones.Editar"] = "Corrección de donación",
-        ["Donaciones.Anular"] = "Anulación de donación", ["Donaciones.Comprobante"] = "Descarga de comprobante de donación",
+        ["Donaciones.Anular"] = "Anulación de donación", ["Donaciones.PorVerificar"] = "Consulta de donaciones por verificar", ["Donaciones.ComprobantePago"] = "Consulta del comprobante de pago de un donante", ["Donaciones.Verificar"] = "Verificación del pago de una donación", ["Institucional.DatosPago"] = "Consulta de datos para donar", ["Institucional.GuardarDatosPago"] = "Cambio de los datos para donar", ["Institucional.SubirQr"] = "Cambio del QR para donar", ["Donaciones.Comprobante"] = "Descarga de comprobante de donación",
         ["Donaciones.Reporte"] = "Consulta del reporte mensual de donaciones",
         ["Campanas.Crear"] = "Creación de campaña", ["Campanas.Actualizar"] = "Edición de campaña",
         ["Transparencia.Publicar"] = "Publicación de transparencia", ["Transparencia.Despublicar"] = "Retiro de transparencia publicada",

@@ -3,7 +3,7 @@ namespace FundacionJaguares.Domain.Entities;
 // JAG-88 / FUJ-125: registro de solo lectura de cada alta, edición o anulación de una donación
 public class AuditoriaDonacion
 {
-    public const string Alta = "ALTA", Edicion = "EDICION", Anulacion = "ANULACION";
+    public const string Alta = "ALTA", Edicion = "EDICION", Anulacion = "ANULACION", Verificacion = "VERIFICACION", Rechazo = "RECHAZO";
 
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid DonacionId { get; set; }

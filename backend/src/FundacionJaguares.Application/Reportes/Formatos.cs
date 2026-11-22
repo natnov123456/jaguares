@@ -45,6 +45,8 @@ public static class Fmt
         "ASIGNADA" => "Asignada",
         "COMPLETADA" => "Completada",
         "ANULADA" => "Anulada",
+        "PENDIENTE" => "En verificación",
+        "RECHAZADA" => "Rechazada",
         null or "" => "—",
         _ => estado
     };

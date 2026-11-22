@@ -12,6 +12,14 @@ public class PaginaInstitucional
     public string? Telefono { get; set; }
     public string? EmailContacto { get; set; }
     public string? Horario { get; set; }
+    // Datos para donar por QR o transferencia (se muestran en la página de donaciones)
+    public byte[]? QrDonacion { get; set; }
+    public string? QrDonacionTipo { get; set; }
+    public string? BancoNombre { get; set; }
+    public string? BancoTipoCuenta { get; set; }
+    public string? BancoCuenta { get; set; }
+    public string? BancoTitular { get; set; }
+    public string? BancoDocumento { get; set; }
     public Guid? ActualizadoPor { get; set; }
     public DateTime ActualizadoEn { get; set; } = DateTime.UtcNow;
 }

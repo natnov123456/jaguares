@@ -27,26 +27,77 @@ public class DonacionesController : ControllerBase
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
     }
 
-    // RF-09: donación en línea (QR / pasarela) — pública
-    // Con sesión iniciada la donación queda en la cuenta; el límite evita usarlo para enviar correos a terceros
+    // Formulario de donación en línea (multipart: datos + foto o PDF del comprobante del banco)
+    public class DonacionEnLineaForm
+    {
+        // Texto con punto decimal ("50.5"): se interpreta igual en cualquier idioma del servidor
+        public string? Monto { get; set; }
+        public string? Medio { get; set; }
+        public string? Referencia { get; set; }
+        public string? DonanteNombre { get; set; }
+        public string? DonanteEmail { get; set; }
+        public Guid? CampanaId { get; set; }
+        public bool? AceptaTerminos { get; set; }
+        public bool? AceptaPrivacidad { get; set; }
+        public IFormFile? ComprobantePago { get; set; }
+    }
+
+    // RF-09: donación en línea por QR o transferencia — pública. Queda "en verificación" hasta que Contabilidad
+    // o la Dirección confirme el pago en el banco. Con sesión iniciada queda en la cuenta del usuario.
     [HttpPost("en-linea")]
     [AllowAnonymous]
     [EnableRateLimiting("donacion-en-linea")]
-    public async Task<IActionResult> EnLinea(CrearDonacionDto dto)
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    public async Task<IActionResult> EnLinea([FromForm] DonacionEnLineaForm form)
     {
         var claimId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
         Guid? usuarioId = Guid.TryParse(claimId, out var id) ? id : null;
         try
         {
+            if (!decimal.TryParse(form.Monto, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var monto))
+                throw new ArgumentException("Escribe un monto válido");
+            var dto = new CrearDonacionDto(monto, form.Medio ?? "", form.Referencia, null, form.DonanteNombre, form.DonanteEmail,
+                                           form.CampanaId, form.AceptaTerminos, form.AceptaPrivacidad);
             // La donación en línea pide datos personales: exige las dos aceptaciones
             ConsentimientoService.Exigir(dto.AceptaTerminos, dto.AceptaPrivacidad);
-            var d = await _donaciones.RegistrarDonacionEnLineaAsync(dto, usuarioId);
+            var archivo = form.ComprobantePago is { } f ? new ArchivoSubido(f.FileName, f.Length, f.OpenReadStream()) : null;
+            var d = await _donaciones.RegistrarDonacionEnLineaAsync(dto, usuarioId, archivo);
             var email = dto.DonanteEmail ?? User.FindFirstValue(ClaimTypes.Email);
             await _consentimientos.RegistrarAsync(Formularios.Donacion, usuarioId, email, HttpContext.Origen());
             return Ok(d);
         }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    // Donaciones en línea que esperan la verificación del pago en el banco
+    [HttpGet("por-verificar")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR")]
+    public async Task<IActionResult> PorVerificar() => Ok(await _donaciones.ListarPendientesAsync());
+
+    // Foto o PDF del comprobante que subió el donante (privado)
+    [HttpGet("{id:guid}/comprobante-pago")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR")]
+    public async Task<IActionResult> ComprobantePago(Guid id)
+    {
+        try
+        {
+            var c = await _donaciones.ObtenerComprobantePagoAsync(id);
+            Response.Headers.CacheControl = "no-store";
+            return File(c.Contenido, c.Tipo, c.Nombre);
+        }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
+    }
+
+    // Confirmar (el dinero llegó: suma y se envía el comprobante) o rechazar (con motivo, se avisa al donante)
+    [HttpPost("{id:guid}/verificar")]
+    [Authorize(Roles = "DIRECTORA,CONTADOR")]
+    public async Task<IActionResult> Verificar(Guid id, VerificarDonacionDto dto)
+    {
+        try { return Ok(await _donaciones.VerificarAsync(id, dto, UsuarioId())); }
+        catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+        catch (KeyNotFoundException ex) { return NotFound(new { error = ex.Message }); }
     }
 
     // FUJ-116: donaciones del usuario con sesión

@@ -40,8 +40,8 @@ public static class GeneradorComprobantePdf
         using (var wstream = new SKManagedWStream(salida))
         using (var doc = SKDocument.CreatePdf(wstream))
         {
-            using var normal = SKTypeface.FromFamilyName("Georgia", SKFontStyle.Normal) ?? SKTypeface.Default;
-            using var negrita = SKTypeface.FromFamilyName("Georgia", SKFontStyle.Bold) ?? SKTypeface.Default;
+            using var normal = Tipografias.Serif();
+            using var negrita = Tipografias.Serif(negrita: true);
             var c = doc.BeginPage(Ancho, Alto);
 
             using var barra = new SKPaint { Color = ColorAcento };

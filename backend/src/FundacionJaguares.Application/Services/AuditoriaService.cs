@@ -28,7 +28,8 @@ public interface IAuditoriaService
 
 public class AuditoriaService(AppDbContext db) : IAuditoriaService
 {
-    public static readonly string[] Acciones = [AuditoriaDonacion.Alta, AuditoriaDonacion.Edicion, AuditoriaDonacion.Anulacion];
+    public static readonly string[] Acciones = [AuditoriaDonacion.Alta, AuditoriaDonacion.Edicion, AuditoriaDonacion.Anulacion,
+                                                AuditoriaDonacion.Verificacion, AuditoriaDonacion.Rechazo];
     private static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     // Fotografía de la donación que se guarda como valor anterior / nuevo
@@ -54,7 +55,7 @@ public class AuditoriaService(AppDbContext db) : IAuditoriaService
     {
         FiltroCombinado.Validar(new FiltrosReporte(Q: f.Q, Desde: f.Desde, Hasta: f.Hasta));
         if (!string.IsNullOrWhiteSpace(f.Accion) && !Acciones.Contains(f.Accion.ToUpperInvariant()))
-            throw new ArgumentException("Acción no válida: ALTA, EDICION o ANULACION");
+            throw new ArgumentException("Acción no válida: ALTA, EDICION, ANULACION, VERIFICACION o RECHAZO");
         var pagina = Math.Max(1, f.Pagina);
         var tamano = Math.Clamp(f.TamanoPagina, 1, 100);
 

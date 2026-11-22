@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
     public DbSet<PlantillaCertificado> PlantillasCertificado => Set<PlantillaCertificado>();
     public DbSet<Donante> Donantes => Set<Donante>();
     public DbSet<Donacion> Donaciones => Set<Donacion>();
+    public DbSet<ComprobantePago> ComprobantesPago => Set<ComprobantePago>();
     public DbSet<Campana> Campanas => Set<Campana>();
     public DbSet<ReporteTransparencia> ReportesTransparencia => Set<ReporteTransparencia>();
     public DbSet<DestinoTransparencia> DestinosTransparencia => Set<DestinoTransparencia>();
@@ -60,6 +61,12 @@ public class AppDbContext : DbContext
 
         // Registro de actividad y consentimientos: solo se insertan (la base rechaza modificar o borrar)
         mb.Entity<RegistroActividad>(e => { e.ToTable("registro_actividad"); e.HasKey(x => x.Id); });
+        mb.Entity<ComprobantePago>(e =>
+        {
+            e.ToTable("comprobantes_pago");
+            e.HasKey(x => x.DonacionId);
+            e.HasOne<Donacion>().WithOne().HasForeignKey<ComprobantePago>(x => x.DonacionId).OnDelete(DeleteBehavior.Cascade);
+        });
         mb.Entity<Consentimiento>(e => { e.ToTable("consentimientos"); e.HasKey(x => x.Id); });
 
         mb.Entity<Exportacion>(e =>

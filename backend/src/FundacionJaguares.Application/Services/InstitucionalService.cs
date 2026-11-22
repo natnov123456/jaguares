@@ -2,6 +2,7 @@ using System.Text.Json;
 using FundacionJaguares.Application.DTOs;
 using FundacionJaguares.Domain.Entities;
 using FundacionJaguares.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 
 namespace FundacionJaguares.Application.Services;
 
@@ -17,7 +18,17 @@ public interface IInstitucionalService
 {
     Task<PaginaInstitucionalDto> ObtenerAsync();
     Task<PaginaInstitucionalDto> ActualizarAsync(PaginaInstitucionalDto dto, Guid actualizadoPor);
+    // Datos para donar por QR o transferencia
+    Task<DatosPagoDto> ObtenerDatosPagoAsync();
+    Task<DatosPagoDto> GuardarDatosPagoAsync(GuardarDatosPagoDto dto, Guid actualizadoPor);
+    Task<(byte[] Imagen, string Tipo)?> ObtenerQrAsync();
+    Task<DatosPagoDto> GuardarQrAsync(ArchivoSubido? archivo, Guid actualizadoPor);
 }
+
+public record DatosPagoDto(bool TieneQr, string? BancoNombre, string? BancoTipoCuenta, string? BancoCuenta, string? BancoTitular,
+                           string? BancoDocumento);
+public record GuardarDatosPagoDto(string? BancoNombre, string? BancoTipoCuenta, string? BancoCuenta, string? BancoTitular,
+                                  string? BancoDocumento);
 
 public class InstitucionalService : IInstitucionalService
 {
@@ -82,6 +93,72 @@ public class InstitucionalService : IInstitucionalService
         await _db.SaveChangesAsync();
         return ADto(p);
     }
+
+    public async Task<DatosPagoDto> ObtenerDatosPagoAsync()
+    {
+        var p = await _db.PaginaInstitucional.FindAsync(1);
+        return p is null ? new DatosPagoDto(false, null, null, null, null, null) : PagoDto(p);
+    }
+
+    public async Task<DatosPagoDto> GuardarDatosPagoAsync(GuardarDatosPagoDto dto, Guid actualizadoPor)
+    {
+        var errores = new Dictionary<string, string>();
+        string? Texto(string? valor, string campo, int max)
+        {
+            var v = string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
+            if (v?.Length > max) errores[campo] = $"Máximo {max} caracteres";
+            if (v is not null && v.Any(c => char.IsControl(c) || c is '<' or '>')) errores[campo] = "Tiene caracteres no permitidos";
+            return v;
+        }
+        var banco = Texto(dto.BancoNombre, "bancoNombre", 100);
+        var tipo = Texto(dto.BancoTipoCuenta, "bancoTipoCuenta", 50);
+        var cuenta = Texto(dto.BancoCuenta, "bancoCuenta", 50);
+        var titular = Texto(dto.BancoTitular, "bancoTitular", 150);
+        var documento = Texto(dto.BancoDocumento, "bancoDocumento", 30);
+        if (cuenta is not null && !cuenta.All(c => char.IsDigit(c) || c is '-' or ' '))
+            errores["bancoCuenta"] = "Solo números y guiones";
+        if (cuenta is not null && (banco is null || titular is null))
+            errores["bancoCuenta"] = "Con el número de cuenta indica también el banco y el titular";
+        if (errores.Count > 0) throw new ValidacionException(errores);
+
+        var p = await _db.PaginaInstitucional.FindAsync(1);
+        if (p is null) { p = new PaginaInstitucional(); _db.PaginaInstitucional.Add(p); }
+        (p.BancoNombre, p.BancoTipoCuenta, p.BancoCuenta, p.BancoTitular, p.BancoDocumento) = (banco, tipo, cuenta, titular, documento);
+        p.ActualizadoPor = actualizadoPor;
+        p.ActualizadoEn = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return PagoDto(p);
+    }
+
+    public async Task<(byte[] Imagen, string Tipo)?> ObtenerQrAsync()
+    {
+        var qr = await _db.PaginaInstitucional.Where(p => p.Id == 1 && p.QrDonacion != null)
+            .Select(p => new { p.QrDonacion, p.QrDonacionTipo }).FirstOrDefaultAsync();
+        return qr is null ? null : (qr.QrDonacion!, qr.QrDonacionTipo ?? "image/png");
+    }
+
+    // Imagen del QR que da el banco de la fundación (PNG o JPG). Null o vacío = quitarlo.
+    public async Task<DatosPagoDto> GuardarQrAsync(ArchivoSubido? archivo, Guid actualizadoPor)
+    {
+        var p = await _db.PaginaInstitucional.FindAsync(1);
+        if (p is null) { p = new PaginaInstitucional(); _db.PaginaInstitucional.Add(p); }
+        if (archivo is null || archivo.Tamano == 0) { p.QrDonacion = null; p.QrDonacionTipo = null; }
+        else
+        {
+            var (datos, esPng) = await ProcesadorImagen.LeerValidadoAsync(archivo);
+            // El QR se guarda en PNG (sin pérdida) para que los lectores lo reconozcan bien
+            var (imagen, _) = ProcesadorImagen.Normalizar(datos, esPng: true, 1200);
+            p.QrDonacion = imagen;
+            p.QrDonacionTipo = "image/png";
+        }
+        p.ActualizadoPor = actualizadoPor;
+        p.ActualizadoEn = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return PagoDto(p);
+    }
+
+    private static DatosPagoDto PagoDto(PaginaInstitucional p) =>
+        new(p.QrDonacion is { Length: > 0 }, p.BancoNombre, p.BancoTipoCuenta, p.BancoCuenta, p.BancoTitular, p.BancoDocumento);
 
     private static PaginaInstitucionalDto ADto(PaginaInstitucional p)
     {

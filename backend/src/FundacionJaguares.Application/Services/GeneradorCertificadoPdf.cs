@@ -70,7 +70,7 @@ public static partial class GeneradorCertificadoPdf
     }
 
     private static SKTypeface Fuente(SKFontStyle estilo) =>
-        SKTypeface.FromFamilyName("Georgia", estilo) ?? SKTypeface.Default;
+        Tipografias.Serif(estilo);
 
     private static void DibujarMarco(SKCanvas c)
     {
