@@ -220,6 +220,11 @@ public sealed class ApiFixture : IAsyncLifetime
             builder.UseSetting("Smtp:Host", "");
             // La tarea programada de recordatorios no corre sola: las pruebas la invocan con la hora que necesitan
             builder.UseSetting("Recordatorios:Habilitado", "false");
+            // Todas las pruebas llegan desde la misma "IP": los límites por IP se suben para no frenarlas.
+            // El bloqueo por cuenta (5 fallos) queda con su valor real y se prueba en SeguridadTests.
+            builder.UseSetting("Seguridad:IntentosPorIp", "100000");
+            builder.UseSetting("Seguridad:LoginPorMinuto", "100000");
+            builder.UseSetting("Seguridad:RegistrosPorHora", "100000");
             builder.ConfigureLogging(l => l.ClearProviders());
             builder.ConfigureTestServices(s =>
             {

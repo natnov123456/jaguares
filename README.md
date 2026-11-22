@@ -177,6 +177,25 @@ docker compose down              # detenerlos
 ```
 El despliegue en el servidor con HTTPS (Caddy, respaldos, monitoreo) está en `deploy/docker-compose.prod.yml`.
 
+### 8. Seguridad
+| Tema | Cómo se protege |
+|---|---|
+| Contraseñas | Hash **BCrypt**; mínimo 8 caracteres con letras y números; nadie puede ver ni cambiar la contraseña de otra persona |
+| Inicio de sesión | Token JWT firmado que vence en 60 min; la cuenta desactivada o con rol cambiado pierde el acceso al instante; **5 intentos fallidos bloquean la cuenta 15 min** (20 bloquean la IP) y se avisa por correo a la Dirección; tiempo de respuesta igual exista o no el correo |
+| Límites | Inicio de sesión (10/min por IP), registro (10/h), recuperar contraseña, contacto, donación y encuestas con límite por IP |
+| Formularios | Todo se valida en el servidor (no se confía en el navegador) |
+| Base de datos | Solo consultas parametrizadas (EF Core). La API usa el usuario `jaguares_app` (`db/20_rol_aplicacion.sql`): no puede borrar tablas, desactivar triggers ni modificar el registro de actividad, los consentimientos ni la auditoría. Conexión cifrada (SSL) a Neon |
+| XSS | React escapa todo el texto; política **CSP** que solo permite scripts propios; la API responde con `default-src 'none'` |
+| Cabeceras | HSTS, X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy; sin cabecera `Server` |
+| HTTPS | Render y Caddy sirven solo HTTPS; la API redirige a HTTPS (`Seguridad__ForzarHttps`) |
+| Rutas de administración | Cada endpoint exige el rol en el servidor (`[Authorize(Roles=...)]`); el menú del panel solo es comodidad |
+| CORS | Solo el frontend publicado (`App__FrontendUrl`) puede llamar a la API desde el navegador |
+| Claves | Ninguna clave en el navegador ni en el repositorio: van en variables de entorno de Render o en `.env` (ignorado por git) |
+| Vigilancia | *Panel → Gestión → Registro de actividad*: resumen de las últimas 24 h (intentos fallidos, bloqueos, accesos denegados, IPs y cuentas sospechosas) y filtro "Sospechosos" |
+| Swagger | Solo en desarrollo |
+
+La sesión se guarda en el navegador como token (no en cookies), así que no hay cookies de sesión que robar ni ataques CSRF; el riesgo de XSS se cubre con la CSP y el vencimiento corto del token.
+
 ---
 
 ## 🔐 Roles y Credenciales de Prueba
