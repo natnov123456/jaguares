@@ -225,6 +225,7 @@ public sealed class ApiFixture : IAsyncLifetime
             builder.UseSetting("Seguridad:IntentosPorIp", "100000");
             builder.UseSetting("Seguridad:LoginPorMinuto", "100000");
             builder.UseSetting("Seguridad:RegistrosPorHora", "100000");
+            builder.UseSetting("Seguridad:DonacionesPorHora", "100000");
             builder.ConfigureLogging(l => l.ClearProviders());
             builder.ConfigureTestServices(s =>
             {

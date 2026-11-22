@@ -142,20 +142,21 @@ public class FlujosE2ETests(ApiFixture api)
         var (contador, _, _) = await api.PersonalAsync("CONTADOR", "Contadora Flujo");
 
         // 1) Donación en línea sin cuenta (CP-09)
-        var d = await (await api.Anonimo().PostJsonAsync("/api/Donaciones/en-linea", new
-        {
-            monto = 345.5m, medio = "QR", referencia = $"E2E-{marca}", donanteId = (Guid?)null,
-            donanteNombre = $"Donante Privado {marca}", donanteEmail = correo, aceptaTerminos = true, aceptaPrivacidad = true
-        })).JsonAsync();
+        var d = await (await api.Anonimo().DonarEnLineaAsync(345.5m, "QR", $"Donante Privado {marca}", correo, $"E2E-{marca}")).JsonAsync();
         var numero = d.GetProperty("numeroComprobante").GetInt64();
+        // Queda en verificación: el donante recibe un aviso sin comprobante de donación
+        Assert.Null(Assert.Single(api.Correos.Para(correo)).Adjunto);
 
-        // 2) Comprobante PDF por correo (FUJ-116)
-        var comprobante = Assert.Single(api.Correos.Para(correo));
+        // 2) Contabilidad revisa el comprobante del banco y confirma el pago → comprobante PDF por correo (FUJ-116)
+        var pendiente = (await (await contador.GetAsync("/api/Donaciones/por-verificar")).JsonAsync()).EnumerateArray().Single(x => x.Id() == d.Id());
+        Assert.Equal("application/pdf", pendiente.Str("tipoComprobante"));
+        await contador.VerificarDonacionAsync(d.Id());
+        var comprobante = api.Correos.Para(correo).Single(c => c.Adjunto is not null);
         Assert.Equal("application/pdf", comprobante.Adjunto!.TipoContenido);
 
-        // 3) Queda en la bitácora de auditoría (FUJ-125)
+        // 3) Queda en la bitácora de auditoría (FUJ-125): alta y verificación
         var bitacora = await (await contador.GetAsync($"/api/Auditoria/donaciones?q={numero}")).JsonAsync();
-        Assert.Equal("ALTA", bitacora.GetProperty("registros")[0].Str("accion"));
+        Assert.Equal(["ALTA", "VERIFICACION"], bitacora.GetProperty("registros").EnumerateArray().Select(r => r.Str("accion")).Order());
 
         // 4) Aparece en el reporte financiero mensual (CP-06) y en su exportación
         var reporte = await (await contador.GetAsync($"/api/Donaciones/reporte/{hoy.Year}/{hoy.Month}")).JsonAsync();

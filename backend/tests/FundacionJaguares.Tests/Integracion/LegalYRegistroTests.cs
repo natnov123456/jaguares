@@ -71,13 +71,8 @@ public class LegalYRegistroTests(ApiFixture api)
             new { nombreCompleto = "Vol Legal", email = vol, telefono = (string?)null, aceptaTerminos = true, aceptaPrivacidad = true })).EsperarAsync(HttpStatusCode.OK);
 
         var donante = Correo("don");
-        var donacion = new { monto = 20, medio = "QR", referencia = (string?)null, donanteId = (Guid?)null, donanteNombre = "Donante Legal", donanteEmail = donante };
-        await (await anon.PostAsJsonAsync("/api/Donaciones/en-linea", donacion)).EsperarAsync(HttpStatusCode.BadRequest);
-        await (await anon.PostAsJsonAsync("/api/Donaciones/en-linea", new
-        {
-            donacion.monto, donacion.medio, donacion.referencia, donacion.donanteId, donacion.donanteNombre, donacion.donanteEmail,
-            aceptaTerminos = true, aceptaPrivacidad = true
-        })).EsperarAsync(HttpStatusCode.OK);
+        await (await anon.DonarEnLineaAsync(20, "QR", "Donante Legal", donante, aceptar: false)).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await anon.DonarEnLineaAsync(20, "QR", "Donante Legal", donante)).EsperarAsync(HttpStatusCode.OK);
 
         var contacto = Correo("con");
         var sinCasillas = await (await anon.PostAsJsonAsync("/api/Contacto",

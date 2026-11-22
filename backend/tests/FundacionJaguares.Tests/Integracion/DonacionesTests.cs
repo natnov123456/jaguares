@@ -58,18 +58,22 @@ public class DonacionesTests(ApiFixture api)
     public async Task Donacion_en_linea_publica_y_con_sesion()
     {
         var anon = api.Anonimo();
-        await (await anon.PostJsonAsync("/api/Donaciones/en-linea", Donacion(50, "EFECTIVO", "Ana", "ana@correo.com"))).EsperarAsync(HttpStatusCode.BadRequest);
-        await (await anon.PostJsonAsync("/api/Donaciones/en-linea", Donacion(50, "QR"))).EsperarAsync(HttpStatusCode.BadRequest);       // sin datos
-        await (await anon.PostJsonAsync("/api/Donaciones/en-linea", Donacion(-5, "QR", "Ana", "ana@correo.com"))).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await anon.DonarEnLineaAsync(50, "EFECTIVO")).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await anon.DonarEnLineaAsync(50, "PASARELA")).EsperarAsync(HttpStatusCode.BadRequest);   // ya no hay pasarela
+        await (await anon.DonarEnLineaAsync(50, "QR", nombre: null, email: null)).EsperarAsync(HttpStatusCode.BadRequest); // sin datos
+        await (await anon.DonarEnLineaAsync(-5)).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await anon.DonarEnLineaAsync(50, conArchivo: false)).EsperarAsync(HttpStatusCode.BadRequest);  // sin comprobante del banco
+        await (await anon.DonarEnLineaAsync(50, referencia: "x")).EsperarAsync(HttpStatusCode.BadRequest);  // sin número de operación
 
-        var publica = await (await anon.PostJsonAsync("/api/Donaciones/en-linea", Donacion(50, "QR", "Ana", "ana@correo.com"))).JsonAsync();
-        Assert.StartsWith("DON-", publica.Str("referencia"));
+        var publica = await (await anon.DonarEnLineaAsync(50, "TRANSFERENCIA", referencia: "OP-PUBLICA-1")).JsonAsync();
+        Assert.Equal("PENDIENTE", publica.Str("estado"));
+        Assert.Equal("OP-PUBLICA-1", publica.Str("referencia"));
 
         var (juan, _, _) = await api.NuevoParticipanteAsync();
-        var conSesion = await (await juan.PostJsonAsync("/api/Donaciones/en-linea", new { monto = 30, medio = "", donanteId = (Guid?)null, aceptaTerminos = true, aceptaPrivacidad = true })).JsonAsync();
-        Assert.Equal("PASARELA", conSesion.Str("medio"));
+        var conSesion = await (await juan.DonarEnLineaAsync(30, "QR", nombre: null, email: null)).JsonAsync();
+        Assert.Equal(("QR", "PENDIENTE"), (conSesion.Str("medio"), conSesion.Str("estado")));
         var mias = await (await juan.GetAsync("/api/Donaciones/mias")).JsonAsync();
-        Assert.Single(mias.EnumerateArray());
+        Assert.Equal("PENDIENTE", Assert.Single(mias.EnumerateArray()).Str("estado"));
     }
 
     [Fact]
@@ -98,7 +102,11 @@ public class DonacionesTests(ApiFixture api)
         await (await dir.PostJsonAsync("/api/Campanas", Campana("Vencida", 100, DateOnly.FromDateTime(DateTime.Today.AddDays(-2))))).EsperarAsync(HttpStatusCode.BadRequest);
 
         var c = await (await dir.PostJsonAsync("/api/Campanas", Campana("Útiles escolares", 200, manana))).JsonAsync();
-        await (await api.Anonimo().PostJsonAsync("/api/Donaciones/en-linea", Donacion(50, "QR", "Ana", "ana@correo.com", c.Id()))).EsperarAsync(HttpStatusCode.OK);
+        var donada = await (await api.Anonimo().DonarEnLineaAsync(50, campanaId: c.Id())).JsonAsync();
+        // En verificación todavía no suma a la campaña
+        var antes = (await (await api.Anonimo().GetAsync("/api/Campanas")).JsonAsync()).EnumerateArray().Single(x => x.Id() == c.Id());
+        Assert.Equal(0, antes.GetProperty("cantidadDonaciones").GetInt32());
+        await dir.VerificarDonacionAsync(donada.Id());
 
         var vigentes = await (await api.Anonimo().GetAsync("/api/Campanas")).JsonAsync();
         var conProgreso = vigentes.EnumerateArray().Single(x => x.Id() == c.Id());
@@ -109,7 +117,7 @@ public class DonacionesTests(ApiFixture api)
         await (await dir.PutJsonAsync($"/api/Campanas/{c.Id()}", Campana("Útiles escolares", 200, manana, activa: false))).EsperarAsync(HttpStatusCode.OK);
         Assert.DoesNotContain((await (await api.Anonimo().GetAsync("/api/Campanas")).JsonAsync()).EnumerateArray(), x => x.Id() == c.Id());
         Assert.Contains((await (await dir.GetAsync("/api/Campanas/admin")).JsonAsync()).EnumerateArray(), x => x.Id() == c.Id());
-        await (await api.Anonimo().PostJsonAsync("/api/Donaciones/en-linea", Donacion(50, "QR", "Ana", "ana@correo.com", c.Id()))).EsperarAsync(HttpStatusCode.BadRequest);
+        await (await api.Anonimo().DonarEnLineaAsync(50, campanaId: c.Id())).EsperarAsync(HttpStatusCode.BadRequest);
         await (await dir.PutJsonAsync($"/api/Campanas/{Guid.NewGuid()}", Campana("X", 1, manana))).EsperarAsync(HttpStatusCode.NotFound);
         await (await dir.PutJsonAsync($"/api/Campanas/{c.Id()}", Campana("X", -1, manana))).EsperarAsync(HttpStatusCode.BadRequest);
     }

@@ -80,10 +80,7 @@ public class AuditoriaTests(ApiFixture api)
     [Fact]
     public async Task Donacion_en_linea_sin_cuenta_tambien_se_audita()
     {
-        var d = await (await api.Anonimo().PostJsonAsync("/api/Donaciones/en-linea", new
-        {
-            monto = 50, medio = "QR", referencia = (string?)null, donanteId = (Guid?)null, donanteNombre = "Visitante Generoso", donanteEmail = "visitante@correo.com", aceptaTerminos = true, aceptaPrivacidad = true
-        })).JsonAsync();
+        var d = await (await api.Anonimo().DonarEnLineaAsync(50, "QR", "Visitante Generoso", "visitante@correo.com")).JsonAsync();
         var regs = Registros(await (await (await api.DirectoraAsync()).GetAsync($"/api/Auditoria/donaciones?q={d.GetProperty("numeroComprobante").GetInt64()}")).JsonAsync());
         var alta = Assert.Single(regs);
         Assert.Equal("ALTA", alta.Str("accion"));

@@ -19,6 +19,7 @@
 //   participantes: <nombre>@demo.jaguares.org / Demo2026!
 
 import pg from 'pg';
+import QRCode from 'qrcode';
 
 // ---------- Opciones ----------
 const args = process.argv.slice(2);
@@ -391,11 +392,36 @@ async function donaciones() {
     const offset = i < 6 ? -entre(0, Math.max(0, HOY.getUTCDate() - 1)) : -entre(1, 175);
     await sql('UPDATE donaciones SET fecha = $2 WHERE id = $1', [d.id, instante(offset, entre(9, 19), entre(0, 59))]);
   }
-  // Donaciones en línea de Juan (se ven en "Mis donaciones" con su comprobante)
+  // Datos para donar: cuenta bancaria y QR de DEMOSTRACIÓN (no son reales: la Directora carga los de la fundación)
+  const dirPago = await entrar('directora@jaguares.org', CLAVE['directora@jaguares.org']);
+  await api('PUT', '/Institucional/datos-pago', { token: dirPago, cuerpo: {
+    bancoNombre: 'Banco de demostración', bancoTipoCuenta: 'Caja de ahorro en bolivianos', bancoCuenta: '10000-000000-1',
+    bancoTitular: 'Fundación Unión de los Jaguares', bancoDocumento: 'NIT 0000000 (demo)' } });
+  const qr = await QRCode.toBuffer('DEMOSTRACION - Fundacion Union de los Jaguares - este QR no cobra', { width: 600, margin: 2 });
+  const formQr = new FormData();
+  formQr.append('archivo', new Blob([qr], { type: 'image/png' }), 'qr-demo.png');
+  await api('POST', '/Institucional/qr-donacion', { token: dirPago, form: formQr });
+
+  // Donaciones en línea: el donante sube el comprobante del banco y quedan "en verificación" hasta que Contabilidad confirma
+  const comprobanteBanco = await QRCode.toBuffer('Comprobante de transferencia de demostracion', { width: 300 });
+  const donarEnLinea = (token, datos) => {
+    const form = new FormData();
+    for (const [k, v] of Object.entries({ ...datos, ...ACEPTA })) if (v !== null && v !== undefined) form.append(k, String(v));
+    form.append('comprobantePago', new Blob([comprobanteBanco], { type: 'image/png' }), 'comprobante-banco.png');
+    return api('POST', '/Donaciones/en-linea', { token, form });
+  };
   const juan = await entrar('juan@example.com', CLAVE['juan@example.com']);
-  for (const monto of [100, 250])
-    await api('POST', '/Donaciones/en-linea', { token: juan, cuerpo: { monto, medio: 'QR', referencia: null, donanteId: null, campanaId: campanas[0].id, ...ACEPTA } });
-  ok(`${creadas.length + 2} donaciones en 6 meses`);
+  const enLinea = [];
+  for (const [monto, medio] of [[100, 'QR'], [250, 'TRANSFERENCIA']])
+    enLinea.push(await donarEnLinea(juan, { monto, medio, referencia: `OP-${entre(1000000, 9999999)}`, campanaId: campanas[0].id }));
+  const [nombreA, emailA] = donantes[0];
+  const [nombreB, emailB] = donantes[2];
+  enLinea.push(await donarEnLinea(null, { monto: 150, medio: 'QR', referencia: `QR-${entre(1000000, 9999999)}`, donanteNombre: nombreA, donanteEmail: emailA }));
+  enLinea.push(await donarEnLinea(null, { monto: 80, medio: 'TRANSFERENCIA', referencia: `TRF-${entre(1000000, 9999999)}`, donanteNombre: nombreB, donanteEmail: emailB }));
+  // Contabilidad confirma una de Juan (con comprobante) y rechaza otra; las demás quedan "Por verificar"
+  await api('POST', `/Donaciones/${enLinea[0].id}/verificar`, { token: cont, cuerpo: { confirmar: true } });
+  await api('POST', `/Donaciones/${enLinea[3].id}/verificar`, { token: cont, cuerpo: { confirmar: false, motivo: 'No encontramos la transferencia en el extracto con ese número de operación' } });
+  ok(`${creadas.length + enLinea.length} donaciones en 6 meses (en línea: 1 confirmada, 1 rechazada y 2 por verificar)`);
 
   // Bitácora: dos correcciones y una anulación (quedan con usuario, hora, antes y después)
   const [a, b, c] = creadas;
