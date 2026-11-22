@@ -4,6 +4,11 @@ import { donacionesApi } from '../services/api';
 import { bs, fechaHora, numeroComprobante } from '../utils/formato';
 import BotonComprobante from './BotonComprobante';
 
+const ESTADO = {
+  CONFIRMADA: ['badge-ok', 'Confirmada'], PENDIENTE: ['badge-warn', 'En verificación'],
+  RECHAZADA: ['badge-off', 'Rechazada'], ANULADA: ['badge-off', 'Anulada'],
+};
+
 export default function MisDonaciones() {
   const [donaciones, setDonaciones] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,13 +30,18 @@ export default function MisDonaciones() {
   return (
     <div className="table-wrap">
       <table className="table">
-        <thead><tr><th>N°</th><th>Fecha</th><th>Monto</th><th /></tr></thead>
+        <thead><tr><th>N°</th><th>Fecha</th><th>Monto</th><th>Estado</th><th /></tr></thead>
         <tbody>
           {donaciones.map(d => (
             <tr key={d.id}>
               <td><code>{numeroComprobante(d.numeroComprobante)}</code></td>
               <td>{fechaHora(d.fecha)}</td>
               <td style={{ fontWeight: 600 }}>{bs(d.monto)}</td>
+              <td>
+                <span className={`badge ${(ESTADO[d.estado] ?? [])[0] ?? ''}`}>{(ESTADO[d.estado] ?? [])[1] ?? d.estado}</span>
+                {d.estado === 'PENDIENTE' && <div className="muted" style={{ fontSize: '0.8rem' }}>La fundación está confirmando el pago</div>}
+                {d.estado === 'RECHAZADA' && d.motivoRechazo && <div className="muted" style={{ fontSize: '0.8rem' }}>{d.motivoRechazo}</div>}
+              </td>
               <td>{d.estado === 'CONFIRMADA' && <BotonComprobante donacion={d} />}</td>
             </tr>
           ))}

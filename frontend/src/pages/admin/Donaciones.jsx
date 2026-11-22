@@ -9,8 +9,114 @@ import BotonExportar from '../../components/BotonExportar';
 import useFiltros from '../../hooks/useFiltros';
 import { aplicarFiltros } from '../../utils/filtros';
 
-const ESTADOS = [{ valor: 'CONFIRMADA', etiqueta: 'Confirmadas' }, { valor: 'ANULADA', etiqueta: 'Anuladas' }];
-const MEDIOS = ['EFECTIVO', 'TRANSFERENCIA', 'QR', 'PASARELA'];
+const ESTADOS = [
+  { valor: 'CONFIRMADA', etiqueta: 'Confirmadas' }, { valor: 'PENDIENTE', etiqueta: 'En verificación' },
+  { valor: 'RECHAZADA', etiqueta: 'Rechazadas' }, { valor: 'ANULADA', etiqueta: 'Anuladas' },
+];
+const ETIQUETA_ESTADO = { CONFIRMADA: 'Confirmada', PENDIENTE: 'En verificación', RECHAZADA: 'Rechazada', ANULADA: 'Anulada' };
+const BADGE_ESTADO = { CONFIRMADA: 'badge-ok', PENDIENTE: 'badge-warn', RECHAZADA: 'badge-off', ANULADA: 'badge-off' };
+// Ya no hay pasarela de pago (las donaciones antiguas con PASARELA se siguen mostrando)
+const MEDIOS = ['EFECTIVO', 'TRANSFERENCIA', 'QR'];
+const MEDIO_TEXTO = { EFECTIVO: 'Efectivo', TRANSFERENCIA: 'Transferencia', QR: 'QR', PASARELA: 'Pasarela (antigua)' };
+
+// Donaciones en línea que esperan que se confirme el pago en el banco (Contador y Directora).
+// Se abre el comprobante que subió el donante, se compara con el extracto del banco y se confirma o rechaza.
+function PorVerificar({ onCambio }) {
+  const [pendientes, setPendientes] = useState(null);
+  const [viendo, setViendo] = useState(null); // { donacion, url, tipo }
+  const [rechazando, setRechazando] = useState(null);
+  const [motivo, setMotivo] = useState('');
+  const [mensaje, setMensaje] = useState(null);
+  const [ocupado, setOcupado] = useState(false);
+
+  const cargar = () => donacionesApi.porVerificar().then(r => setPendientes(r.data)).catch(() => setPendientes([]));
+  useEffect(() => { cargar(); }, []);
+  useEffect(() => () => { if (viendo?.url) URL.revokeObjectURL(viendo.url); }, [viendo]);
+
+  const ver = async (d) => {
+    try {
+      const r = await donacionesApi.comprobantePago(d.id);
+      setViendo({ donacion: d, url: URL.createObjectURL(r.data), tipo: r.data.type });
+    } catch { setMensaje({ tipo: 'error', texto: 'No se pudo abrir el comprobante' }); }
+  };
+
+  const decidir = async (d, confirmar) => {
+    if (confirmar && !window.confirm(`¿Confirmas que ${bs(d.monto)} (operación ${d.referencia}) llegó a la cuenta de la fundación?`)) return;
+    setOcupado(true);
+    setMensaje(null);
+    try {
+      await donacionesApi.verificar(d.id, confirmar, confirmar ? null : motivo.trim());
+      setMensaje({ tipo: 'success', texto: confirmar
+        ? `Pago confirmado. Se envió el comprobante N° ${numeroComprobante(d.numeroComprobante)} al donante.`
+        : 'Donación rechazada. Se avisó al donante con el motivo.' });
+      setRechazando(null); setMotivo(''); setViendo(null);
+      cargar();
+      onCambio();
+    } catch (err) {
+      setMensaje({ tipo: 'error', texto: err.response?.data?.error || 'No se pudo guardar' });
+    } finally { setOcupado(false); }
+  };
+
+  if (!pendientes) return null;
+  return (
+    <section className="panel" style={{ marginBottom: 16, borderLeft: `4px solid ${pendientes.length ? '#d97706' : '#16a34a'}` }}>
+      <h2 style={{ marginTop: 0 }}>Por verificar en el banco ({pendientes.length})</h2>
+      {mensaje && <div className={`${mensaje.tipo}-msg`}>{mensaje.texto}</div>}
+      {pendientes.length === 0 ? <p className="muted">No hay donaciones en línea esperando verificación.</p> : (
+        <>
+          <p className="muted" style={{ fontSize: '0.9rem' }}>
+            Abre el comprobante, búscalo en el extracto de la cuenta (monto y N° de operación) y confirma solo si el dinero llegó.
+            Mientras tanto no suman en reportes ni campañas.
+          </p>
+          <div className="tarjetas-verificar">
+            {pendientes.map(d => (
+              <article key={d.id} className="tarjeta-verificar">
+                <div className="tv-monto">{bs(d.monto)}</div>
+                <div><strong>{d.donanteNombre || 'Sin nombre'}</strong>{d.donanteEmail && <span className="muted"> · {d.donanteEmail}</span>}</div>
+                <div className="muted" style={{ fontSize: '0.85rem' }}>
+                  {MEDIO_TEXTO[d.medio] || d.medio} · Op. <code>{d.referencia}</code> · {fechaHora(d.fecha)}
+                  {d.campana && <> · {d.campana}</>}
+                </div>
+                <div className="tv-acciones">
+                  <button type="button" className="btn-secondary" onClick={() => ver(d)} disabled={!d.tipoComprobante}>Ver comprobante</button>
+                  <button type="button" className="btn-primary" onClick={() => decidir(d, true)} disabled={ocupado}>Confirmar pago</button>
+                  <button type="button" className="btn-secondary" style={{ color: '#991b1b' }} onClick={() => { setRechazando(d); setMotivo(''); }} disabled={ocupado}>Rechazar</button>
+                </div>
+                {rechazando?.id === d.id && (
+                  <div className="form-stack" style={{ marginTop: 8 }}>
+                    <label htmlFor={`mot-${d.id}`}>Motivo (se le envía al donante)</label>
+                    <textarea id={`mot-${d.id}`} rows="2" maxLength={300} value={motivo} onChange={e => setMotivo(e.target.value)}
+                              placeholder="Ej.: No encontramos el depósito con ese número de operación" />
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button type="button" className="btn-danger" disabled={ocupado || motivo.trim().length < 5} onClick={() => decidir(d, false)}>Rechazar donación</button>
+                      <button type="button" className="btn-secondary" onClick={() => setRechazando(null)}>Cancelar</button>
+                    </div>
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+      {viendo && (
+        <div className="modal-fondo" onClick={() => setViendo(null)}>
+          <div className="modal modal-comprobante" role="dialog" aria-modal="true" aria-label="Comprobante de pago" onClick={e => e.stopPropagation()}>
+            <button className="modal-cerrar" onClick={() => setViendo(null)} aria-label="Cerrar">×</button>
+            <h2>Comprobante de {viendo.donacion.donanteNombre || 'donante'} · {bs(viendo.donacion.monto)}</h2>
+            <p className="muted">Operación <code>{viendo.donacion.referencia}</code></p>
+            {viendo.tipo === 'application/pdf'
+              ? <iframe src={viendo.url} title="Comprobante en PDF" className="comprobante-vista" />
+              : <img src={viendo.url} alt="Comprobante de pago" className="comprobante-vista" />}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+              <a href={viendo.url} download={`comprobante-pago-${numeroComprobante(viendo.donacion.numeroComprobante)}`} className="btn-secondary">Descargar</a>
+              <button type="button" className="btn-primary" onClick={() => decidir(viendo.donacion, true)} disabled={ocupado}>Confirmar pago</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
 const ultimoDia = (anio, mes) => new Date(anio, mes, 0).getDate();
 const dosDigitos = (n) => String(n).padStart(2, '0');
 
@@ -54,7 +160,7 @@ function EditorDonacion({ donacion, modo, onGuardado, onCerrar }) {
                        onChange={e => setForm({ ...form, monto: e.target.value })} /></div>
               <div><label htmlFor="ed-medio">Medio</label>
                 <select id="ed-medio" value={form.medio} onChange={e => setForm({ ...form, medio: e.target.value })}>
-                  {MEDIOS.map(m => <option key={m} value={m}>{m}</option>)}
+                  {[...new Set([...MEDIOS, donacion.medio])].map(m => <option key={m} value={m}>{MEDIO_TEXTO[m] || m}</option>)}
                 </select></div>
               <div><label htmlFor="ed-ref">Referencia / recibo</label>
                 <input id="ed-ref" maxLength={100} value={form.referencia} onChange={e => setForm({ ...form, referencia: e.target.value })} /></div>
@@ -96,9 +202,9 @@ function TablaDonaciones({ donaciones, vacio, onEditar }) {
               <td><code>{numeroComprobante(d.numeroComprobante)}</code></td>
               <td>{fechaHora(d.fecha)}</td>
               <td style={{ fontWeight: 'bold' }}>{bs(d.monto)}</td>
-              <td>{d.medio}</td>
+              <td>{MEDIO_TEXTO[d.medio] || d.medio}</td>
               <td className="muted">{d.referencia || '-'}</td>
-              <td><span className={`badge ${d.estado === 'ANULADA' ? 'badge-off' : 'badge-ok'}`}>{d.estado === 'ANULADA' ? 'Anulada' : 'Confirmada'}</span></td>
+              <td><span className={`badge ${BADGE_ESTADO[d.estado] || 'badge-ok'}`}>{ETIQUETA_ESTADO[d.estado] || d.estado}</span></td>
               <td>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {d.estado === 'CONFIRMADA' && <BotonComprobante donacion={d} />}
@@ -239,6 +345,8 @@ export default function AdminDonaciones() {
         )}
       </div>
 
+      {puedeCorregir && <PorVerificar onCambio={cargar} />}
+
       <div className="split">
         <section className="panel">
           <h2>{verReporte ? 'Detalle del mes' : 'Mis últimos registros'}</h2>
@@ -248,7 +356,7 @@ export default function AdminDonaciones() {
               <span>Medio</span>
               <select value={valores.accion} onChange={e => cambiar('accion', e.target.value)}>
                 <option value="">Todos</option>
-                {MEDIOS.map(m => <option key={m} value={m}>{m}</option>)}
+                {[...MEDIOS, 'PASARELA'].map(m => <option key={m} value={m}>{MEDIO_TEXTO[m]}</option>)}
               </select>
             </label>
             <BotonExportar reporte="donaciones" filtros={filtrosExportar} />
@@ -266,7 +374,7 @@ export default function AdminDonaciones() {
         <section className="panel">
           <h2>Registrar efectivo</h2>
           <p className="muted" style={{ fontSize: '0.9rem', marginBottom: 16 }}>
-            Usa este formulario cuando alguien entregue dinero en mano. Las donaciones en línea se registran solas.
+            Usa este formulario cuando alguien entregue dinero en mano. Las donaciones en línea (QR y transferencia) llegan solas a "Por verificar".
           </p>
           {mensaje && <div className={`${mensaje.tipo}-msg`}>{mensaje.texto}</div>}
           <form onSubmit={registrarDonacionManual} className="form-stack">

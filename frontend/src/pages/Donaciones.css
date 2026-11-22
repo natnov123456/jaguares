@@ -1,0 +1,31 @@
+/* Página de donación: pensada primero para el celular */
+.donar h2 { font-size: 1.1rem; }
+.donar-campanas { margin-bottom: 24px; }
+.donar-campanas article { margin-top: 14px; }
+.donar-campanas article p { font-size: 0.9rem; }
+.donar-campanas article button { margin-top: 6px; }
+
+.donar-etiqueta { display: block; font-weight: 700; margin-top: 18px; color: #92400e; }
+.donar-medios { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0; }
+.donar-medios button {
+  padding: 14px 10px; border: 2px solid #e5e7eb; border-radius: 10px; background: #fff; font-weight: 600;
+  cursor: pointer; font-size: 0.95rem; min-height: 52px;
+}
+.donar-medios button.activo { border-color: #b45309; background: #fef3c7; color: #78350f; }
+
+.donar-instrucciones { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 14px; margin: 6px 0 4px; }
+.donar-instrucciones p { margin: 4px 0; }
+.donar-qr { display: block; width: 100%; max-width: 260px; height: auto; margin: 10px auto; background: #fff; padding: 8px; border-radius: 8px; }
+.donar-descargar { display: block; width: fit-content; margin: 0 auto 6px; text-decoration: none; }
+
+.donar-resumen { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 10px 0; }
+.donar-resumen dt { color: #6b7280; }
+.donar-resumen dd { margin: 0; word-break: break-word; }
+.donar-nota { font-size: 0.85rem; margin: 2px 0 8px; }
+.donar input[type="file"] { padding: 8px; background: #fff; max-width: 100%; }
+
+@media (max-width: 420px) {
+  .donar-medios { grid-template-columns: 1fr; }
+  .donar-resumen { grid-template-columns: 1fr; }
+  .donar-resumen dt { margin-top: 6px; }
+}

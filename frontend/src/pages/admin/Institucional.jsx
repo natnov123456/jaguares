@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { institucionalApi } from '../../services/api';
 import { fechaHora } from '../../utils/formato';
+import DatosParaDonar from '../../components/DatosParaDonar';
 import '../QuienesSomos.css';
 
 // FUJ-127: la Directora edita el contenido de "Quiénes somos" y el correo que recibe las consultas
@@ -140,6 +141,8 @@ export default function AdminInstitucional() {
           </section>
         </div>
       </form>
+      {/* Fuera del formulario de "Quiénes somos": se guarda por separado */}
+      <div style={{ marginTop: 16 }}><DatosParaDonar /></div>
     </div>
   );
 }

@@ -10,9 +10,10 @@ import { bs, fechaHora, numeroComprobante } from '../../utils/formato';
 // Los filtros se aplican en el servidor (la bitácora puede ser grande) y la tabla está paginada.
 const ACCIONES = [
   { valor: 'ALTA', etiqueta: 'Alta' }, { valor: 'EDICION', etiqueta: 'Edición' }, { valor: 'ANULACION', etiqueta: 'Anulación' },
+  { valor: 'VERIFICACION', etiqueta: 'Pago verificado' }, { valor: 'RECHAZO', etiqueta: 'Pago rechazado' },
 ];
 const ETIQUETA = Object.fromEntries(ACCIONES.map(a => [a.valor, a.etiqueta]));
-const BADGE = { ALTA: 'badge-ok', EDICION: 'badge-warn', ANULACION: 'badge-off' };
+const BADGE = { ALTA: 'badge-ok', EDICION: 'badge-warn', ANULACION: 'badge-off', VERIFICACION: 'badge-ok', RECHAZO: 'badge-off' };
 const CAMPOS = [['monto', 'Monto'], ['medio', 'Medio'], ['referencia', 'Referencia'], ['campana', 'Campaña'],
                 ['estado', 'Estado'], ['donante', 'Donante'], ['fecha', 'Fecha']];
 const POR_PAGINA = 25;

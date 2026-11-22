@@ -127,7 +127,16 @@ export const plantillasApi = {
 
 export const donacionesApi = {
   registrar: (data) => api.post('/Donaciones', data),
-  enLinea: (data) => api.post('/Donaciones/en-linea', data),
+  // Donación en línea: datos + foto o PDF del comprobante del banco (multipart). Queda en verificación.
+  enLinea: (datos, archivo) => {
+    const form = new FormData();
+    Object.entries(datos).forEach(([k, v]) => { if (v !== null && v !== undefined && v !== '') form.append(k, String(v)); });
+    if (archivo) form.append('comprobantePago', archivo);
+    return api.post('/Donaciones/en-linea', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  porVerificar: () => api.get('/Donaciones/por-verificar'),
+  comprobantePago: (id) => api.get(`/Donaciones/${id}/comprobante-pago`, { responseType: 'blob' }),
+  verificar: (id, confirmar, motivo) => api.post(`/Donaciones/${id}/verificar`, { confirmar, motivo }),
   reporte: (anio, mes) => api.get(`/Donaciones/reporte/${anio}/${mes}`),
   misRegistros: () => api.get('/Donaciones/mis-registros'),
   mias: () => api.get('/Donaciones/mias'),
@@ -173,6 +182,15 @@ export const galeriaApi = {
 export const institucionalApi = {
   obtener: () => api.get('/Institucional'),
   actualizar: (data) => api.put('/Institucional', data),
+  // Datos para donar: cuenta bancaria y QR de la fundación
+  datosPago: () => api.get('/Institucional/datos-pago'),
+  guardarDatosPago: (data) => api.put('/Institucional/datos-pago', data),
+  subirQr: (archivo) => {
+    const form = new FormData();
+    if (archivo) form.append('archivo', archivo);
+    return api.post('/Institucional/qr-donacion', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  urlQr: () => archivoUrl(`/api/Institucional/qr-donacion?v=${Date.now()}`),
 };
 
 export const contactoApi = {
