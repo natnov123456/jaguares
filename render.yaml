@@ -26,8 +26,13 @@ services:
         value: https://jaguares-front.onrender.com
       - key: Proxy__Confiable
         value: "true"
+      # Correo: Gmail con contraseña de aplicación (Smtp__Usuario y Smtp__Password se cargan en el panel)
       - key: Smtp__Host
-        sync: false
+        value: smtp.gmail.com
+      - key: Smtp__Puerto
+        value: "587"
+      - key: Smtp__UsarSsl
+        value: "true"
       - key: Smtp__Usuario
         sync: false
       - key: Smtp__Password
