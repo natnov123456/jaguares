@@ -26,16 +26,19 @@ services:
         value: https://jaguares-front.onrender.com
       - key: Proxy__Confiable
         value: "true"
-      # Correo: Gmail con contraseña de aplicación (Smtp__Usuario y Smtp__Password se cargan en el panel)
+      # Correo: Brevo por el puerto 2525 (el plan gratis de Render bloquea 25, 465 y 587).
+      # Smtp__Usuario, Smtp__Password y Smtp__Remitente (correo verificado en Brevo) se cargan en el panel
       - key: Smtp__Host
-        value: smtp.gmail.com
+        value: smtp-relay.brevo.com
       - key: Smtp__Puerto
-        value: "587"
+        value: "2525"
       - key: Smtp__UsarSsl
         value: "true"
       - key: Smtp__Usuario
         sync: false
       - key: Smtp__Password
+        sync: false
+      - key: Smtp__Remitente
         sync: false
 
   # Microservicio frontend (jaguares_front): sitio React estático en la CDN de Render (gratis, no se duerme).

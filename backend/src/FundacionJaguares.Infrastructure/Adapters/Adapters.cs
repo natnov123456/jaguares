@@ -73,7 +73,8 @@ public class EmailAdapter : IEmailAdapter
         if (adjunto is not null && (html is null || adjunto.ContentId is null))
             mensaje.Attachments.Add(new System.Net.Mail.Attachment(new MemoryStream(adjunto.Contenido), adjunto.Nombre, adjunto.TipoContenido));
 
-        using var cliente = new System.Net.Mail.SmtpClient(_smtp.Host, _smtp.Puerto) { EnableSsl = _smtp.UsarSsl };
+        // Tiempo máximo para no dejar colgada la pantalla si el servidor de correo no responde (p. ej. puerto bloqueado)
+        using var cliente = new System.Net.Mail.SmtpClient(_smtp.Host, _smtp.Puerto) { EnableSsl = _smtp.UsarSsl, Timeout = 15000 };
         if (!string.IsNullOrEmpty(_smtp.Usuario))
             cliente.Credentials = new System.Net.NetworkCredential(_smtp.Usuario, _smtp.Password);
         await cliente.SendMailAsync(mensaje);
