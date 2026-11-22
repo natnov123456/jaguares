@@ -18,4 +18,8 @@ public class RegistroActividadController(IRegistroActividadService registro) : C
         try { return Ok(await registro.ListarAsync(new FiltroRegistroActividad(q, resultado, desde, hasta, usuarioId, pagina, tamano))); }
         catch (ArgumentException ex) { return BadRequest(new { error = ex.Message }); }
     }
+
+    // Vigilancia de actividad sospechosa de las últimas horas (por defecto 24)
+    [HttpGet("seguridad")]
+    public async Task<IActionResult> Seguridad([FromQuery] int horas = 24) => Ok(await registro.ResumenSeguridadAsync(horas));
 }

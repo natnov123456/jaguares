@@ -207,7 +207,8 @@ public static class DescripcionAcciones
     public static string Describir(string? controlador, string? accion, string metodo, int estado)
     {
         if (controlador is not null && accion is not null && Nombres.TryGetValue($"{controlador}.{accion}", out var nombre))
-            return estado is 401 or 403 && controlador == "Auth" && accion == "Login" ? "Inicio de sesión fallido" : nombre;
+            return controlador == "Auth" && accion == "Login" && estado is 401 or 403 ? "Inicio de sesión fallido"
+                 : controlador == "Auth" && accion == "Login" && estado == 429 ? "Inicio de sesión bloqueado por intentos fallidos" : nombre;
         var verbo = metodo.ToUpperInvariant() switch
         {
             "GET" => "Consulta", "POST" => "Alta", "PUT" or "PATCH" => "Modificación", "DELETE" => "Eliminación", _ => metodo,

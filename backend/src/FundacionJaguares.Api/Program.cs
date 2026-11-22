@@ -38,6 +38,13 @@ builder.Services.AddScoped<VoluntarioRepository>();
 builder.Services.AddScoped<ContenidoRepository>();
 
 // 3) Adapters
+// Seguridad: bloqueo por intentos fallidos de inicio de sesión y aviso a la Dirección
+var seguridad = builder.Configuration.GetSection("Seguridad").Get<SeguridadOpciones>() ?? new SeguridadOpciones();
+builder.Services.AddSingleton(seguridad);
+builder.Services.AddSingleton<ProteccionAccesos>();
+builder.Services.AddSingleton<AlertasSeguridad>();
+// No anunciar el servidor web en las respuestas
+builder.WebHost.ConfigureKestrel(k => k.AddServerHeader = false);
 // Correo: sección "Smtp" (guárdala con user-secrets, nunca en appsettings.json). Sin Host, solo se registra en el log.
 builder.Services.AddSingleton(builder.Configuration.GetSection("Smtp").Get<SmtpOpciones>() ?? new SmtpOpciones());
 builder.Services.AddSingleton(builder.Configuration.GetSection("Contacto").Get<ContactoOpciones>() ?? new ContactoOpciones());
@@ -142,14 +149,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
-// 6) CORS
+// 6) CORS: en producción solo el frontend publicado (App:FrontendUrl) y los orígenes extra de Cors:Origenes
+// (separados por coma) pueden llamar a la API desde el navegador. En desarrollo se acepta cualquiera.
+var origenes = new[] { cfg["App:FrontendUrl"] }
+    .Concat((cfg["Cors:Origenes"] ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    .Where(o => !string.IsNullOrWhiteSpace(o)).Select(o => o!.TrimEnd('/')).Distinct().ToArray();
 builder.Services.AddCors(o => o.AddPolicy("front", p =>
-    p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+{
+    if (builder.Environment.IsDevelopment() || origenes.Length == 0) p.AllowAnyOrigin();
+    else p.WithOrigins(origenes);
+    p.AllowAnyHeader().AllowAnyMethod();
+}));
 
 // Donación en línea: endpoint público que envía correos, limitado por IP
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    // Mensaje claro para la pantalla (sin él, el navegador recibe un 429 vacío)
+    o.OnRejected = (ctx, ct) => new ValueTask(ctx.HttpContext.Response.WriteAsJsonAsync(
+        new { error = "Demasiadas solicitudes seguidas. Espera un momento y vuelve a intentarlo." }, ct));
     o.AddPolicy("donacion-en-linea", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromHours(1) }));
@@ -161,6 +179,14 @@ builder.Services.AddRateLimiter(o =>
     o.AddPolicy("recuperar-contrasena", ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(15) }));
+    // Inicio de sesión: frena a quien prueba contraseñas muy rápido (además del bloqueo por fallos)
+    o.AddPolicy("inicio-sesion", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = Math.Max(1, seguridad.LoginPorMinuto), Window = TimeSpan.FromMinutes(1) }));
+    // Registro de cuentas: evita la creación masiva de cuentas falsas desde una misma IP
+    o.AddPolicy("registro-cuenta", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = Math.Max(1, seguridad.RegistrosPorHora), Window = TimeSpan.FromHours(1) }));
 });
 
 // 7) Swagger (compatible con Swashbuckle 10 / Microsoft.OpenApi 2.x)
@@ -212,6 +238,8 @@ builder.Services.Configure<Microsoft.AspNetCore.Builder.ForwardedHeadersOptions>
 });
 
 var app = builder.Build();
+// Cabeceras de seguridad y redirección a HTTPS (antes de UseForwardedHeaders: lee X-Forwarded-Proto original)
+app.UseCabecerasDeSeguridad(seguridad.ForzarHttps);
 app.UseForwardedHeaders();
 
 // RNF-04: un error no controlado se registra y responde 500 genérico (sin detalles internos); la API sigue en pie
@@ -223,8 +251,12 @@ app.UseExceptionHandler(manejo => manejo.Run(async ctx =>
     await ctx.Response.WriteAsJsonAsync(new { error = "Ocurrió un error inesperado. Ya quedó registrado; intenta de nuevo en unos minutos." });
 }));
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// La documentación interactiva de la API solo en desarrollo (o si se habilita a propósito con Swagger:Habilitado)
+if (app.Environment.IsDevelopment() || cfg.GetValue<bool>("Swagger:Habilitado"))
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseStaticFiles(new StaticFileOptions
 {

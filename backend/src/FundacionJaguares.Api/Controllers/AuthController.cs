@@ -14,8 +14,15 @@ public class AuthController : ControllerBase
     private readonly IAuthService _auth;
     private readonly IUsuarioService _usuarios;
     private readonly IConsentimientoService _consentimientos;
-    public AuthController(IAuthService auth, IUsuarioService usuarios, IConsentimientoService consentimientos)
-    { _auth = auth; _usuarios = usuarios; _consentimientos = consentimientos; }
+    private readonly ProteccionAccesos _proteccion;
+    private readonly AlertasSeguridad _alertas;
+    private readonly SeguridadOpciones _seguridad;
+    public AuthController(IAuthService auth, IUsuarioService usuarios, IConsentimientoService consentimientos,
+                          ProteccionAccesos proteccion, AlertasSeguridad alertas, SeguridadOpciones seguridad)
+    {
+        _auth = auth; _usuarios = usuarios; _consentimientos = consentimientos;
+        _proteccion = proteccion; _alertas = alertas; _seguridad = seguridad;
+    }
 
     // FUJ-122: el personal define su contraseña con el enlace de un solo uso que recibió por correo
     [HttpPost("definir-contrasena")]
@@ -51,6 +58,7 @@ public class AuthController : ControllerBase
 
     // Registro de participante: exige aceptar los Términos y la Política de privacidad (dos casillas)
     [HttpPost("registro")]
+    [EnableRateLimiting("registro-cuenta")]
     public async Task<ActionResult<TokenDto>> Registro(RegistroDto dto)
     {
         HttpContext.Items[RegistroActividadMiddleware.ClaveEmail] = dto.Email?.Trim();
@@ -66,17 +74,31 @@ public class AuthController : ControllerBase
     }
 
     // El correo queda en el registro de actividad también cuando el intento falla
+    // Tras varios fallos seguidos se bloquea la cuenta o la IP unos minutos y se avisa a la Dirección.
     [HttpPost("login")]
+    [EnableRateLimiting("inicio-sesion")]
     public async Task<ActionResult<TokenDto>> Login(LoginDto dto)
     {
         HttpContext.Items[RegistroActividadMiddleware.ClaveEmail] = dto.Email?.Trim();
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        if (_proteccion.Bloqueo(dto.Email, ip) is { } resta)
+            return StatusCode(StatusCodes.Status429TooManyRequests, new
+            {
+                error = $"Demasiados intentos fallidos. Por seguridad, espera {Math.Max(1, (int)Math.Ceiling(resta.TotalMinutes))} minutos y vuelve a intentarlo."
+            });
         try
         {
             var token = await _auth.LoginAsync(dto);
+            _proteccion.RegistrarExito(dto.Email);
             HttpContext.Items[RegistroActividadMiddleware.ClaveRol] = token.Rol;
             return Ok(token);
         }
-        catch (UnauthorizedAccessException ex) { return Unauthorized(new { error = ex.Message }); }
+        catch (UnauthorizedAccessException ex)
+        {
+            if (_proteccion.RegistrarFallo(dto.Email, ip))
+                _alertas.AvisarBloqueo(dto.Email?.Trim(), ip, _seguridad.MinutosBloqueo);
+            return Unauthorized(new { error = ex.Message });
+        }
     }
 
     // Cierre de sesión: el token vive en el navegador; esta llamada deja constancia en el registro de actividad
