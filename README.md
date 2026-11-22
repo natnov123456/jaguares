@@ -156,6 +156,27 @@ dotnet test                      # ejecuta todas las pruebas
 ```
 También corren solas en GitHub Actions en cada push y pull request (`.github/workflows/backend-tests.yml`).
 
+### 7. Ejecutar con Docker: dos microservicios separados
+El proyecto corre en **dos contenedores independientes**, cada uno con su propia imagen y su propio puerto:
+
+| Microservicio | Contenedor | Dirección | Imagen |
+|---|---|---|---|
+| Frontend (React + nginx) | `jaguares_front` | http://localhost:3000 | `frontend/Dockerfile` |
+| Backend (API ASP.NET Core 10) | `jaguares_backend` | http://localhost:8080 (salud: `/health/live`) | `backend/Dockerfile` |
+
+La base de datos no va en un contenedor: el backend se conecta a la que indique `DB_CONEXION` en el archivo `.env`
+(PostgreSQL en la nube o el de tu computadora). Si se deja vacío, usa la base local `fundacion_jaguares_docker`.
+
+```powershell
+copy .env.example .env           # completa DB_CONEXION y JWT_SECRET
+docker compose up -d --build     # compila y levanta los dos microservicios
+docker compose ps                # estado de cada uno
+docker compose logs -f backend   # registro de un solo microservicio
+docker compose up -d --build frontend   # actualizar solo uno
+docker compose down              # detenerlos
+```
+El despliegue en el servidor con HTTPS (Caddy, respaldos, monitoreo) está en `deploy/docker-compose.prod.yml`.
+
 ---
 
 ## 🔐 Roles y Credenciales de Prueba

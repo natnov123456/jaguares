@@ -13,3 +13,6 @@ backend/tests/TestResults/
 # Despliegue (JAG-77): secretos y respaldos solo en el servidor
 deploy/.env
 deploy/respaldos/
+
+# Variables de docker-compose.yml (cadena de la base de datos, secretos)
+.env

@@ -1,0 +1,53 @@
+# Dos microservicios separados, cada uno en su propio contenedor y puerto:
+#   frontend  → sitio React servido por nginx      http://localhost:3000
+#   backend   → API ASP.NET Core 10                 http://localhost:8080   (salud: /health/live)
+#
+# La base de datos NO va en un contenedor: el backend se conecta a la que indique DB_CONEXION
+# (PostgreSQL en la nube, o el PostgreSQL instalado en esta computadora).
+#
+#   cp .env.example .env        # y completa los valores
+#   docker compose up -d --build
+#   docker compose ps
+#
+# El despliegue en servidor con HTTPS sigue en deploy/docker-compose.prod.yml.
+name: jaguares
+
+services:
+  backend:
+    build:
+      context: ./backend
+    image: jaguares_backend
+    container_name: jaguares_backend
+    restart: unless-stopped
+    ports: ["${PUERTO_BACKEND:-8080}:8080"]
+    environment:
+      ConnectionStrings__Default: ${DB_CONEXION:-Host=host.docker.internal;Port=5432;Database=fundacion_jaguares_docker;Username=postgres;Password=postgres}
+      Jwt__Secret: ${JWT_SECRET:-solo-para-desarrollo-cambiar-en-produccion-0123456789}
+      # Para los enlaces de los correos (encuestas, contraseñas)
+      App__FrontendUrl: ${URL_FRONTEND:-http://localhost:3000}
+      Smtp__Host: ${SMTP_HOST:-}
+      Smtp__Puerto: ${SMTP_PUERTO:-587}
+      Smtp__Usuario: ${SMTP_USUARIO:-}
+      Smtp__Password: ${SMTP_CLAVE:-}
+      Smtp__Remitente: ${SMTP_REMITENTE:-no-responder@jaguares.org.bo}
+      Smtp__UsarSsl: ${SMTP_SSL:-true}
+      Contacto__EmailDestino: ${CONTACTO_DESTINO:-}
+    volumes:
+      # Certificados, fotos de la galería y plantillas
+      - archivos:/datos/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Dirección pública del backend: el navegador llama a la API en ese otro puerto/dominio
+        VITE_SERVIDOR: ${URL_BACKEND:-http://localhost:8080}
+    image: jaguares_front
+    container_name: jaguares_front
+    restart: unless-stopped
+    ports: ["${PUERTO_FRONTEND:-3000}:80"]
+
+volumes:
+  archivos:
