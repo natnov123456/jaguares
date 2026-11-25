@@ -158,7 +158,7 @@ export default function Cursos() {
               <p style={{ flex: 1 }}>{c.descripcion}</p>
               <p className="muted" style={{ fontSize: '0.9rem' }}>📅 {fecha(c.fechaInicio)} – {fecha(c.fechaFin)}</p>
               <p>
-                <strong>Cupos:</strong> {c.cupoDisponible} / {c.cupoMaximo}
+                <strong>Cupos disponibles:</strong> {c.cupoDisponible} de {c.cupoMaximo}
                 {c.cupoDisponible === 0 && <span className="badge badge-off" style={{ marginLeft: 8 }}>Curso lleno</span>}
               </p>
               <div>{accion(c)}</div>
