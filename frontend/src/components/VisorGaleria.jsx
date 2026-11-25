@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { archivoUrl } from '../services/api';
 
 // Vista ampliada de la galería (FUJ-126): solo la foto, a pantalla completa, o el video insertado.
@@ -27,7 +28,9 @@ export default function VisorGaleria({ items, indice, onCambiar, onCerrar }) {
 
   if (!item) return null;
 
-  return (
+  // Se dibuja directo en <body>: si la página tiene animaciones con transform, un position: fixed
+  // dentro de ella quedaría encerrado en el contenido en vez de cubrir toda la ventana.
+  return createPortal(
     <div className="visor" role="dialog" aria-modal="true" aria-label={item.titulo || 'Vista ampliada'} onClick={onCerrar}>
       <button className="visor-cerrar" onClick={onCerrar} aria-label="Cerrar">×</button>
       {hayVarios && (
@@ -53,6 +56,7 @@ export default function VisorGaleria({ items, indice, onCambiar, onCerrar }) {
       {hayVarios && (
         <button className="visor-flecha der" onClick={e => { e.stopPropagation(); mover(1); }} aria-label="Siguiente">›</button>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }
